@@ -1,8 +1,8 @@
 # macOS packaging
 
-`uv run --no-dev okmate-ops package desktop` sets Okmate identity and calls
-sibling [`h35-desktop`](https://github.com/koliyo/h35-desktop)
-`packaging/macos/` scripts. Those assemble `dist/Okmate.app` with Sparkle 2.
+`uv run --no-dev okmate-ops package desktop` sets Okmate identity and runs
+sibling [`h35-desktop`](https://github.com/koliyo/h35-desktop) `h35-ops package`.
+That assembles `dist/Okmate.app` with Sparkle 2.
 `okmate-ops package sign` wraps the host signer: Developer ID, notarytool,
 staple. Missing signing secrets fail closed; the release workflow will not
 attach an unsigned production archive.

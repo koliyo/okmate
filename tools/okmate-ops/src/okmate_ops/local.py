@@ -79,11 +79,11 @@ def h35_desktop_root(root: Path) -> Path:
     return (root / ".." / "h35-desktop").resolve()
 
 
-def h35_macos_script(root: Path, name: str) -> Path:
-    script = h35_desktop_root(root) / "packaging" / "macos" / name
-    if not script.is_file():
-        raise SystemExit(f"  Error: h35-desktop packager not found at '{script}'")
-    return script
+def h35_ops_argv(root: Path, args: list[str]) -> list[str]:
+    h35 = h35_desktop_root(root)
+    if not (h35 / "h35-ops").is_dir():
+        raise SystemExit(f"  Error: h35-desktop packager not found at '{h35}'")
+    return ["uv", "run", "--directory", str(h35), "--no-dev", "h35-ops", *args]
 
 
 def package_env(root: Path) -> dict[str, str]:
@@ -101,8 +101,7 @@ def package_env(root: Path) -> dict[str, str]:
 def package_desktop() -> int:
     require_darwin("The macOS app bundle")
     root = repo_root()
-    script = h35_macos_script(root, "package.sh")
-    run([str(script)], cwd=root, env=package_env(root))
+    run(h35_ops_argv(root, ["package"]), cwd=root, env=package_env(root))
     print(app_bundle_dir(root))
     return 0
 
@@ -115,8 +114,7 @@ def package_sign(argv: list[str]) -> int:
     require_darwin("Signing")
     root = repo_root()
     app = Path(argv[0]) if argv else app_bundle_dir(root)
-    script = h35_macos_script(root, "sign.sh")
-    run([str(script), str(app)], cwd=root, env=package_env(root))
+    run(h35_ops_argv(root, ["sign", str(app)]), cwd=root, env=package_env(root))
     return 0
 
 
@@ -126,21 +124,7 @@ def package_appcast(argv: list[str]) -> int:
     require_darwin("Appcast generation")
     root = repo_root()
     inbox, prefix = argv
-    env = package_env(root)
-    framework = run(
-        [str(h35_macos_script(root, "fetch-sparkle.sh"))],
-        cwd=root,
-        env=env,
-        capture=True,
-    ).strip()
-    if not framework:
-        raise SystemExit("  Error: fetch-sparkle.sh printed no framework path")
-    env["GENERATE_APPCAST"] = str(Path(framework).parent / "bin" / "generate_appcast")
-    run(
-        [str(h35_macos_script(root, "generate-appcast.sh")), inbox, prefix],
-        cwd=root,
-        env=env,
-    )
+    run(h35_ops_argv(root, ["appcast", inbox, prefix]), cwd=root, env=package_env(root))
     return 0
 
 
