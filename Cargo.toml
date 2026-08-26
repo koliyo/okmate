@@ -36,7 +36,7 @@ toml = "1.1"
 tower-http = { version = "0.6", features = ["fs"] }
 datastar = { version = "0.4", features = ["axum"] }
 futures-util = { version = "0.3", default-features = false, features = ["std"] }
-h35-desktop = { path = "../h35-desktop", optional = true }
+h35-desktop = { git = "https://github.com/koliyo/h35-desktop", optional = true }
 
 [dev-dependencies]
 http-body-util = "0.1"
