@@ -53,6 +53,13 @@ fn build_writes_engine_catalog_html_landmarks_and_pages_json() {
 
     let review = fs::read_to_string(output.join("review").join("index.html")).unwrap();
     assert!(review.contains("id=\"okmate-queue\""));
+    assert!(review.contains("id=\"okmate-search-input\""));
+    assert!(review.contains("id=\"okmate-review-table\""));
+    assert!(review.contains("Lifecycle / Authority"));
+    assert!(review.contains("Trust &amp; Verification"));
+    assert!(review.contains("Required Action"));
+    assert!(review.contains("id=\"diagnostics\""));
+    assert!(output.join("__okmate").join("review.js").is_file());
 
     let settings = fs::read_to_string(output.join("settings").join("index.html")).unwrap();
     assert!(settings.contains("id=\"okmate-settings\""));

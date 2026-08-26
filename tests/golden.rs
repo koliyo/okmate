@@ -53,6 +53,7 @@ fn sample() -> Document {
             action: "Clean".into(),
             ..ReviewRow::default()
         }],
+        action_rows: Vec::new(),
         stats: Vec::new(),
         recents: Vec::new(),
         diagnostics: Vec::new(),

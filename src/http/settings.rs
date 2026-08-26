@@ -123,6 +123,7 @@ fn settings_document(
             status: String::new(),
             authority: String::new(),
             review_rows: Vec::new(),
+            action_rows: Vec::new(),
             stats: Vec::new(),
             recents: Vec::new(),
             diagnostics: Vec::new(),

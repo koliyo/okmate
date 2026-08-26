@@ -1,25 +1,106 @@
-<div id="okmate-queue">
+<div id="okmate-queue" class="okmate-review-view">
   <h1>Knowledge Governance &amp; Review Queue</h1>
-  <p>Deterministic overview of bundle lifecycle status and required human actions.</p>
-  <table class="okmate-review-table">
-    <thead>
-      <tr>
-        <th>Concept</th>
-        <th>Status</th>
-        <th>Action</th>
-      </tr>
-    </thead>
-    <tbody>
-      {% for row in review_rows %}
+  <p>Deterministic overview of bundle lifecycle status, trust tiers, source drift, and required human actions.</p>
+  {% include "fragments/stats.html" %}
+  <section class="okmate-priority-section">
+    <h2 id="needs-action">Needs action</h2>
+    {% if action_rows.is_empty() %}
+      <p>No records currently require action.</p>
+    {% else %}
+      <div class="okmate-table-container">
+        <table class="okmate-review-table">
+          <thead>
+            <tr>
+              <th>Concept</th>
+              <th>Collection</th>
+              <th>Required Action</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for row in action_rows %}
+              <tr>
+                <td>
+                  <a href="{{ row.href }}" class="okmate-concept-title-link" data-on:click__prevent="@get('{{ row.href }}')"><strong>{{ row.title }}</strong></a>
+                  <div class="okmate-concept-id-sub"><code>{{ row.id }}</code></div>
+                </td>
+                <td><span class="okmate-badge okmate-type">{{ row.concept_type }}</span></td>
+                <td>
+                  <div class="okmate-action-wrapper">
+                    <span class="okmate-action-pill {{ row.pill_class }}">{{ row.action }}</span>
+                    <div class="okmate-action-detail-text">{{ row.action_detail }}</div>
+                  </div>
+                </td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    {% endif %}
+  </section>
+  <h2 id="all-concepts-queue">All Bundle Concepts ({{ review_rows.len() }} Records)</h2>
+  <div class="okmate-filter-bar">
+    <button type="button" class="okmate-filter-btn is-active" data-filter="all">All ({{ review_rows.len() }})</button>
+    <button type="button" class="okmate-filter-btn" data-filter="action">Needs Action ({{ action_rows.len() }})</button>
+    {% for card in stats %}
+      {% if card.label == "Draft" %}
+        <button type="button" class="okmate-filter-btn" data-filter="draft">Draft ({{ card.value }})</button>
+      {% endif %}
+      {% if card.label == "Stable" %}
+        <button type="button" class="okmate-filter-btn" data-filter="stable">Stable ({{ card.value }})</button>
+      {% endif %}
+    {% endfor %}
+    <input type="search" id="okmate-search-input" class="okmate-search-input" placeholder="Filter by concept, path, tag, or action..." aria-label="Search review queue">
+  </div>
+  <div class="okmate-table-container">
+    <table class="okmate-review-table" id="okmate-review-table">
+      <thead>
         <tr>
-          <td>
-            <a href="{{ row.href }}" data-on:click__prevent="@get('{{ row.href }}')"><strong>{{ row.title }}</strong></a>
-            <div><code>{{ row.id }}</code></div>
-          </td>
-          <td>{{ row.status }}</td>
-          <td>{{ row.action }}</td>
+          <th>Concept</th>
+          <th>Collection</th>
+          <th>Lifecycle / Authority</th>
+          <th>Trust &amp; Verification</th>
+          <th>Required Action</th>
         </tr>
+      </thead>
+      <tbody>
+        {% for row in review_rows %}
+          <tr class="okmate-row" data-status="{{ row.status }}" data-action="{% if row.is_action_required %}true{% else %}false{% endif %}" data-search="{{ row.search }}">
+            <td>
+              <a href="{{ row.href }}" class="okmate-concept-title-link" data-on:click__prevent="@get('{{ row.href }}')"><strong>{{ row.title }}</strong></a>
+              <div class="okmate-concept-id-sub"><code>{{ row.id }}</code></div>
+            </td>
+            <td><span class="okmate-badge okmate-type">{{ row.concept_type }}</span></td>
+            <td>
+              <span class="okmate-badge okmate-status okmate-status-{{ row.status }}">{{ row.status }}</span>
+              <span class="okmate-badge okmate-auth okmate-auth-{{ row.authority }}">{{ row.authority }}</span>
+            </td>
+            <td>
+              <span class="okmate-badge okmate-trust okmate-trust-{{ row.trust_slug }}">{{ row.trust_label }}</span>
+              <div class="okmate-verifier-sub"><code>{{ row.verifier }}</code></div>
+            </td>
+            <td>
+              <div class="okmate-action-wrapper">
+                <span class="okmate-action-pill {{ row.pill_class }}">{{ row.action }}</span>
+                <div class="okmate-action-detail-text">{{ row.action_detail }}</div>
+              </div>
+            </td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  <h2 id="diagnostics">Active Bundle Diagnostics</h2>
+  {% if diagnostics.is_empty() %}
+    <p>No validation errors or provenance warnings detected.</p>
+  {% else %}
+    <div class="okmate-diagnostics-list">
+      {% for item in diagnostics %}
+        <div class="okmate-diagnostic-item">
+          <span class="okmate-badge">{% if item.severity == "Error" %}Error{% else %}Warning{% endif %}</span>
+          <code>{{ item.code }}</code>
+          <strong>{{ item.path }}</strong>: {{ item.message }}
+        </div>
       {% endfor %}
-    </tbody>
-  </table>
+    </div>
+  {% endif %}
 </div>

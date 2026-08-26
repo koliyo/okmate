@@ -7,13 +7,14 @@ use okf::{BuildSummary, Bundle, Profile};
 use serde::Serialize;
 
 use crate::views::{
-    Document, NavNode, ReviewRow, governance_stats, recent_leaf_documents, review_rows,
-    toc_from_headings,
+    Document, NavNode, action_rows, diagnostic_rows, governance_stats, recent_leaf_documents,
+    review_rows, toc_from_headings,
 };
 
 const APP_CSS: &str = include_str!("../assets/app.css");
 const DATASTAR_JS: &str = include_str!("../assets/datastar.js");
 const GOTO_JS: &str = include_str!("../assets/goto.js");
+const REVIEW_JS: &str = include_str!("../assets/review.js");
 
 #[derive(Serialize)]
 struct NavPage {
@@ -85,7 +86,7 @@ pub fn page_for_route(bundle: &Bundle, route: &str) -> Option<Document> {
                 Vec::new(),
             )
             .with_kind("review")
-            .with_review(review_rows(bundle)),
+            .with_review(bundle),
         ),
         "/settings/" => Some(settings_document(bundle)),
         other => {
@@ -144,6 +145,7 @@ fn document(
         status: String::new(),
         authority: String::new(),
         review_rows: Vec::new(),
+        action_rows: Vec::new(),
         stats: Vec::new(),
         recents: Vec::new(),
         diagnostics: Vec::new(),
@@ -190,8 +192,11 @@ impl Document {
         self
     }
 
-    fn with_review(mut self, rows: Vec<ReviewRow>) -> Self {
-        self.review_rows = rows;
+    fn with_review(mut self, bundle: &Bundle) -> Self {
+        self.review_rows = review_rows(bundle);
+        self.action_rows = action_rows(&self.review_rows);
+        self.stats = governance_stats(bundle);
+        self.diagnostics = diagnostic_rows(bundle);
         self
     }
 
@@ -232,7 +237,8 @@ fn write_assets(output: &Path) -> Result<()> {
     fs::create_dir_all(&dir).with_context(|| format!("failed to create {}", dir.display()))?;
     fs::write(dir.join("app.css"), APP_CSS).context("failed to write app.css")?;
     fs::write(dir.join("datastar.js"), DATASTAR_JS).context("failed to write datastar.js")?;
-    fs::write(dir.join("goto.js"), GOTO_JS).context("failed to write goto.js")
+    fs::write(dir.join("goto.js"), GOTO_JS).context("failed to write goto.js")?;
+    fs::write(dir.join("review.js"), REVIEW_JS).context("failed to write review.js")
 }
 
 fn nav_pages(bundle: &Bundle) -> Vec<NavPage> {

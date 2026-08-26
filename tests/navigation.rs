@@ -84,4 +84,8 @@ async fn review_page_contains_queue_region() {
     let body = body_text(response).await;
     assert!(body.contains("id=\"okmate-queue\""), "{body}");
     assert!(body.contains("Hello"), "{body}");
+    assert!(body.contains("id=\"okmate-search-input\""), "{body}");
+    assert!(body.contains("Lifecycle / Authority"), "{body}");
+    assert!(body.contains("id=\"diagnostics\""), "{body}");
+    assert!(body.contains("data-search="), "{body}");
 }

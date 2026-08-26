@@ -51,6 +51,7 @@ pub struct ReviewRow {
     pub pill_class: String,
     pub is_action_required: bool,
     pub search: String,
+    pub action_rank: u8,
 }
 
 macro_rules! document_template {
@@ -67,6 +68,7 @@ macro_rules! document_template {
             pub status: String,
             pub authority: String,
             pub review_rows: Vec<ReviewRow>,
+            pub action_rows: Vec<ReviewRow>,
             pub stats: Vec<StatCard>,
             pub recents: Vec<RecentDoc>,
             pub diagnostics: Vec<DiagnosticRow>,
@@ -88,6 +90,7 @@ macro_rules! document_template {
                     status: document.status,
                     authority: document.authority,
                     review_rows: document.review_rows,
+                    action_rows: document.action_rows,
                     stats: document.stats,
                     recents: document.recents,
                     diagnostics: document.diagnostics,
@@ -119,6 +122,7 @@ pub struct Document {
     pub status: String,
     pub authority: String,
     pub review_rows: Vec<ReviewRow>,
+    pub action_rows: Vec<ReviewRow>,
     pub stats: Vec<StatCard>,
     pub recents: Vec<RecentDoc>,
     pub diagnostics: Vec<DiagnosticRow>,
@@ -217,9 +221,39 @@ pub fn review_rows(bundle: &Bundle) -> Vec<ReviewRow> {
                 pill_class: action.pill_class.to_string(),
                 is_action_required: action.is_action_required,
                 search,
+                action_rank: action_rank(action.kind),
             }
         })
         .collect()
+}
+
+fn action_rank(kind: okf::ActionKind) -> u8 {
+    match kind {
+        okf::ActionKind::FixErrors => 0,
+        okf::ActionKind::ReverifySources => 1,
+        okf::ActionKind::ReverifyRegenerated => 2,
+        okf::ActionKind::RefreshStale => 3,
+        okf::ActionKind::UncommittedChanges => 4,
+        okf::ActionKind::UntrackedSources => 5,
+        okf::ActionKind::InitialVerification => 6,
+        okf::ActionKind::PendingPromotion => 7,
+        okf::ActionKind::Exploratory => 8,
+        okf::ActionKind::Clean => 9,
+    }
+}
+
+pub fn action_rows(rows: &[ReviewRow]) -> Vec<ReviewRow> {
+    let mut rows: Vec<ReviewRow> = rows
+        .iter()
+        .filter(|row| row.is_action_required)
+        .cloned()
+        .collect();
+    rows.sort_by(|left, right| {
+        left.action_rank
+            .cmp(&right.action_rank)
+            .then_with(|| left.id.cmp(&right.id))
+    });
+    rows
 }
 
 #[cfg(test)]
@@ -252,6 +286,7 @@ mod tests {
             status: "draft".into(),
             authority: "descriptive".into(),
             review_rows: Vec::new(),
+            action_rows: Vec::new(),
             stats: Vec::new(),
             recents: Vec::new(),
             diagnostics: Vec::new(),
