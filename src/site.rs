@@ -225,6 +225,15 @@ fn route_to_path(output: &Path, route: &str) -> PathBuf {
     }
 }
 
+pub(crate) fn write_settings_host(output: &Path) -> Result<()> {
+    write_assets(output)?;
+    let config_path = crate::config::config_path();
+    let config = crate::config::load_or_default(&config_path);
+    let html = crate::http::render_page(None, &config, None, &config_path);
+    write_route(output, "/settings/", html.clone())?;
+    write_route(output, "/", html)
+}
+
 fn write_pages_json(bundle: &Bundle, output: &Path) -> Result<()> {
     fs::write(
         output.join("pages.json"),

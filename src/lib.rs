@@ -1,5 +1,6 @@
 //! Okmate library: CLI and later HTTP/desktop surfaces over the portable `okf` engine.
 
+pub mod bundle;
 pub mod cli;
 pub mod config;
 #[cfg(feature = "desktop")]

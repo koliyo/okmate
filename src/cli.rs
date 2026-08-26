@@ -176,7 +176,11 @@ enum InspectTarget {
 }
 
 pub fn run() -> Result<()> {
-    let cli = Cli::parse();
+    let raw: Vec<String> = std::env::args().collect();
+    let bundled = std::env::current_exe()
+        .ok()
+        .is_some_and(|exe| crate::bundle::running_inside_app_bundle(&exe));
+    let cli = Cli::parse_from(crate::bundle::argv_for_parse(raw, bundled));
     match cli.command {
         Commands::Check {
             root,
@@ -269,6 +273,7 @@ pub fn run() -> Result<()> {
             public,
             port: port.resolve()?,
             no_window,
+            allow_missing_bundle: bundled,
         }),
         Commands::Roots {
             format,

@@ -25,6 +25,7 @@ pub struct ViewOptions {
     pub public: bool,
     pub port: u16,
     pub no_window: bool,
+    pub allow_missing_bundle: bool,
 }
 
 pub struct ServerReady {
@@ -97,7 +98,17 @@ impl PreparedView {
 }
 
 async fn prepare(options: ViewOptions) -> Result<PreparedView> {
-    let target = resolve_target(options.path.as_deref())?;
+    let target = match resolve_target(options.path.as_deref()) {
+        Ok(target) => Some(target),
+        Err(error) if options.allow_missing_bundle && options.path.is_none() => {
+            eprintln!("okmate: {error:#}; opening settings");
+            None
+        }
+        Err(error) => return Err(error),
+    };
+    let Some(target) = target else {
+        return prepare_settings_host(options).await;
+    };
     persist_bundle(&target.root);
     let output = output_path(options.output.as_deref(), &target.root);
     site::build(&target.root, &output, options.profile)?;
@@ -140,6 +151,32 @@ async fn prepare(options: ViewOptions) -> Result<PreparedView> {
         state: crate::http::AppState {
             output,
             root: target.root,
+            profile: options.profile,
+            config_path: crate::config::config_path(),
+        },
+        home_url,
+        initial_url,
+    })
+}
+
+async fn prepare_settings_host(options: ViewOptions) -> Result<PreparedView> {
+    let output = output_path(options.output.as_deref(), Path::new("settings"));
+    site::write_settings_host(&output)?;
+    let addr = bind_addr(options.public, options.port);
+    let listener = tokio::net::TcpListener::bind(addr)
+        .await
+        .with_context(|| format!("failed to bind {addr}"))?;
+    let bound = listener
+        .local_addr()
+        .context("failed to read bound address")?;
+    let home_url = home_url(bound);
+    let initial_url = format!("{}settings/", home_url);
+    eprintln!("okmate: serving settings at {initial_url}");
+    Ok(PreparedView {
+        listener,
+        state: crate::http::AppState {
+            output,
+            root: PathBuf::from("/"),
             profile: options.profile,
             config_path: crate::config::config_path(),
         },
