@@ -314,6 +314,7 @@ mod tests {
         assert!(html.contains("data-on:click__prevent"), "{html}");
         assert!(html.contains("/__okmate/goto.js"), "{html}");
         assert!(html.contains("/__okmate/resize.js"), "{html}");
+        assert!(html.contains("/__okmate/toc.js"), "{html}");
     }
 
     #[test]

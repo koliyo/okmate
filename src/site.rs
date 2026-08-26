@@ -15,6 +15,7 @@ const APP_CSS: &str = include_str!("../assets/app.css");
 const DATASTAR_JS: &str = include_str!("../assets/datastar.js");
 const GOTO_JS: &str = include_str!("../assets/goto.js");
 const RESIZE_JS: &str = include_str!("../assets/resize.js");
+const TOC_JS: &str = include_str!("../assets/toc.js");
 const REVIEW_JS: &str = include_str!("../assets/review.js");
 
 #[derive(Serialize)]
@@ -250,6 +251,7 @@ fn write_assets(output: &Path) -> Result<()> {
     fs::write(dir.join("datastar.js"), DATASTAR_JS).context("failed to write datastar.js")?;
     fs::write(dir.join("goto.js"), GOTO_JS).context("failed to write goto.js")?;
     fs::write(dir.join("resize.js"), RESIZE_JS).context("failed to write resize.js")?;
+    fs::write(dir.join("toc.js"), TOC_JS).context("failed to write toc.js")?;
     fs::write(dir.join("review.js"), REVIEW_JS).context("failed to write review.js")
 }
 

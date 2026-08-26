@@ -162,7 +162,12 @@ body.is-col-resizing {
   line-height: 1.35;
   text-decoration: none;
 }
-.okmate-toc-link:hover {
+.okmate-toc-link:hover,
+.okmate-toc-link.is-current,
+.okmate-toc-link[aria-current="location"],
+.okmate-outline-link:hover,
+.okmate-outline-link.is-current,
+.okmate-outline-link[aria-current="location"] {
   border-color: var(--rd-primary);
   color: var(--rd-fg);
   text-decoration: none;

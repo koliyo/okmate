@@ -89,6 +89,7 @@ pub fn parse_markdown_body(
 
     let mut article_html = String::new();
     let _ = comrak::format_html(root, &options, &mut article_html);
+    article_html = inject_heading_ids(&article_html, &walker.headings);
 
     MarkdownOutput {
         headings: walker.headings,
@@ -205,6 +206,30 @@ fn collect_text<'a>(node: &'a AstNode<'a>) -> String {
     for child in node.children() {
         out.push_str(&collect_text(child));
     }
+    out
+}
+
+fn inject_heading_ids(html: &str, headings: &[Heading]) -> String {
+    let mut out = String::with_capacity(html.len() + headings.len() * 24);
+    let mut cursor = 0;
+    for heading in headings {
+        let needle = format!("<h{}", heading.level);
+        let Some(rel) = html[cursor..].find(&needle) else {
+            break;
+        };
+        let start = cursor + rel;
+        out.push_str(&html[cursor..start]);
+        out.push_str(&needle);
+        let after = start + needle.len();
+        let rest = &html[after..];
+        if !rest.starts_with(" id=") && !rest.starts_with("id=") {
+            out.push_str(" id=\"");
+            out.push_str(&heading.id);
+            out.push('"');
+        }
+        cursor = after;
+    }
+    out.push_str(&html[cursor..]);
     out
 }
 

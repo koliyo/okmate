@@ -82,8 +82,11 @@ fn build_writes_engine_catalog_html_landmarks_and_pages_json() {
     let css = fs::read_to_string(output.join("__okmate").join("app.css")).unwrap();
     assert!(css.contains("--okmate-nav-width"), "{css}");
     assert!(css.contains(".okmate-col-resizer"), "{css}");
+    assert!(css.contains(".okmate-toc-link.is-current"), "{css}");
     assert!(output.join("__okmate").join("resize.js").is_file());
+    assert!(output.join("__okmate").join("toc.js").is_file());
     assert!(home.contains("/__okmate/resize.js"), "{home}");
+    assert!(home.contains("/__okmate/toc.js"), "{home}");
     let pages: serde_json::Value =
         serde_json::from_str(&fs::read_to_string(output.join("pages.json")).unwrap()).unwrap();
     let routes: Vec<&str> = pages
