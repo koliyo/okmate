@@ -7,8 +7,8 @@ use okf::{BuildSummary, Bundle, Profile};
 use serde::Serialize;
 
 use crate::views::{
-    Document, NavNode, action_rows, diagnostic_rows, governance_stats, recent_leaf_documents,
-    review_rows, toc_from_headings,
+    Document, NavNode, action_rows, concept_meta, diagnostic_rows, governance_stats,
+    recent_leaf_documents, review_rows, toc_from_headings,
 };
 
 const APP_CSS: &str = include_str!("../assets/app.css");
@@ -97,7 +97,7 @@ pub fn page_for_route(bundle: &Bundle, route: &str) -> Option<Document> {
                     document(bundle, other, title, toc_from_headings(&concept.headings))
                         .with_kind("page")
                         .with_article(&concept.article_html)
-                        .with_meta(concept),
+                        .with_meta(concept, &bundle.diagnostics),
                 )
             } else {
                 bundle
@@ -179,7 +179,7 @@ impl Document {
         self
     }
 
-    fn with_meta(mut self, concept: &okf::Concept) -> Self {
+    fn with_meta(mut self, concept: &okf::Concept, diagnostics: &[okf::Diagnostic]) -> Self {
         self.concept_type = okf::string_field(&concept.metadata, "type")
             .unwrap_or("Concept")
             .to_string();
@@ -189,6 +189,7 @@ impl Document {
         self.authority = okf::string_field(&concept.metadata, "authority")
             .unwrap_or("descriptive")
             .to_string();
+        self.meta = concept_meta(concept, diagnostics);
         self
     }
 

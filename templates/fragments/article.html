@@ -1,8 +1,39 @@
 {% if !concept_type.is_empty() %}
-  <section class="okmate-meta" aria-label="Concept metadata">
-    <span class="okmate-badge">{{ concept_type }}</span>
-    {% if !status.is_empty() %}<span class="okmate-badge">{{ status }}</span>{% endif %}
-    {% if !authority.is_empty() %}<span class="okmate-badge">{{ authority }}</span>{% endif %}
+  <section class="okmate-concept-meta" aria-label="Concept Metadata &amp; Governance">
+    <div class="okmate-badge-group">
+      <span class="okmate-badge okmate-type">{{ concept_type }}</span>
+      {% if !status.is_empty() %}<span class="okmate-badge okmate-status okmate-status-{{ status }}">{{ status }}</span>{% endif %}
+      {% if !authority.is_empty() %}<span class="okmate-badge okmate-auth okmate-auth-{{ authority }}">{{ authority }}</span>{% endif %}
+      {% if !meta.trust_label.is_empty() %}<span class="okmate-badge okmate-trust okmate-trust-{{ meta.trust_slug }}">{{ meta.trust_label }}</span>{% endif %}
+      {% if meta.stale %}<span class="okmate-badge okmate-badge-stale">Stale (expired {{ meta.stale_after }})</span>{% endif %}
+    </div>
+    {% if !meta.alert.is_empty() %}
+      <div class="okmate-alert-banner" role="alert">
+        <div class="okmate-alert-content">
+          <strong>Review Action Required:</strong> {{ meta.alert }}
+        </div>
+      </div>
+    {% endif %}
+    {% if !meta.description.is_empty() %}
+      <p class="okmate-lead">{{ meta.description }}</p>
+    {% endif %}
+    {% if !meta.provenance.is_empty() %}
+      <ul class="okmate-provenance">
+        {% for item in meta.provenance %}
+          <li>
+            <span class="okmate-meta-label">{{ item.label }}</span>
+            {% if item.unverified %}<em>{{ item.value }}</em>{% else %}<code>{{ item.value }}</code>{% endif %}
+          </li>
+        {% endfor %}
+      </ul>
+    {% endif %}
+    {% if !meta.drift_sources.is_empty() %}
+      <ul class="okmate-provenance">
+        {% for item in meta.drift_sources %}
+          <li><span class="okmate-meta-label">Source drift</span> {{ item }}</li>
+        {% endfor %}
+      </ul>
+    {% endif %}
   </section>
 {% endif %}
 {{ article_html|safe }}

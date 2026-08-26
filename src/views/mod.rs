@@ -516,4 +516,26 @@ mod tests {
         assert!(html.contains("Knowledge Collections"));
         assert!(html.contains("Total"));
     }
+
+    #[test]
+    fn concept_meta_includes_alert_for_stale_record() {
+        let mut concept = test_concept(
+            "plans/old",
+            "plans/old.md",
+            "Old",
+            "draft",
+            "2020-01-01T00:00:00Z",
+        );
+        concept
+            .metadata
+            .insert("stale_after".into(), serde_json::json!("2000-01-01"));
+        concept
+            .metadata
+            .insert("description".into(), serde_json::json!("An old plan."));
+        let meta = concept_meta(&concept, &[]);
+        assert!(meta.stale);
+        assert!(meta.alert.contains("stale_after"));
+        assert_eq!(meta.description, "An old plan.");
+        assert_eq!(meta.trust_slug, "generated");
+    }
 }

@@ -18,6 +18,11 @@ fn build_writes_engine_catalog_html_landmarks_and_pages_json() {
         ),
     )
     .unwrap();
+    fs::write(
+        root.join("stale.md"),
+        valid_strict_concept("Stale", "stale_after: 2000-01-01\n", "Expired record.\n"),
+    )
+    .unwrap();
     let output = temp_dir("build-out");
 
     let status = Command::new(okmate_bin())
@@ -35,7 +40,7 @@ fn build_writes_engine_catalog_html_landmarks_and_pages_json() {
     let catalog: serde_json::Value =
         serde_json::from_str(&fs::read_to_string(output.join("catalog.json")).unwrap()).unwrap();
     assert!(catalog.is_array());
-    assert_eq!(catalog.as_array().unwrap().len(), 1);
+    assert_eq!(catalog.as_array().unwrap().len(), 2);
 
     let home = fs::read_to_string(output.join("index.html")).unwrap();
     assert!(home.contains("id=\"okmate-nav\""), "{home}");
@@ -50,6 +55,15 @@ fn build_writes_engine_catalog_html_landmarks_and_pages_json() {
     assert!(concept.contains("id=\"okmate-main\""), "{concept}");
     assert!(concept.contains("id=\"okmate-toc\""), "{concept}");
     assert!(concept.contains("Details"));
+    assert!(concept.contains("okmate-concept-meta"), "{concept}");
+    assert!(concept.contains("generated"), "{concept}");
+    assert!(concept.contains("Test concept Hello"), "{concept}");
+    assert!(concept.contains("Owners"), "{concept}");
+
+    let stale = fs::read_to_string(output.join("stale").join("index.html")).unwrap();
+    assert!(stale.contains("okmate-badge-stale"), "{stale}");
+    assert!(stale.contains("Review Action Required"), "{stale}");
+    assert!(stale.contains("stale_after"), "{stale}");
 
     let review = fs::read_to_string(output.join("review").join("index.html")).unwrap();
     assert!(review.contains("id=\"okmate-queue\""));
