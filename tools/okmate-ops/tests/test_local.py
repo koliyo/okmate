@@ -6,13 +6,17 @@ from okmate_ops.local import (
     CLI_CRATE,
     DEFAULT_SU_FEED_URL,
     INSTALL_USAGE,
+    PACKAGE_APPCAST_USAGE,
+    PACKAGE_SIGN_USAGE,
     PACKAGE_USAGE,
     app_bundle_dir,
     build_command,
     install_cli,
     install_command,
+    package_appcast,
     package_command,
     package_desktop,
+    package_sign,
     release_binary,
 )
 
@@ -106,19 +110,29 @@ def test_package_rejects_unknown_target() -> None:
         raise AssertionError("expected SystemExit")
 
 
-def test_package_desktop_runs_h35_packager(monkeypatch, tmp_path) -> None:
+def _h35_macos(tmp_path, *names: str):
     root = tmp_path / "okmate"
     h35 = tmp_path / "h35-desktop"
-    script = h35 / "packaging" / "macos" / "package.sh"
-    script.parent.mkdir(parents=True)
-    script.write_text("#!/bin/sh\n", encoding="utf-8")
+    macos = h35 / "packaging" / "macos"
+    macos.mkdir(parents=True)
+    scripts = {}
+    for name in names:
+        script = macos / name
+        script.write_text("#!/bin/sh\n", encoding="utf-8")
+        scripts[name] = script
     root.mkdir()
+    return root, h35, scripts
+
+
+def test_package_desktop_runs_h35_packager(monkeypatch, tmp_path) -> None:
+    root, h35, scripts = _h35_macos(tmp_path, "package.sh")
     calls: list[list[str]] = []
     envs: list[dict[str, str]] = []
 
-    def fake_run(argv, cwd=None, env=None) -> None:
+    def fake_run(argv, cwd=None, env=None, capture=False) -> str:
         calls.append(list(argv))
         envs.append(env or {})
+        return ""
 
     monkeypatch.setenv("H35_DESKTOP", str(h35))
     monkeypatch.setattr("okmate_ops.local.repo_root", lambda: root)
@@ -126,7 +140,7 @@ def test_package_desktop_runs_h35_packager(monkeypatch, tmp_path) -> None:
     monkeypatch.setattr("okmate_ops.local.run", fake_run)
 
     assert package_desktop() == 0
-    assert calls == [[str(script)]]
+    assert calls == [[str(scripts["package.sh"])]]
     assert envs[0]["APP_NAME"] == APP_NAME
     assert envs[0]["BUNDLE_ID"] == BUNDLE_IDENTIFIER
     assert envs[0]["EXECUTABLE"] == CLI_BINARY
@@ -144,5 +158,66 @@ def test_package_desktop_requires_h35_packager(monkeypatch, tmp_path) -> None:
         package_desktop()
     except SystemExit as exc:
         assert "h35-desktop packager" in str(exc)
+    else:
+        raise AssertionError("expected SystemExit")
+
+
+def test_package_sign_runs_h35_signer(monkeypatch, tmp_path) -> None:
+    root, h35, scripts = _h35_macos(tmp_path, "sign.sh")
+    calls: list[list[str]] = []
+
+    def fake_run(argv, cwd=None, env=None, capture=False) -> str:
+        calls.append(list(argv))
+        return ""
+
+    monkeypatch.setenv("H35_DESKTOP", str(h35))
+    monkeypatch.setattr("okmate_ops.local.repo_root", lambda: root)
+    monkeypatch.setattr("okmate_ops.local.require_darwin", lambda kind: None)
+    monkeypatch.setattr("okmate_ops.local.run", fake_run)
+
+    assert package_sign([]) == 0
+    assert calls == [[str(scripts["sign.sh"]), str(root / "dist" / f"{APP_NAME}.app")]]
+
+
+def test_package_sign_usage() -> None:
+    try:
+        package_sign(["a.app", "b.app"])
+    except SystemExit as exc:
+        assert str(exc) == PACKAGE_SIGN_USAGE
+    else:
+        raise AssertionError("expected SystemExit")
+
+
+def test_package_appcast_fetches_sparkle_then_generates(monkeypatch, tmp_path) -> None:
+    root, h35, scripts = _h35_macos(tmp_path, "fetch-sparkle.sh", "generate-appcast.sh")
+    framework = tmp_path / "Sparkle.framework"
+    calls: list[list[str]] = []
+    envs: list[dict[str, str]] = []
+
+    def fake_run(argv, cwd=None, env=None, capture=False) -> str:
+        calls.append(list(argv))
+        envs.append(env or {})
+        if capture:
+            return f"{framework}\n"
+        return ""
+
+    monkeypatch.setenv("H35_DESKTOP", str(h35))
+    monkeypatch.setattr("okmate_ops.local.repo_root", lambda: root)
+    monkeypatch.setattr("okmate_ops.local.require_darwin", lambda kind: None)
+    monkeypatch.setattr("okmate_ops.local.run", fake_run)
+
+    inbox = str(tmp_path / "inbox")
+    prefix = "https://example.test/download/"
+    assert package_appcast([inbox, prefix]) == 0
+    assert calls[0] == [str(scripts["fetch-sparkle.sh"])]
+    assert calls[1] == [str(scripts["generate-appcast.sh"]), inbox, prefix]
+    assert envs[1]["GENERATE_APPCAST"] == str(framework.parent / "bin" / "generate_appcast")
+
+
+def test_package_appcast_usage() -> None:
+    try:
+        package_appcast(["only-inbox"])
+    except SystemExit as exc:
+        assert str(exc) == PACKAGE_APPCAST_USAGE
     else:
         raise AssertionError("expected SystemExit")

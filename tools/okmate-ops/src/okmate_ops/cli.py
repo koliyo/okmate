@@ -11,7 +11,7 @@ commands:
   build         cargo release build of okmate
   ci            run GitHub Actions validation jobs on this machine
   install       cli
-  package       desktop
+  package       desktop, sign, appcast
   pr-checkout   list open PRs, or checkout one here as pr/<branch>
   promote       tag
 """

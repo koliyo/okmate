@@ -82,8 +82,8 @@ cargo test -p okmate --no-default-features
 
 Release-build the `okmate` binary with `uv run --no-dev okmate-ops build`.
 To install it into `~/.local/bin`, run `uv run --no-dev okmate-ops install cli`.
-On macOS, assemble `Okmate.app` with `packaging/macos/package.sh` (or
-`uv run --no-dev okmate-ops package desktop` for a local unsigned tree).
+On macOS, assemble `Okmate.app` with
+`uv run --no-dev okmate-ops package desktop`.
 
 ## Install Okmate.app (macOS)
 

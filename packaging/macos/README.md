@@ -1,34 +1,34 @@
 # macOS packaging
 
-`package.sh` sets Okmate identity and calls sibling
-[`h35-desktop`](https://github.com/koliyo/h35-desktop) `packaging/macos/`
-scripts. Those assemble `dist/Okmate.app` with Sparkle 2. `sign.sh` is a
-wrapper around the same host script: Developer ID, notarytool, staple.
-Missing signing secrets fail closed; the release workflow will not attach
-an unsigned production archive.
+`uv run --no-dev okmate-ops package desktop` sets Okmate identity and calls
+sibling [`h35-desktop`](https://github.com/koliyo/h35-desktop)
+`packaging/macos/` scripts. Those assemble `dist/Okmate.app` with Sparkle 2.
+`okmate-ops package sign` wraps the host signer: Developer ID, notarytool,
+staple. Missing signing secrets fail closed; the release workflow will not
+attach an unsigned production archive.
 
 The tag-triggered `.github/workflows/release.yml` workflow signs, zips that
-bundle, and runs `generate-appcast.sh`. Operators still create immutable `v*`
-tags only with `okmate-ops promote tag vX.Y.Z`. The movable `dev` tag is not
-an update channel.
+bundle, and runs `okmate-ops package appcast`. Operators still create
+immutable `v*` tags only with `okmate-ops promote tag vX.Y.Z`. The movable
+`dev` tag is not an update channel.
 
 ## Secrets
 
 | Name | Used by | Purpose |
 | --- | --- | --- |
-| `SPARKLE_EDDSA_PRIVATE_KEY` | `release.yml` → `generate-appcast.sh` | Sparkle EdDSA private key, passed on stdin via `--ed-key-file -`. Never pass `-s` and never echo this value. |
-| `APPLE_DEVELOPER_ID_APPLICATION` | `sign.sh` | Developer ID Application identity passed to `codesign --sign`. |
-| `APPLE_API_KEY_ID` | `sign.sh` | App Store Connect API key id for `notarytool`. |
-| `APPLE_API_ISSUER` | `sign.sh` | App Store Connect API issuer UUID. |
-| `APPLE_API_KEY` | `sign.sh` | App Store Connect API `.p8` contents. Written to a temp file only. |
+| `SPARKLE_EDDSA_PRIVATE_KEY` | `release.yml` → `okmate-ops package appcast` | Sparkle EdDSA private key, passed on stdin via `--ed-key-file -`. Never pass `-s` and never echo this value. |
+| `APPLE_DEVELOPER_ID_APPLICATION` | `okmate-ops package sign` | Developer ID Application identity passed to `codesign --sign`. |
+| `APPLE_API_KEY_ID` | `okmate-ops package sign` | App Store Connect API key id for `notarytool`. |
+| `APPLE_API_ISSUER` | `okmate-ops package sign` | App Store Connect API issuer UUID. |
+| `APPLE_API_KEY` | `okmate-ops package sign` | App Store Connect API `.p8` contents. Written to a temp file only. |
 
 `SUPublicEDKey` in `Info.plist` is the production Sparkle public key and must
 match `SPARKLE_EDDSA_PRIVATE_KEY`. Generate a pair with Sparkle
 `bin/generate_keys`.
 
-`SIGN_DRY_RUN=1 packaging/macos/sign.sh dist/Okmate.app` prints the intended
-steps without codesign or notarytool. It does not report a notarization
-success.
+`SIGN_DRY_RUN=1 uv run --no-dev okmate-ops package sign dist/Okmate.app`
+prints the intended steps without codesign or notarytool. It does not report
+a notarization success.
 
 ## Verify a stapled build
 

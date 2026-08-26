@@ -21,23 +21,41 @@ DEFAULT_SU_PUBLIC_ED_KEY = "0cxKUYv/b7Z7qSI2l2lEzV0IcV/rb59l6lFnRD5vs2U="
 
 BUILD_USAGE = "usage: okmate-ops build"
 INSTALL_USAGE = "usage: okmate-ops install cli"
-PACKAGE_USAGE = "usage: okmate-ops package desktop"
+PACKAGE_USAGE = "usage: okmate-ops package <desktop|sign|appcast>"
+PACKAGE_SIGN_USAGE = "usage: okmate-ops package sign [App.app]"
+PACKAGE_APPCAST_USAGE = (
+    "usage: okmate-ops package appcast <inbox-dir> <download-url-prefix>"
+)
 
 
-def run(argv: list[str], *, cwd: Path | None = None, env: dict[str, str] | None = None) -> None:
+def run(
+    argv: list[str],
+    *,
+    cwd: Path | None = None,
+    env: dict[str, str] | None = None,
+    capture: bool = False,
+) -> str:
     started = time.monotonic()
     print(
         f"[okmate-ops] phase=command status=start command={shlex.join(argv)}",
         flush=True,
     )
     try:
-        subprocess.run(argv, cwd=cwd or repo_root(), env=env, check=True)
+        result = subprocess.run(
+            argv,
+            cwd=cwd or repo_root(),
+            env=env,
+            check=True,
+            text=True,
+            capture_output=capture,
+        )
     except subprocess.CalledProcessError:
         elapsed_ms = int((time.monotonic() - started) * 1000)
         print(f"[okmate-ops] phase=command status=failed elapsed_ms={elapsed_ms}", flush=True)
         raise
     elapsed_ms = int((time.monotonic() - started) * 1000)
     print(f"[okmate-ops] phase=command status=done elapsed_ms={elapsed_ms}", flush=True)
+    return result.stdout if capture else ""
 
 
 def release_binary(root: Path, name: str) -> Path:
@@ -61,6 +79,13 @@ def h35_desktop_root(root: Path) -> Path:
     return (root / ".." / "h35-desktop").resolve()
 
 
+def h35_macos_script(root: Path, name: str) -> Path:
+    script = h35_desktop_root(root) / "packaging" / "macos" / name
+    if not script.is_file():
+        raise SystemExit(f"  Error: h35-desktop packager not found at '{script}'")
+    return script
+
+
 def package_env(root: Path) -> dict[str, str]:
     env = os.environ.copy()
     env["APP_NAME"] = APP_NAME
@@ -76,11 +101,46 @@ def package_env(root: Path) -> dict[str, str]:
 def package_desktop() -> int:
     require_darwin("The macOS app bundle")
     root = repo_root()
-    script = h35_desktop_root(root) / "packaging" / "macos" / "package.sh"
-    if not script.is_file():
-        raise SystemExit(f"  Error: h35-desktop packager not found at '{script}'")
+    script = h35_macos_script(root, "package.sh")
     run([str(script)], cwd=root, env=package_env(root))
     print(app_bundle_dir(root))
+    return 0
+
+
+def package_sign(argv: list[str]) -> int:
+    if argv and argv[0] in ("-h", "--help"):
+        raise SystemExit(PACKAGE_SIGN_USAGE)
+    if len(argv) > 1:
+        raise SystemExit(PACKAGE_SIGN_USAGE)
+    require_darwin("Signing")
+    root = repo_root()
+    app = Path(argv[0]) if argv else app_bundle_dir(root)
+    script = h35_macos_script(root, "sign.sh")
+    run([str(script), str(app)], cwd=root, env=package_env(root))
+    return 0
+
+
+def package_appcast(argv: list[str]) -> int:
+    if len(argv) != 2 or argv[0] in ("-h", "--help"):
+        raise SystemExit(PACKAGE_APPCAST_USAGE)
+    require_darwin("Appcast generation")
+    root = repo_root()
+    inbox, prefix = argv
+    env = package_env(root)
+    framework = run(
+        [str(h35_macos_script(root, "fetch-sparkle.sh"))],
+        cwd=root,
+        env=env,
+        capture=True,
+    ).strip()
+    if not framework:
+        raise SystemExit("  Error: fetch-sparkle.sh printed no framework path")
+    env["GENERATE_APPCAST"] = str(Path(framework).parent / "bin" / "generate_appcast")
+    run(
+        [str(h35_macos_script(root, "generate-appcast.sh")), inbox, prefix],
+        cwd=root,
+        env=env,
+    )
     return 0
 
 
@@ -88,10 +148,14 @@ def package_command(argv: list[str]) -> int:
     if not argv or argv[0] in ("-h", "--help"):
         raise SystemExit(PACKAGE_USAGE)
     sub, rest = argv[0], argv[1:]
-    if rest:
-        raise SystemExit(PACKAGE_USAGE)
     if sub == "desktop":
+        if rest:
+            raise SystemExit(PACKAGE_USAGE)
         return package_desktop()
+    if sub == "sign":
+        return package_sign(rest)
+    if sub == "appcast":
+        return package_appcast(rest)
     raise SystemExit(PACKAGE_USAGE)
 
 
