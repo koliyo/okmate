@@ -64,7 +64,9 @@ and never includes tokens or resolved secrets. If the config is missing or
 `roots` is empty, `./knowledge` is printed when that directory exists.
 
 `view` serves the live HTML tree on localhost (pass `--public` to bind every
-interface). Settings POST is `/__okmate/settings` and loopback-only. In the
+interface). With a window, `--port` defaults to `auto` (a free local port).
+`--no-window` defaults to `8000`. An explicit port fails if it is already in
+use. Settings POST is `/__okmate/settings` and loopback-only. In the
 desktop window, **Choose folder…** uses `rfd` via wry IPC (`pick-folder`), not
 an HTTP pick-folder route. Without a window, paste the folder path.
 

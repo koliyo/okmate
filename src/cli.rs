@@ -71,9 +71,16 @@ enum Commands {
         /// Bind every interface (`0.0.0.0`). Default is localhost only.
         #[arg(long)]
         public: bool,
-        /// TCP port to listen on. Defaults to 8000.
-        #[arg(long, default_value_t = 8000)]
-        port: u16,
+        /// TCP port. Defaults to a free port with the preview window, or 8000
+        /// with `--no-window`. Pass `auto` to pick a free port.
+        #[arg(
+            long,
+            default_value = "auto",
+            default_value_if("no_window", "true", "8000"),
+            value_name = "PORT",
+            value_parser = crate::port::parse_port_arg
+        )]
+        port: crate::port::PortArg,
     },
     /// Print resolved local bundle directories for configured knowledge roots.
     Roots {
@@ -260,7 +267,7 @@ pub fn run() -> Result<()> {
             output,
             profile: profile.into(),
             public,
-            port,
+            port: port.resolve()?,
             no_window,
         }),
         Commands::Roots {
@@ -278,5 +285,42 @@ pub fn run() -> Result<()> {
             crate::roots::print_roots(format.into(), mode)
         }
         Commands::Sync { id } => crate::roots::sync(id),
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::port::PortArg;
+
+    fn view_port(cli: &Cli) -> PortArg {
+        match &cli.command {
+            Commands::View { port, .. } => *port,
+            _ => panic!("expected view"),
+        }
+    }
+
+    #[test]
+    fn clap_defaults_to_auto_with_window() {
+        let cli = Cli::try_parse_from(["okmate", "view"]).unwrap();
+        assert_eq!(view_port(&cli), PortArg::Auto);
+    }
+
+    #[test]
+    fn clap_defaults_to_8000_without_window() {
+        let cli = Cli::try_parse_from(["okmate", "view", "--no-window"]).unwrap();
+        assert_eq!(view_port(&cli), PortArg::Exact(8000));
+    }
+
+    #[test]
+    fn clap_accepts_port_auto() {
+        let cli = Cli::try_parse_from(["okmate", "view", "--port", "auto"]).unwrap();
+        assert_eq!(view_port(&cli), PortArg::Auto);
+    }
+
+    #[test]
+    fn clap_accepts_explicit_port() {
+        let cli = Cli::try_parse_from(["okmate", "view", "--port", "9001"]).unwrap();
+        assert_eq!(view_port(&cli), PortArg::Exact(9001));
     }
 }
