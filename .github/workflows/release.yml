@@ -23,6 +23,13 @@ jobs:
       - uses: Swatinem/rust-cache@v2
       - name: Assemble Okmate.app
         run: packaging/macos/package.sh
+      - name: Sign and notarize
+        env:
+          APPLE_DEVELOPER_ID_APPLICATION: ${{ secrets.APPLE_DEVELOPER_ID_APPLICATION }}
+          APPLE_API_KEY_ID: ${{ secrets.APPLE_API_KEY_ID }}
+          APPLE_API_ISSUER: ${{ secrets.APPLE_API_ISSUER }}
+          APPLE_API_KEY: ${{ secrets.APPLE_API_KEY }}
+        run: packaging/macos/sign.sh dist/Okmate.app
       - name: Zip archive and generate appcast
         env:
           SPARKLE_EDDSA_PRIVATE_KEY: ${{ secrets.SPARKLE_EDDSA_PRIVATE_KEY }}
