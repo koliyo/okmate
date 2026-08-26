@@ -1,0 +1,25 @@
+{% if !crumbs.is_empty() %}
+  <nav class="okmate-breadcrumbs" aria-label="Breadcrumb">
+    <ol>
+      {% for crumb in crumbs %}
+        <li>
+          {% if crumb.current %}
+            <span class="okmate-crumb-current" aria-current="page">{{ crumb.title }}</span>
+          {% else %}
+            <a href="{{ crumb.href }}" data-on:click__prevent="@get('{{ crumb.href }}')">{{ crumb.title }}</a>
+          {% endif %}
+        </li>
+      {% endfor %}
+    </ol>
+  </nav>
+{% endif %}
+{% if !toc.is_empty() %}
+  <details class="okmate-outline-menu">
+    <summary>On this page</summary>
+    <div class="okmate-toc-items">
+      {% for heading in toc %}
+        <a class="okmate-outline-link{% if heading.level == 3 %} level-3{% endif %}" href="#{{ heading.id }}">{{ heading.text }}</a>
+      {% endfor %}
+    </div>
+  </details>
+{% endif %}

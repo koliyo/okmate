@@ -46,6 +46,7 @@ fn build_writes_engine_catalog_html_landmarks_and_pages_json() {
     assert!(home.contains("id=\"okmate-nav\""), "{home}");
     assert!(home.contains("id=\"okmate-main\""), "{home}");
     assert!(home.contains("id=\"okmate-recents\""), "{home}");
+    assert!(home.contains("okmate-recents-list"), "{home}");
     assert!(home.contains("Open review queue"), "{home}");
     assert!(home.contains("Knowledge Collections"), "{home}");
     assert!(home.contains("Total"), "{home}");
@@ -56,6 +57,11 @@ fn build_writes_engine_catalog_html_landmarks_and_pages_json() {
     assert!(concept.contains("id=\"okmate-toc\""), "{concept}");
     assert!(concept.contains("Details"));
     assert!(concept.contains("okmate-concept-meta"), "{concept}");
+    assert!(
+        concept.contains("class=\"okmate-outline-menu\""),
+        "{concept}"
+    );
+    assert!(concept.contains("okmate-breadcrumbs"), "{concept}");
     assert!(concept.contains("generated"), "{concept}");
     assert!(concept.contains("Test concept Hello"), "{concept}");
     assert!(concept.contains("Owners"), "{concept}");
@@ -83,6 +89,7 @@ fn build_writes_engine_catalog_html_landmarks_and_pages_json() {
     assert!(css.contains("--okmate-nav-width"), "{css}");
     assert!(css.contains(".okmate-col-resizer"), "{css}");
     assert!(css.contains(".okmate-toc-link.is-current"), "{css}");
+    assert!(css.contains("grid-template-columns: subgrid"), "{css}");
     assert!(output.join("__okmate").join("resize.js").is_file());
     assert!(output.join("__okmate").join("toc.js").is_file());
     assert!(home.contains("/__okmate/resize.js"), "{home}");

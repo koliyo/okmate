@@ -7,7 +7,7 @@ use okf::{BuildSummary, Bundle, Profile};
 use serde::Serialize;
 
 use crate::views::{
-    Document, NavNode, action_rows, concept_meta, diagnostic_rows, governance_stats,
+    Crumb, Document, NavNode, action_rows, concept_meta, diagnostic_rows, governance_stats,
     recent_leaf_documents, review_rows, toc_from_headings,
 };
 
@@ -151,12 +151,63 @@ fn document(
         action_rows: Vec::new(),
         stats: Vec::new(),
         recents: Vec::new(),
+        crumbs: breadcrumbs(bundle, route, title),
         diagnostics: Vec::new(),
         meta: crate::views::ConceptMeta::default(),
         message: String::new(),
         config_path: String::new(),
         settings_roots: Vec::new(),
     }
+}
+
+fn breadcrumbs(bundle: &Bundle, route: &str, title: &str) -> Vec<Crumb> {
+    let route = normalize_route(route);
+    if matches!(route.as_str(), "/" | "/review/" | "/settings/") {
+        return Vec::new();
+    }
+    let mut crumbs = vec![Crumb {
+        href: "/".into(),
+        title: "Dashboard".into(),
+        current: false,
+    }];
+    let id = route.trim_matches('/');
+    let parts: Vec<&str> = id.split('/').filter(|part| !part.is_empty()).collect();
+    let mut acc = String::new();
+    for (index, segment) in parts.iter().enumerate() {
+        if !acc.is_empty() {
+            acc.push('/');
+        }
+        acc.push_str(segment);
+        let href = format!("/{acc}/");
+        let last = index + 1 == parts.len();
+        let crumb_title = if last {
+            title.to_string()
+        } else {
+            ancestor_title(bundle, &acc, segment)
+        };
+        crumbs.push(Crumb {
+            href,
+            title: crumb_title,
+            current: last,
+        });
+    }
+    crumbs
+}
+
+fn ancestor_title(bundle: &Bundle, path: &str, segment: &str) -> String {
+    if let Some(index) = bundle
+        .indexes
+        .iter()
+        .find(|index| index.path.strip_suffix("/index.md") == Some(path))
+    {
+        return collection_title(index);
+    }
+    if let Some(concept) = bundle.concepts.iter().find(|concept| concept.id == path) {
+        return okf::string_field(&concept.metadata, "title")
+            .unwrap_or(&concept.id)
+            .to_string();
+    }
+    segment.to_string()
 }
 
 pub(crate) fn settings_shell(bundle: &Bundle) -> crate::views::Document {

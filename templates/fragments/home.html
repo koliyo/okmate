@@ -1,3 +1,4 @@
+{% include "fragments/chrome.html" %}
 <div class="okmate-home-governance">
   <section class="okmate-recents" id="okmate-recents">
     <h2 id="recent-documents">Recent documents</h2>
@@ -22,7 +23,7 @@
     <a href="/review/" class="okmate-cta-btn" data-on:click__prevent="@get('/review/')">Open review queue</a>
   </div>
   {% include "fragments/stats.html" %}
-  <hr>
+  <hr class="okmate-rule">
   <h2 id="knowledge-collections">Knowledge Collections</h2>
 </div>
 {{ article_html|safe }}

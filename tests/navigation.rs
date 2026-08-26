@@ -120,6 +120,9 @@ async fn collection_nav_uses_section_overview_and_span_summary() {
         !html.contains("nav-category\" data-on:click"),
         "category summary must not be a @get link: {html}"
     );
+    assert!(html.contains("okmate-breadcrumbs"), "{html}");
+    assert!(html.contains("href=\"/plans/\""), "{html}");
+    assert!(html.contains(">Plans<"), "{html}");
 }
 
 #[test]

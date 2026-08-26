@@ -127,6 +127,7 @@ fn settings_document(
             action_rows: Vec::new(),
             stats: Vec::new(),
             recents: Vec::new(),
+            crumbs: Vec::new(),
             diagnostics: Vec::new(),
             meta: crate::views::ConceptMeta::default(),
             message: String::new(),

@@ -25,6 +25,13 @@ pub struct TocEntry {
     pub level: u8,
 }
 
+#[derive(Clone, Debug, Default)]
+pub struct Crumb {
+    pub href: String,
+    pub title: String,
+    pub current: bool,
+}
+
 #[derive(Clone, Debug)]
 pub struct SettingsRoot {
     pub id: String,
@@ -72,6 +79,7 @@ macro_rules! document_template {
             pub action_rows: Vec<ReviewRow>,
             pub stats: Vec<StatCard>,
             pub recents: Vec<RecentDoc>,
+            pub crumbs: Vec<Crumb>,
             pub diagnostics: Vec<DiagnosticRow>,
             pub meta: ConceptMeta,
             pub message: String,
@@ -94,6 +102,7 @@ macro_rules! document_template {
                     action_rows: document.action_rows,
                     stats: document.stats,
                     recents: document.recents,
+                    crumbs: document.crumbs,
                     diagnostics: document.diagnostics,
                     meta: document.meta,
                     message: document.message,
@@ -126,6 +135,7 @@ pub struct Document {
     pub action_rows: Vec<ReviewRow>,
     pub stats: Vec<StatCard>,
     pub recents: Vec<RecentDoc>,
+    pub crumbs: Vec<Crumb>,
     pub diagnostics: Vec<DiagnosticRow>,
     pub meta: ConceptMeta,
     pub message: String,
@@ -292,6 +302,7 @@ mod tests {
             action_rows: Vec::new(),
             stats: Vec::new(),
             recents: Vec::new(),
+            crumbs: Vec::new(),
             diagnostics: Vec::new(),
             meta: ConceptMeta::default(),
             message: String::new(),
