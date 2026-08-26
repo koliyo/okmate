@@ -35,6 +35,9 @@ pub fn run(options: crate::preview::ViewOptions) -> Result<()> {
         goto: false,
         find: true,
         extra_initialization_script: Some(PICK_FOLDER_ALIAS.into()),
+        check_updates: std::env::current_exe()
+            .ok()
+            .is_some_and(|exe| crate::bundle::running_inside_app_bundle(&exe)),
         ..h35_desktop::HostOptions::default()
     })
     .map_err(|error| anyhow::anyhow!("{error}"))
