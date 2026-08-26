@@ -6,7 +6,6 @@ import shlex
 import shutil
 import subprocess
 import time
-import tomllib
 from pathlib import Path
 
 from okmate_ops.paths import repo_root
@@ -14,7 +13,11 @@ from okmate_ops.paths import repo_root
 CLI_CRATE = "okmate"
 CLI_BINARY = "okmate"
 APP_NAME = "Okmate"
-BUNDLE_IDENTIFIER = "dev.okmate.app"
+BUNDLE_IDENTIFIER = "com.koliyo.okmate"
+DEFAULT_SU_FEED_URL = (
+    "https://github.com/koliyo/okmate/releases/latest/download/appcast.xml"
+)
+DEFAULT_SU_PUBLIC_ED_KEY = "0cxKUYv/b7Z7qSI2l2lEzV0IcV/rb59l6lFnRD5vs2U="
 
 BUILD_USAGE = "usage: okmate-ops build"
 INSTALL_USAGE = "usage: okmate-ops install cli"
@@ -47,77 +50,37 @@ def require_darwin(kind: str) -> None:
         raise SystemExit(f"{kind} can only be built on macOS.")
 
 
-def crate_version(root: Path) -> str:
-    data = tomllib.loads((root / "Cargo.toml").read_text(encoding="utf-8"))
-    return str(data["package"]["version"])
-
-
 def app_bundle_dir(root: Path) -> Path:
-    target = Path(os.environ.get("CARGO_TARGET_DIR") or root / "target")
-    return target / "release" / "bundle" / "macos" / f"{APP_NAME}.app"
+    return root / "dist" / f"{APP_NAME}.app"
 
 
-def info_plist(version: str, executable: str) -> str:
-    return f"""<?xml version="1.0" encoding="UTF-8"?>
-<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
-<plist version="1.0">
-<dict>
-  <key>CFBundleDevelopmentRegion</key>
-  <string>en</string>
-  <key>CFBundleDisplayName</key>
-  <string>{APP_NAME}</string>
-  <key>CFBundleExecutable</key>
-  <string>{executable}</string>
-  <key>CFBundleIdentifier</key>
-  <string>{BUNDLE_IDENTIFIER}</string>
-  <key>CFBundleInfoDictionaryVersion</key>
-  <string>6.0</string>
-  <key>CFBundleName</key>
-  <string>{APP_NAME}</string>
-  <key>CFBundlePackageType</key>
-  <string>APPL</string>
-  <key>CFBundleShortVersionString</key>
-  <string>{version}</string>
-  <key>CFBundleVersion</key>
-  <string>{version}</string>
-  <key>LSMinimumSystemVersion</key>
-  <string>12.0</string>
-  <key>NSHighResolutionCapable</key>
-  <true/>
-  <key>NSSupportsAutomaticGraphicsSwitching</key>
-  <true/>
-</dict>
-</plist>
-"""
+def h35_desktop_root(root: Path) -> Path:
+    env = os.environ.get("H35_DESKTOP")
+    if env:
+        return Path(env)
+    return (root / ".." / "h35-desktop").resolve()
+
+
+def package_env(root: Path) -> dict[str, str]:
+    env = os.environ.copy()
+    env["APP_NAME"] = APP_NAME
+    env["BUNDLE_ID"] = env.get("BUNDLE_ID") or BUNDLE_IDENTIFIER
+    env["EXECUTABLE"] = CLI_BINARY
+    env["CRATE"] = CLI_CRATE
+    env["PRODUCT_ROOT"] = str(root)
+    env.setdefault("SU_FEED_URL", DEFAULT_SU_FEED_URL)
+    env.setdefault("SU_PUBLIC_ED_KEY", DEFAULT_SU_PUBLIC_ED_KEY)
+    return env
 
 
 def package_desktop() -> int:
     require_darwin("The macOS app bundle")
     root = repo_root()
-    run(["cargo", "build", "--release", "-p", CLI_CRATE], cwd=root)
-    src = release_binary(root, CLI_BINARY)
-    if not src.is_file():
-        raise SystemExit(f"  Error: expected binary not found at '{src}'")
-    bundle_dir = app_bundle_dir(root)
-    if bundle_dir.exists():
-        shutil.rmtree(bundle_dir)
-    macos = bundle_dir / "Contents" / "MacOS"
-    resources = bundle_dir / "Contents" / "Resources"
-    macos.mkdir(parents=True)
-    resources.mkdir(parents=True)
-    dest = macos / CLI_BINARY
-    shutil.copy2(src, dest)
-    dest.chmod(0o755)
-    icns = root / "packaging" / "macos" / "AppIcon.icns"
-    if icns.is_file():
-        shutil.copy2(icns, resources / "AppIcon.icns")
-    version = crate_version(root)
-    (bundle_dir / "Contents" / "Info.plist").write_text(
-        info_plist(version, CLI_BINARY), encoding="utf-8"
-    )
-    (bundle_dir / "Contents" / "PkgInfo").write_bytes(b"APPL????")
-    run(["codesign", "--force", "--deep", "--sign", "-", str(bundle_dir)], cwd=root)
-    print(bundle_dir)
+    script = h35_desktop_root(root) / "packaging" / "macos" / "package.sh"
+    if not script.is_file():
+        raise SystemExit(f"  Error: h35-desktop packager not found at '{script}'")
+    run([str(script)], cwd=root, env=package_env(root))
+    print(app_bundle_dir(root))
     return 0
 
 

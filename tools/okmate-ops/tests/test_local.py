@@ -1,8 +1,10 @@
 from okmate_ops.local import (
     APP_NAME,
     BUILD_USAGE,
+    BUNDLE_IDENTIFIER,
     CLI_BINARY,
     CLI_CRATE,
+    DEFAULT_SU_FEED_URL,
     INSTALL_USAGE,
     PACKAGE_USAGE,
     app_bundle_dir,
@@ -104,36 +106,43 @@ def test_package_rejects_unknown_target() -> None:
         raise AssertionError("expected SystemExit")
 
 
-def test_package_desktop_assembles_app(monkeypatch, tmp_path) -> None:
-    monkeypatch.delenv("CARGO_TARGET_DIR", raising=False)
-    root = tmp_path / "repo"
+def test_package_desktop_runs_h35_packager(monkeypatch, tmp_path) -> None:
+    root = tmp_path / "okmate"
+    h35 = tmp_path / "h35-desktop"
+    script = h35 / "packaging" / "macos" / "package.sh"
+    script.parent.mkdir(parents=True)
+    script.write_text("#!/bin/sh\n", encoding="utf-8")
     root.mkdir()
-    (root / "Cargo.toml").write_text(
-        '[package]\nname = "okmate"\nversion = "0.1.0"\n',
-        encoding="utf-8",
-    )
-    binary = release_binary(root, "okmate")
     calls: list[list[str]] = []
+    envs: list[dict[str, str]] = []
 
     def fake_run(argv, cwd=None, env=None) -> None:
         calls.append(list(argv))
-        if argv[:3] == ["cargo", "build", "--release"]:
-            binary.parent.mkdir(parents=True)
-            binary.write_bytes(b"okmate")
+        envs.append(env or {})
 
+    monkeypatch.setenv("H35_DESKTOP", str(h35))
     monkeypatch.setattr("okmate_ops.local.repo_root", lambda: root)
     monkeypatch.setattr("okmate_ops.local.require_darwin", lambda kind: None)
     monkeypatch.setattr("okmate_ops.local.run", fake_run)
 
     assert package_desktop() == 0
-    bundle = app_bundle_dir(root)
-    assert bundle.name == f"{APP_NAME}.app"
-    exe = bundle / "Contents" / "MacOS" / "okmate"
-    assert exe.is_file()
-    assert exe.read_bytes() == b"okmate"
-    plist = (bundle / "Contents" / "Info.plist").read_text(encoding="utf-8")
-    assert "dev.okmate.app" in plist
-    assert "0.1.0" in plist
-    assert (bundle / "Contents" / "PkgInfo").read_bytes() == b"APPL????"
-    assert calls[0] == ["cargo", "build", "--release", "-p", "okmate"]
-    assert calls[1][:4] == ["codesign", "--force", "--deep", "--sign"]
+    assert calls == [[str(script)]]
+    assert envs[0]["APP_NAME"] == APP_NAME
+    assert envs[0]["BUNDLE_ID"] == BUNDLE_IDENTIFIER
+    assert envs[0]["EXECUTABLE"] == CLI_BINARY
+    assert envs[0]["CRATE"] == CLI_CRATE
+    assert envs[0]["PRODUCT_ROOT"] == str(root)
+    assert envs[0]["SU_FEED_URL"] == DEFAULT_SU_FEED_URL
+    assert app_bundle_dir(root) == root / "dist" / f"{APP_NAME}.app"
+
+
+def test_package_desktop_requires_h35_packager(monkeypatch, tmp_path) -> None:
+    monkeypatch.setenv("H35_DESKTOP", str(tmp_path / "missing"))
+    monkeypatch.setattr("okmate_ops.local.repo_root", lambda: tmp_path)
+    monkeypatch.setattr("okmate_ops.local.require_darwin", lambda kind: None)
+    try:
+        package_desktop()
+    except SystemExit as exc:
+        assert "h35-desktop packager" in str(exc)
+    else:
+        raise AssertionError("expected SystemExit")
