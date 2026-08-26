@@ -18,7 +18,8 @@ html, body {
   background: var(--rd-bg);
   color: var(--rd-fg);
   margin: 0;
-  min-height: 100vh;
+  height: 100%;
+  overflow: hidden;
   line-height: 1.65;
 }
 
@@ -27,18 +28,52 @@ a:hover { text-decoration: underline; }
 code, pre { font-family: var(--rd-font-mono); }
 
 .okmate-shell {
+  position: relative;
   display: grid;
-  grid-template-columns: 16.5rem minmax(0, 1fr) 13.5rem;
-  min-height: 100vh;
+  grid-template-columns: var(--okmate-nav-width, 16.5rem) minmax(0, 1fr) var(--okmate-outline-width, 13.5rem);
+  align-items: stretch;
+  height: calc(100dvh - var(--okmate-chrome-top, 0px) - var(--okmate-chrome-bottom, 0px));
+  overflow: hidden;
+}
+.okmate-shell:not(:has(#okmate-toc .okmate-toc-link)) {
+  grid-template-columns: var(--okmate-nav-width, 16.5rem) minmax(0, 1fr);
+}
+
+.okmate-col-resizer {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 11px;
+  z-index: 5;
+  cursor: col-resize;
+  touch-action: none;
+  background: transparent;
+}
+.okmate-col-resizer::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 5px;
+  width: 1px;
+  background: transparent;
+}
+.okmate-col-resizer:hover::after,
+.okmate-col-resizer:focus-visible::after,
+.okmate-col-resizer.is-active::after {
+  background: var(--rd-primary);
+}
+body.is-col-resizing {
+  cursor: col-resize;
+  user-select: none;
 }
 
 .okmate-chrome {
-  position: sticky;
-  top: 0;
   box-sizing: border-box;
-  max-height: 100vh;
+  min-height: 0;
   padding: 2.15rem 1.2rem 2rem 1.5rem;
-  overflow: auto;
+  overflow-x: hidden;
+  overflow-y: auto;
   user-select: none;
 }
 
@@ -84,9 +119,11 @@ code, pre { font-family: var(--rd-font-mono); }
 #okmate-main {
   box-sizing: border-box;
   min-width: 0;
+  min-height: 0;
   width: min(42rem, calc(100% - 2rem));
   margin: 0 auto;
   padding: 2.5rem 0 4rem;
+  overflow-y: auto;
 }
 
 #okmate-main h1 { font-size: 2rem; line-height: 1.2; margin: 0 0 1rem; }
@@ -97,10 +134,10 @@ code, pre { font-family: var(--rd-font-mono); }
 
 .okmate-toc {
   box-sizing: border-box;
-  position: sticky;
-  top: 0;
-  max-height: 100vh;
+  min-width: 0;
+  min-height: 0;
   padding: 2.15rem 1.2rem 2rem 0;
+  overflow-x: hidden;
   overflow-y: auto;
 }
 .okmate-toc-label {
@@ -131,7 +168,7 @@ code, pre { font-family: var(--rd-font-mono); }
   text-decoration: none;
 }
 .okmate-toc-link.level-3 { padding-left: 1.35rem; }
-.okmate-toc:not(:has(.okmate-toc-link)) { visibility: hidden; }
+.okmate-toc:not(:has(.okmate-toc-link)) { display: none; }
 
 .okmate-goto {
   width: min(32rem, calc(100vw - 2rem));
@@ -384,9 +421,19 @@ code, pre { font-family: var(--rd-font-mono); }
 .okmate-provenance { margin: 0; padding-left: 1.1rem; }
 .okmate-meta-label { color: var(--rd-muted); font-size: 0.8rem; }
 
-@media (max-width: 960px) {
-  .okmate-shell { display: block; }
-  .okmate-toc { display: none; }
-  .okmate-chrome { position: static; max-height: none; }
+@media (max-width: 48rem) {
+  html, body { height: auto; overflow: auto; }
+  .okmate-shell {
+    display: block;
+    height: auto;
+    overflow: visible;
+  }
+  .okmate-toc,
+  .okmate-col-resizer { display: none; }
+  .okmate-chrome { max-height: none; }
+  #okmate-main {
+    width: min(42rem, calc(100% - 2rem));
+    overflow: visible;
+  }
   .okmate-search-input { margin-left: 0; min-width: 0; width: 100%; }
 }

@@ -313,6 +313,7 @@ mod tests {
         assert!(html.contains("/__okmate/app.css"));
         assert!(html.contains("data-on:click__prevent"), "{html}");
         assert!(html.contains("/__okmate/goto.js"), "{html}");
+        assert!(html.contains("/__okmate/resize.js"), "{html}");
     }
 
     #[test]
