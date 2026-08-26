@@ -121,3 +121,38 @@ async fn collection_nav_uses_section_overview_and_span_summary() {
         "category summary must not be a @get link: {html}"
     );
 }
+
+#[test]
+fn full_documents_differ_in_nav_current_markers() {
+    let root = temp_dir("nav-current-src");
+    write_index(&root);
+    fs::create_dir_all(root.join("plans")).unwrap();
+    fs::write(root.join("plans").join("index.md"), "# Plans\n").unwrap();
+    fs::write(
+        root.join("plans").join("nested.md"),
+        valid_strict_concept("Nested", "", "Body.\n"),
+    )
+    .unwrap();
+    let output = temp_dir("nav-current-out");
+    okmate::site::build(&root, &output, Profile::Strict).unwrap();
+    let home = fs::read_to_string(output.join("index.html")).unwrap();
+    let nested =
+        fs::read_to_string(output.join("plans").join("nested").join("index.html")).unwrap();
+    assert!(
+        home.contains("class=\"nav-link is-current\" href=\"/\""),
+        "{home}"
+    );
+    assert!(
+        !home.contains("data-okmate-nav-current"),
+        "dashboard is not inside a collection: {home}"
+    );
+    assert!(
+        nested.contains("class=\"nav-link is-current\" href=\"/plans/nested/\""),
+        "{nested}"
+    );
+    assert!(nested.contains("data-okmate-nav-current"), "{nested}");
+    assert!(
+        !nested.contains("class=\"nav-link is-current\" href=\"/\""),
+        "{nested}"
+    );
+}

@@ -87,6 +87,7 @@ fn build_writes_engine_catalog_html_landmarks_and_pages_json() {
     assert!(output.join("__okmate").join("toc.js").is_file());
     assert!(home.contains("/__okmate/resize.js"), "{home}");
     assert!(home.contains("/__okmate/toc.js"), "{home}");
+    assert!(home.contains("/__okmate/nav.js"), "{home}");
     let pages: serde_json::Value =
         serde_json::from_str(&fs::read_to_string(output.join("pages.json")).unwrap()).unwrap();
     let routes: Vec<&str> = pages
