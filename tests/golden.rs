@@ -1,7 +1,7 @@
 use std::fs;
 use std::path::Path;
 
-use okmate::views::{Document, NavNode, ReviewRow, TocEntry};
+use okmate::views::{ConceptMeta, Document, NavNode, ReviewRow, TocEntry};
 
 fn golden(name: &str) -> String {
     fs::read_to_string(
@@ -51,7 +51,12 @@ fn sample() -> Document {
             id: "hello".into(),
             status: "draft".into(),
             action: "Clean".into(),
+            ..ReviewRow::default()
         }],
+        stats: Vec::new(),
+        recents: Vec::new(),
+        diagnostics: Vec::new(),
+        meta: ConceptMeta::default(),
         message: String::new(),
         config_path: "~/.okmate/config.toml".into(),
         settings_roots: Vec::new(),

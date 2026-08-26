@@ -238,8 +238,155 @@ code, pre { font-family: var(--rd-font-mono); }
   cursor: pointer;
 }
 
+.okmate-home-governance { margin-bottom: 2rem; }
+.okmate-recents-list { list-style: none; margin: 0 0 1rem; padding: 0; }
+.okmate-recent-link {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.45rem 0.65rem;
+  padding: 0.35rem 0;
+}
+.okmate-recent-title { font-weight: 650; }
+.okmate-recents-empty { color: var(--rd-muted); }
+.okmate-cta-row { display: flex; gap: 1.25rem; margin: 1.5rem 0 2rem; }
+.okmate-cta-btn {
+  display: inline-flex;
+  padding: 0.55rem 1.15rem;
+  background: var(--rd-primary);
+  color: #fff !important;
+  border-radius: 0.45rem;
+  font-weight: 700;
+  font-size: 0.86rem;
+  text-decoration: none !important;
+}
+.okmate-stat-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(7.5rem, 1fr));
+  gap: 0.85rem;
+  margin: 1.6rem 0 2.2rem;
+  padding: 0;
+  list-style: none;
+}
+.okmate-stat-row {
+  display: grid;
+  gap: 0.25rem;
+  padding: 1.1rem 0.85rem;
+  text-align: center;
+  border: 1px solid var(--rd-border);
+  border-radius: 0.68rem;
+  background: var(--rd-bg-subtle);
+}
+.okmate-stat-value {
+  font-size: 1.95rem;
+  font-weight: 800;
+  letter-spacing: -0.03em;
+  line-height: 1.1;
+}
+.okmate-stat-label {
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: var(--rd-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+.okmate-stat-row.is-action .okmate-stat-value { color: var(--rd-orange); }
+.okmate-filter-bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem;
+  margin: 1.8rem 0 1rem;
+}
+.okmate-filter-btn {
+  padding: 0.42rem 0.85rem;
+  border: 1px solid var(--rd-border);
+  border-radius: 0.5rem;
+  background: var(--rd-bg-subtle);
+  color: var(--rd-muted);
+  font: inherit;
+  font-size: 0.83rem;
+  font-weight: 650;
+  cursor: pointer;
+}
+.okmate-filter-btn.is-active {
+  background: color-mix(in srgb, var(--rd-primary) 16%, transparent);
+  color: var(--rd-primary);
+  border-color: var(--rd-primary);
+}
+.okmate-search-input {
+  margin-left: auto;
+  padding: 0.45rem 0.85rem;
+  border: 1px solid var(--rd-border);
+  border-radius: 0.5rem;
+  background: var(--rd-bg);
+  color: var(--rd-fg);
+  font: inherit;
+  font-size: 0.83rem;
+  min-width: 16rem;
+}
+.okmate-table-container {
+  overflow-x: auto;
+  border: 1px solid var(--rd-border);
+  border-radius: 0.68rem;
+  margin: 1rem 0 2.5rem;
+}
+.okmate-concept-id-sub, .okmate-verifier-sub, .okmate-action-detail-text {
+  color: var(--rd-muted);
+  font-size: 0.78rem;
+}
+.okmate-action-pill {
+  display: inline-flex;
+  padding: 0.2rem 0.55rem;
+  border-radius: 0.35rem;
+  font-size: 0.75rem;
+  font-weight: 750;
+}
+.okmate-action-pill.pill-action {
+  color: var(--rd-orange);
+  border: 1px solid color-mix(in srgb, var(--rd-orange) 45%, transparent);
+}
+.okmate-action-pill.pill-clean {
+  color: var(--rd-green);
+  border: 1px solid color-mix(in srgb, var(--rd-green) 45%, transparent);
+}
+.okmate-action-pill.pill-error {
+  color: var(--rd-red);
+  border: 1px solid color-mix(in srgb, var(--rd-red) 45%, transparent);
+}
+.okmate-diagnostics-list { display: grid; gap: 0.55rem; margin: 1rem 0; }
+.okmate-diagnostic-item {
+  padding: 0.75rem 0.95rem;
+  border: 1px solid var(--rd-border);
+  border-radius: 0.5rem;
+  background: var(--rd-bg-subtle);
+  font-size: 0.83rem;
+}
+.okmate-concept-meta {
+  margin: 0 0 2.2rem;
+  padding: 1.25rem 1.4rem;
+  border: 1px solid var(--rd-border);
+  border-radius: 0.68rem;
+  background: var(--rd-bg-subtle);
+}
+.okmate-badge-group { display: flex; flex-wrap: wrap; gap: 0.4rem 0.5rem; margin-bottom: 0.85rem; }
+.okmate-status-stable, .okmate-trust-human { color: var(--rd-green); }
+.okmate-status-draft, .okmate-trust-generated, .okmate-badge-stale { color: var(--rd-orange); }
+.okmate-alert-banner {
+  display: flex;
+  gap: 0.65rem;
+  margin: 0 0 1rem;
+  padding: 0.75rem 0.9rem;
+  border-left: 0.25rem solid var(--rd-orange);
+  background: var(--rd-bg);
+}
+.okmate-lead { color: var(--rd-muted); }
+.okmate-provenance { margin: 0; padding-left: 1.1rem; }
+.okmate-meta-label { color: var(--rd-muted); font-size: 0.8rem; }
+
 @media (max-width: 960px) {
   .okmate-shell { display: block; }
   .okmate-toc { display: none; }
   .okmate-chrome { position: static; max-height: none; }
+  .okmate-search-input { margin-left: 0; min-width: 0; width: 100%; }
 }
