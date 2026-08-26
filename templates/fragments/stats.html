@@ -1,0 +1,8 @@
+<ul class="okmate-stat-list">
+  {% for card in stats %}
+    <li class="okmate-stat-row{% if card.tone == "action" %} is-action{% endif %}">
+      <span class="okmate-stat-label">{{ card.label }}</span>
+      <span class="okmate-stat-value">{{ card.value }}</span>
+    </li>
+  {% endfor %}
+</ul>

@@ -6,7 +6,10 @@ use anyhow::{Context, Result};
 use okf::{BuildSummary, Bundle, Profile};
 use serde::Serialize;
 
-use crate::views::{Document, NavNode, ReviewRow, review_rows, toc_from_headings};
+use crate::views::{
+    Document, NavNode, ReviewRow, governance_stats, recent_leaf_documents, review_rows,
+    toc_from_headings,
+};
 
 const APP_CSS: &str = include_str!("../assets/app.css");
 const DATASTAR_JS: &str = include_str!("../assets/datastar.js");
@@ -62,12 +65,14 @@ pub fn page_for_route(bundle: &Bundle, route: &str) -> Option<Document> {
                 Some(
                     document(bundle, "/", "Knowledge", toc_from_headings(&index.headings))
                         .with_kind("home")
+                        .with_home(bundle)
                         .with_article(&index.article_html),
                 )
             } else {
                 Some(
                     document(bundle, "/", "Knowledge", Vec::new())
                         .with_kind("home")
+                        .with_home(bundle)
                         .with_article("<h1>Knowledge</h1>"),
                 )
             }
@@ -187,6 +192,12 @@ impl Document {
 
     fn with_review(mut self, rows: Vec<ReviewRow>) -> Self {
         self.review_rows = rows;
+        self
+    }
+
+    fn with_home(mut self, bundle: &Bundle) -> Self {
+        self.recents = recent_leaf_documents(bundle, 10);
+        self.stats = governance_stats(bundle);
         self
     }
 }

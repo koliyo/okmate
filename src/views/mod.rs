@@ -435,4 +435,50 @@ mod tests {
         assert!(recents.iter().all(|doc| doc.href != "/plans/"));
         assert!(!recents.iter().any(|doc| doc.href == "/plans/doc-01/"));
     }
+
+    #[test]
+    fn dashboard_lists_ten_recent_leaf_documents() {
+        let mut document = sample_document(Vec::new());
+        document.page_kind = "home".into();
+        document.recents = recent_leaf_documents(
+            &test_bundle(
+                (0..12)
+                    .map(|index| {
+                        test_concept(
+                            &format!("plans/doc-{index:02}"),
+                            &format!("plans/doc-{index:02}.md"),
+                            &format!("Doc {index:02}"),
+                            "draft",
+                            &format!("2026-08-{:02}T12:00:00Z", index + 1),
+                        )
+                    })
+                    .collect(),
+            ),
+            10,
+        );
+        document.stats = vec![StatCard {
+            value: "12".into(),
+            label: "Total".into(),
+            tone: String::new(),
+        }];
+        let html = document.render_home().unwrap();
+        assert!(html.contains("id=\"okmate-recents\""));
+        assert!(html.contains("href=\"/plans/doc-11/\""));
+        assert!(html.contains("Doc 11"));
+        assert!(html.contains("href=\"/plans/doc-02/\""));
+        assert!(!html.contains("href=\"/plans/doc-01/\""));
+        assert!(!html.contains("href=\"/plans/\">"));
+        assert_eq!(html.matches("class=\"okmate-recent-link\"").count(), 10);
+        let first = html
+            .find("class=\"okmate-recent-link\"")
+            .expect("recent link");
+        let title = html[first..].find("Doc 11").expect("title first");
+        let badge = html[first..]
+            .find("okmate-badge")
+            .expect("collection badge");
+        assert!(title < badge);
+        assert!(html.contains("Open review queue"));
+        assert!(html.contains("Knowledge Collections"));
+        assert!(html.contains("Total"));
+    }
 }

@@ -40,6 +40,10 @@ fn build_writes_engine_catalog_html_landmarks_and_pages_json() {
     let home = fs::read_to_string(output.join("index.html")).unwrap();
     assert!(home.contains("id=\"okmate-nav\""), "{home}");
     assert!(home.contains("id=\"okmate-main\""), "{home}");
+    assert!(home.contains("id=\"okmate-recents\""), "{home}");
+    assert!(home.contains("Open review queue"), "{home}");
+    assert!(home.contains("Knowledge Collections"), "{home}");
+    assert!(home.contains("Total"), "{home}");
 
     let concept = fs::read_to_string(output.join("hello").join("index.html")).unwrap();
     assert!(concept.contains("id=\"okmate-nav\""), "{concept}");

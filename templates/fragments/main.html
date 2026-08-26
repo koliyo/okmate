@@ -3,6 +3,8 @@
     {% include "fragments/queue.html" %}
   {% else if page_kind == "settings" %}
     {% include "fragments/settings.html" %}
+  {% else if page_kind == "home" %}
+    {% include "fragments/home.html" %}
   {% else %}
     {% include "fragments/article.html" %}
   {% endif %}

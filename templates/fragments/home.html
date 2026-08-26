@@ -1,0 +1,28 @@
+<div class="okmate-home-governance">
+  <section class="okmate-recents" id="okmate-recents">
+    <h2 id="recent-documents">Recent documents</h2>
+    {% if recents.is_empty() %}
+      <p class="okmate-recents-empty">No recent documents yet.</p>
+    {% else %}
+      <ul class="okmate-recents-list">
+        {% for doc in recents %}
+          <li>
+            <a class="okmate-recent-link" href="{{ doc.href }}" data-on:click__prevent="@get('{{ doc.href }}')">
+              <span class="okmate-recent-title">{{ doc.title }}</span>
+              {% if !doc.collection.is_empty() %}
+                <span class="okmate-badge okmate-type">{{ doc.collection }}</span>
+              {% endif %}
+            </a>
+          </li>
+        {% endfor %}
+      </ul>
+    {% endif %}
+  </section>
+  <div class="okmate-cta-row">
+    <a href="/review/" class="okmate-cta-btn" data-on:click__prevent="@get('/review/')">Open review queue</a>
+  </div>
+  {% include "fragments/stats.html" %}
+  <hr>
+  <h2 id="knowledge-collections">Knowledge Collections</h2>
+</div>
+{{ article_html|safe }}
