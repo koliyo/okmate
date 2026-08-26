@@ -1,9 +1,11 @@
 # macOS packaging
 
-`package.sh` release-builds `okmate`, embeds Sparkle 2, and writes `dist/Okmate.app`.
-`sign.sh` signs the bundle and Sparkle helpers with Developer ID Application, submits
-to notarytool, and staples. Missing signing secrets fail closed; the release
-workflow will not attach an unsigned production archive.
+`package.sh` sets Okmate identity and calls sibling
+[`h35-desktop`](https://github.com/koliyo/h35-desktop) `packaging/macos/`
+scripts. Those assemble `dist/Okmate.app` with Sparkle 2. `sign.sh` is a
+wrapper around the same host script: Developer ID, notarytool, staple.
+Missing signing secrets fail closed; the release workflow will not attach
+an unsigned production archive.
 
 The tag-triggered `.github/workflows/release.yml` workflow signs, zips that
 bundle, and runs `generate-appcast.sh`. Operators still create immutable `v*`

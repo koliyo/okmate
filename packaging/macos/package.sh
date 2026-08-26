@@ -2,31 +2,14 @@
 set -euo pipefail
 
 root=$(cd "$(dirname "$0")/../.." && pwd)
-cd "$root"
+h35=${H35_DESKTOP:-$root/../h35-desktop}
 
-version=$(sed -n 's/^version = "\([^"]*\)"/\1/p' Cargo.toml | head -n 1)
-if [[ -z $version ]]; then
-  echo "package.sh: could not read package.version from Cargo.toml" >&2
-  exit 1
-fi
+export APP_NAME=Okmate
+export BUNDLE_ID=${BUNDLE_ID:-com.koliyo.okmate}
+export EXECUTABLE=okmate
+export CRATE=okmate
+export PRODUCT_ROOT=$root
+export SU_FEED_URL=${SU_FEED_URL:-https://github.com/koliyo/okmate/releases/latest/download/appcast.xml}
+export SU_PUBLIC_ED_KEY=${SU_PUBLIC_ED_KEY:-0cxKUYv/b7Z7qSI2l2lEzV0IcV/rb59l6lFnRD5vs2U=}
 
-cargo build --release -p okmate
-
-if [[ $(uname -s) == Darwin ]]; then
-  SPARKLE_FRAMEWORK=$("$root/packaging/macos/fetch-sparkle.sh")
-  export SPARKLE_FRAMEWORK
-fi
-
-bundle_version=${BUNDLE_VERSION:-$version}
-
-"$root/packaging/macos/assemble.sh" \
-  "$root/target/release/okmate" \
-  "$root/dist/Okmate.app" \
-  "$version" \
-  "$bundle_version"
-
-if [[ $(uname -s) == Darwin ]]; then
-  codesign --force --deep --sign - "$root/dist/Okmate.app"
-fi
-
-echo "$root/dist/Okmate.app"
+exec "$h35/packaging/macos/package.sh"
