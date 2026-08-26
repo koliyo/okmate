@@ -27,3 +27,6 @@ jobs:
         run: cargo fmt --all -- --check
       - name: Test engine and app
         run: cargo test -p okf && cargo test -p okmate --no-default-features
+      - uses: astral-sh/setup-uv@v6
+      - name: Test okmate-ops
+        run: uv run --directory tools/okmate-ops --group dev pytest

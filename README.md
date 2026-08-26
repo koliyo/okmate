@@ -87,8 +87,8 @@ cargo test -p okf
 cargo test -p okmate --no-default-features
 ```
 
-When `tools/okmate-ops` is present, replay those jobs with
-`uv run --no-dev okmate-ops ci`. To publish a GitHub release from
+Replay those jobs with `uv run --no-dev okmate-ops ci`. To publish a GitHub
+release from
 `origin/main`, run `uv run okmate-ops promote tag vX.Y.Z` (or `--from BRANCH`).
 That waits for hosted CI on the target SHA, then pushes the tag.
 `uv run okmate-ops promote tag dev` force-moves the rolling `dev` prerelease

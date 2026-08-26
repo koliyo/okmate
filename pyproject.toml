@@ -1,0 +1,15 @@
+[project]
+name = "okmate-workspace"
+version = "0.0.0"
+description = "Okmate repository operator workspace."
+requires-python = ">=3.12"
+dependencies = ["okmate-ops"]
+
+[tool.uv]
+package = false
+
+[tool.uv.workspace]
+members = ["tools/okmate-ops"]
+
+[tool.uv.sources]
+okmate-ops = { workspace = true }
