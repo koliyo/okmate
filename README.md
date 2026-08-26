@@ -7,7 +7,7 @@ Repository: [github.com/koliyo/okmate](https://github.com/koliyo/okmate)
 
 ## Stack
 
-- **Engine:** the portable [`okf`](https://github.com/koliyo/rocci/tree/main/crates/okf) crate (git dependency; the only Rocci crate)
+- **Engine:** the portable [`okf`](okf/) crate in this repository (UI-neutral; the only library crate)
 - **HTML:** Askama 0.16
 - **HTTP:** Axum 0.8
 - **Morph / SSE:** official Datastar Rust SDK 0.4 (`axum` feature) plus a
@@ -19,21 +19,15 @@ Roc.
 
 ## Depends on `okf` only
 
-Okmate must not depend on any `rocci-*` crate.
+Okmate must not depend on any `rocci-*` crate. The `okf` engine lives in
+[`okf/`](okf/). For a side-by-side Rocci checkout you only need the knowledge
+bundle path (`../rocci/knowledge`).
 
-For local engine development, you can override the git dep:
-
-```toml
-okf = { path = "../rocci/crates/okf" }
-```
-
-## Coexistence with `rocci-okf`
-
-`okmate check` is the knowledge **application** CLI. In the Rocci monorepo,
-`rocci-okf check` remains the Rocci tool (CI, `manage-rocci-knowledge`) until
-an explicit cutover. Engine JSON for `check` / `inspect` / `search` /
-`benchmark` matches `rocci-okf` so agents can switch the binary name without a
-new schema. There is no `--host` flag.
+Rocci keeps the inert `knowledge/` bundle. Check, inspect, search, build, and
+view that bundle with this binary (`okmate check knowledge --profile rocci`).
+CLI-only builds omit the webview: `cargo test -p okmate --no-default-features`
+(or `cargo run --no-default-features`). `view` without `--no-window` needs the
+default `desktop` feature.
 
 Settings live under `~/.okmate/` (`OKMATE_CONFIG`, `OKMATE_CACHE`,
 `OKMATE_STATE`). If `~/.okmate/config.toml` is missing, Okmate may import

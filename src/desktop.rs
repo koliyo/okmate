@@ -42,7 +42,7 @@ pub fn pick_folder_result_script(path: Option<&str>) -> String {
 }
 
 pub fn home_url(bound: impl std::fmt::Display) -> String {
-    format!("http://{bound}/")
+    crate::preview::home_url(bound)
 }
 
 pub fn run(options: crate::preview::ViewOptions) -> Result<()> {

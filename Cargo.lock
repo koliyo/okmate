@@ -2263,7 +2263,6 @@ dependencies = [
 [[package]]
 name = "okf"
 version = "0.1.0"
-source = "git+https://github.com/koliyo/rocci#2f94707a97b0c14e5b60ef90096b6476f0dfa3bd"
 dependencies = [
  "anyhow",
  "comrak",

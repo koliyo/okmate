@@ -1,3 +1,12 @@
+[workspace]
+resolver = "2"
+members = ["okf"]
+
+[workspace.package]
+version = "0.1.0"
+edition = "2024"
+license-file = "LICENSE"
+
 [package]
 name = "okmate"
 version = "0.1.0"
@@ -9,13 +18,17 @@ description = "Okmate — open knowledge mate for OKF bundles"
 name = "okmate"
 path = "src/main.rs"
 
+[features]
+default = ["desktop"]
+desktop = ["dep:tao", "dep:wry", "dep:rfd"]
+
 [dependencies]
 anyhow = "1.0"
 askama = "0.16"
 axum = "0.8"
 clap = { version = "4.5", features = ["derive", "env"] }
 notify = "8"
-okf = { git = "https://github.com/koliyo/rocci", package = "okf" }
+okf = { path = "okf" }
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
 tokio = { version = "1.47", features = ["macros", "net", "rt-multi-thread", "sync", "time"] }
@@ -23,10 +36,16 @@ toml = "1.1"
 tower-http = { version = "0.6", features = ["fs"] }
 datastar = { version = "0.4", features = ["axum"] }
 futures-util = { version = "0.3", default-features = false, features = ["std"] }
-tao = "0.36"
-wry = { version = "0.56", features = ["devtools"] }
-rfd = "0.15"
+tao = { version = "0.36", optional = true }
+wry = { version = "0.56", optional = true, features = ["devtools"] }
+rfd = { version = "0.15", optional = true }
 
 [dev-dependencies]
 http-body-util = "0.1"
 tower = { version = "0.5", features = ["util"] }
+
+[profile.dev.package.comrak]
+opt-level = 3
+
+[profile.dev.package.okf]
+opt-level = 3

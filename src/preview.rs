@@ -37,14 +37,26 @@ pub fn run(options: ViewOptions) -> Result<()> {
         let runtime = tokio::runtime::Runtime::new().context("failed to start tokio runtime")?;
         runtime.block_on(run_headless(options))
     } else {
-        crate::desktop::run(options)
+        #[cfg(feature = "desktop")]
+        {
+            crate::desktop::run(options)
+        }
+        #[cfg(not(feature = "desktop"))]
+        {
+            bail!("okmate was built without the desktop feature; pass --no-window")
+        }
     }
+}
+
+pub fn home_url(bound: impl std::fmt::Display) -> String {
+    format!("http://{bound}/")
 }
 
 async fn run_headless(options: ViewOptions) -> Result<()> {
     prepare(options).await?.serve().await
 }
 
+#[cfg(feature = "desktop")]
 pub(crate) async fn serve_ready(
     options: ViewOptions,
     ready: std::sync::mpsc::Sender<Result<ServerReady>>,
@@ -67,7 +79,9 @@ pub(crate) async fn serve_ready(
 struct PreparedView {
     listener: tokio::net::TcpListener,
     state: crate::http::AppState,
+    #[cfg_attr(not(feature = "desktop"), allow(dead_code))]
     home_url: String,
+    #[cfg_attr(not(feature = "desktop"), allow(dead_code))]
     initial_url: String,
 }
 
@@ -111,7 +125,7 @@ async fn prepare(options: ViewOptions) -> Result<PreparedView> {
         }
     });
 
-    let home_url = crate::desktop::home_url(bound);
+    let home_url = home_url(bound);
     let initial_url = format!(
         "{}{}",
         home_url.trim_end_matches('/'),
