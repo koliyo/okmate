@@ -17,11 +17,13 @@ if [[ $(uname -s) == Darwin ]]; then
   export SPARKLE_FRAMEWORK
 fi
 
+bundle_version=${BUNDLE_VERSION:-$version}
+
 "$root/packaging/macos/assemble.sh" \
   "$root/target/release/okmate" \
   "$root/dist/Okmate.app" \
   "$version" \
-  "$version"
+  "$bundle_version"
 
 if [[ $(uname -s) == Darwin ]]; then
   codesign --force --deep --sign - "$root/dist/Okmate.app"

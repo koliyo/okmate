@@ -4,7 +4,7 @@ title: Standalone Okmate self-update
 description: Ship Okmate.app with Sparkle 2 so macOS users check, consent, replace, and relaunch the way common Mac apps do, using GitHub Releases as the artifact store.
 tags: [domain/okmate, domain/ops, concern/tooling, concern/architecture]
 status: draft
-generated: { by: process:cursor, at: 2026-08-26T16:45:00Z }
+generated: { by: process:cursor, at: 2026-08-26T18:10:00Z }
 stale_after: 2026-11-26
 authority: exploratory
 owners: [human:nils]
@@ -345,10 +345,12 @@ release.
 
 ## Status
 
-Exploratory draft. No phase started. Depends on the shipped desktop window
-and on `promote tag`; does not depend on finishing leftover extract-plan
-copy. Evidence: current `desktop.rs` / `promote.py` / Ubuntu `ci.yml`,
-Sparkle 2 docs.
+Exploratory. Phases 1–6 are implemented on branch `standalone-self-update`
+(Finder launch, `packaging/macos`, Sparkle client, tag-triggered
+`release.yml`, fail-closed Developer ID/notarize, README). Not a shipped
+production release and not an approved Decision. System overview is
+unchanged until this behavior is on `main`. Evidence: this worktree's
+`src/bundle.rs`, `src/update.rs`, `packaging/macos/`, `.github/workflows/release.yml`.
 
 [^readme]: CLI, `~/.okmate/`, `promote tag`, and rolling `dev` fetch.
 [^overview]: Application crate owns desktop; engine stays UI-neutral.

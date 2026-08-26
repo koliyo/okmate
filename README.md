@@ -82,15 +82,50 @@ cargo test -p okmate --no-default-features
 
 Release-build the `okmate` binary with `uv run --no-dev okmate-ops build`.
 To install it into `~/.local/bin`, run `uv run --no-dev okmate-ops install cli`.
-On macOS, assemble `Okmate.app` with `uv run --no-dev okmate-ops package desktop`.
+On macOS, assemble `Okmate.app` with `packaging/macos/package.sh` (or
+`uv run --no-dev okmate-ops package desktop` for a local unsigned tree).
 
-Replay those jobs with `uv run --no-dev okmate-ops ci`. To publish a GitHub
-release from
-`origin/main`, run `uv run okmate-ops promote tag vX.Y.Z` (or `--from BRANCH`).
+## Install Okmate.app (macOS)
+
+Download `Okmate.zip` from the latest
+[GitHub Release](https://github.com/koliyo/okmate/releases/latest), unzip it,
+and drag `Okmate.app` to `/Applications`. Double-click opens the knowledge
+window (`view`) and restores `~/.okmate/state` when present.
+
+**Check for Updates…** in the Okmate menu uses Sparkle. After the second
+launch, Sparkle may ask to check automatically. An update shows release notes
+and Install / Remind Me Later / Skip. Installation replaces this `.app` and
+relaunches; it does not rewrite `~/.okmate/` config, cache, or session.
+
+A `cargo install` or copied `okmate` binary on `PATH` does not self-update.
+Use a new install, or the `.app`, for updates.
+
+## Publish a `v*` app release
+
+The update plan is
+[`knowledge/plans/okmate/standalone-self-update.md`](knowledge/plans/okmate/standalone-self-update.md).
+Do not treat this README as an architecture decision.
+
+1. Bump `package.version` in `Cargo.toml` and, if it must move separately,
+   `BUNDLE_VERSION` / `CFBundleVersion` (every `v*` must increase the Sparkle
+   compare version).
+2. Wait for hosted **Test** on the SHA you will tag.
+3. Run `uv run okmate-ops promote tag vX.Y.Z` (or `--from BRANCH`). That is
+   the only operator path that creates an immutable `v*` tag.
+4. Wait for the **Release** workflow on that tag (signing secrets must be
+   present; the job fails closed instead of attaching an unsigned archive).
+5. Confirm
+   `https://github.com/koliyo/okmate/releases/latest/download/appcast.xml`
+   serves the new item.
+
+Replay local validation with `uv run --no-dev okmate-ops ci`. To publish a
+GitHub release tag from `origin/main`, run
+`uv run okmate-ops promote tag vX.Y.Z` (or `--from BRANCH`).
 That waits for hosted CI on the target SHA, then pushes the tag.
 `uv run okmate-ops promote tag dev` force-moves the rolling `dev` prerelease
-tag. A later `git pull` then reports `! [rejected] dev -> dev (would clobber
-existing tag)` unless this repo force-updates that tag on fetch:
+tag. `dev` is not `SUFeedURL`. A later `git pull` then reports
+`! [rejected] dev -> dev (would clobber existing tag)` unless this repo
+force-updates that tag on fetch:
 
 ```sh
 git config --local --add remote.origin.fetch '+refs/tags/dev:refs/tags/dev'
