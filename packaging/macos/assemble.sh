@@ -40,3 +40,17 @@ printf 'APPL????' >"$dest/Contents/PkgInfo"
 if [[ -f $here/AppIcon.icns ]]; then
   cp "$here/AppIcon.icns" "$resources/AppIcon.icns"
 fi
+
+if [[ -n ${SPARKLE_FRAMEWORK:-} ]]; then
+  if [[ ! -d $SPARKLE_FRAMEWORK ]]; then
+    echo "assemble.sh: SPARKLE_FRAMEWORK is not a directory: $SPARKLE_FRAMEWORK" >&2
+    exit 1
+  fi
+  frameworks=$dest/Contents/Frameworks
+  mkdir -p "$frameworks"
+  rm -rf "$frameworks/Sparkle.framework"
+  cp -R "$SPARKLE_FRAMEWORK" "$frameworks/Sparkle.framework"
+  if [[ $(uname -s) == Darwin ]] && /usr/bin/file -b "$macos/okmate" | grep -q 'Mach-O'; then
+    install_name_tool -add_rpath '@executable_path/../Frameworks' "$macos/okmate"
+  fi
+fi

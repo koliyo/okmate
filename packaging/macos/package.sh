@@ -12,6 +12,11 @@ fi
 
 cargo build --release -p okmate
 
+if [[ $(uname -s) == Darwin ]]; then
+  SPARKLE_FRAMEWORK=$("$root/packaging/macos/fetch-sparkle.sh")
+  export SPARKLE_FRAMEWORK
+fi
+
 "$root/packaging/macos/assemble.sh" \
   "$root/target/release/okmate" \
   "$root/dist/Okmate.app" \

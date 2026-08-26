@@ -26,11 +26,9 @@
   <true/>
   <key>NSSupportsAutomaticGraphicsSwitching</key>
   <true/>
-  <!-- Phase 3 fills SUFeedURL and SUPublicEDKey.
   <key>SUFeedURL</key>
-  <string></string>
+  <string>https://github.com/koliyo/okmate/releases/latest/download/appcast.xml</string>
   <key>SUPublicEDKey</key>
-  <string></string>
-  -->
+  <string>0cxKUYv/b7Z7qSI2l2lEzV0IcV/rb59l6lFnRD5vs2U=</string>
 </dict>
 </plist>

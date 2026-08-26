@@ -36,4 +36,28 @@ fn assemble_script_writes_plist_keys_and_executable() {
         fs::read(dest.join("Contents/PkgInfo")).unwrap(),
         b"APPL????"
     );
+    assert!(plist.contains("SUFeedURL"), "{plist}");
+    assert!(plist.contains("SUPublicEDKey"), "{plist}");
+    assert!(!plist.contains("SUAutomaticallyUpdate"), "{plist}");
+
+    let sparkle = scratch.join("Sparkle.framework");
+    fs::create_dir_all(&sparkle).unwrap();
+    fs::write(sparkle.join("Sparkle"), b"dylib").unwrap();
+    let dest_with_sparkle = scratch.join("Bundled.app");
+    let status = Command::new(format!("{root}/packaging/macos/assemble.sh"))
+        .env("SPARKLE_FRAMEWORK", &sparkle)
+        .arg(&binary)
+        .arg(&dest_with_sparkle)
+        .arg("1.2.3")
+        .status()
+        .expect("run assemble.sh with Sparkle");
+    assert!(
+        status.success(),
+        "assemble.sh with Sparkle failed: {status}"
+    );
+    assert!(
+        dest_with_sparkle
+            .join("Contents/Frameworks/Sparkle.framework/Sparkle")
+            .is_file()
+    );
 }
