@@ -23,7 +23,7 @@ jobs:
         run: git clone --depth 1 https://github.com/koliyo/h35-desktop.git "${GITHUB_WORKSPACE}/../h35-desktop"
       - uses: dtolnay/rust-toolchain@stable
       - uses: Swatinem/rust-cache@v2
-      - uses: astral-sh/setup-uv@v6
+      - uses: astral-sh/setup-uv@v7
       - name: Assemble Okmate.app
         run: uv run --no-dev okmate-ops package desktop
       - name: Sign and notarize

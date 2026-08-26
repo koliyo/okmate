@@ -29,6 +29,6 @@ jobs:
         run: cargo test -p okf && cargo test -p okmate --no-default-features
       - name: Check knowledge bundle
         run: cargo run -q --no-default-features -p okmate -- check knowledge --profile strict --format terminal
-      - uses: astral-sh/setup-uv@v6
+      - uses: astral-sh/setup-uv@v7
       - name: Test okmate-ops
         run: uv run --directory tools/okmate-ops --group dev pytest
