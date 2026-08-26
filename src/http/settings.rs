@@ -116,6 +116,7 @@ fn settings_document(
                 current: true,
                 open: false,
                 children: Vec::new(),
+                section_key: String::new(),
             }],
             toc: Vec::new(),
             article_html: String::new(),

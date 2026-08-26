@@ -35,6 +35,7 @@ fn sample() -> Document {
             current: true,
             open: false,
             children: Vec::new(),
+            section_key: String::new(),
         }],
         toc: vec![TocEntry {
             id: "section".into(),

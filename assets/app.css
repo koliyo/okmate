@@ -86,6 +86,34 @@ body.is-col-resizing {
   padding-right: 1.75rem;
 }
 .nav-section summary::-webkit-details-marker { display: none; }
+.nav-section summary::after {
+  content: "";
+  position: absolute;
+  right: 0.68rem;
+  top: 50%;
+  width: 0.42rem;
+  height: 0.42rem;
+  border-right: 1.5px solid currentColor;
+  border-bottom: 1.5px solid currentColor;
+  transform: translate(-0.12rem, -50%) rotate(-45deg);
+  transition: transform 160ms ease;
+}
+.nav-section[open] > summary::after {
+  transform: translate(-0.12rem, -65%) rotate(45deg);
+}
+.okmate-nav-menu {
+  display: none;
+}
+.okmate-nav-menu > summary {
+  list-style: none;
+  cursor: pointer;
+  padding: 0.42rem 0.68rem;
+  border: 1px solid var(--rd-border);
+  border-radius: 0.45rem;
+  color: var(--rd-fg);
+  font-weight: 680;
+}
+.okmate-nav-menu > summary::-webkit-details-marker { display: none; }
 .nav-link {
   display: block;
   overflow: hidden;
@@ -436,6 +464,8 @@ body.is-col-resizing {
   .okmate-toc,
   .okmate-col-resizer { display: none; }
   .okmate-chrome { max-height: none; }
+  .okmate-nav-menu { display: block; margin-bottom: 0.75rem; }
+  .okmate-desktop-nav { display: none; }
   #okmate-main {
     width: min(42rem, calc(100% - 2rem));
     overflow: visible;

@@ -351,6 +351,7 @@ fn leaf(href: &str, title: &str, current: &str) -> NavNode {
         current: href == current,
         open: false,
         children: Vec::new(),
+        section_key: String::new(),
     }
 }
 
@@ -366,9 +367,10 @@ fn nav_forest(bundle: &Bundle, current: &str) -> Vec<NavNode> {
             NavNode {
                 href: href.clone(),
                 title: collection_title(index),
-                current: href == current,
-                open: current.starts_with(&href),
+                current: current == href || current.starts_with(&href),
+                open: current == href || current.starts_with(&href),
                 children: Vec::new(),
+                section_key: path.to_string(),
             },
         );
     }
@@ -394,6 +396,7 @@ fn nav_forest(bundle: &Bundle, current: &str) -> Vec<NavNode> {
                 current: href == current,
                 open: false,
                 children: Vec::new(),
+                section_key: String::new(),
             });
         }
     }
@@ -424,28 +427,57 @@ fn nav_forest(bundle: &Bundle, current: &str) -> Vec<NavNode> {
 
     fn take_node(
         path: &str,
+        current: &str,
         by_path: &mut BTreeMap<String, NavNode>,
         children_of: &BTreeMap<String, Vec<String>>,
     ) -> NavNode {
         let mut node = by_path.remove(path).expect("nav node");
         if let Some(child_paths) = children_of.get(path) {
             for child in child_paths {
-                node.children.push(take_node(child, by_path, children_of));
+                node.children
+                    .push(take_node(child, current, by_path, children_of));
             }
         }
-        node.children.sort_by(|left, right| {
-            left.title
-                .cmp(&right.title)
-                .then(left.href.cmp(&right.href))
-        });
-        node
+        finalize_collection(path, node, current)
     }
 
     roots.sort();
     roots
         .into_iter()
-        .map(|path| take_node(&path, &mut by_path, &children_of))
+        .map(|path| take_node(&path, current, &mut by_path, &children_of))
         .collect()
+}
+
+fn finalize_collection(path: &str, mut node: NavNode, current: &str) -> NavNode {
+    let href = format!("/{path}/");
+    let mut nested = Vec::new();
+    let mut leaves = Vec::new();
+    for child in node.children.drain(..) {
+        if child.section_key.is_empty() {
+            leaves.push(child);
+        } else {
+            nested.push(child);
+        }
+    }
+    nested.sort_by(|left, right| {
+        left.title
+            .cmp(&right.title)
+            .then(left.href.cmp(&right.href))
+    });
+    leaves.sort_by(|left, right| {
+        left.title
+            .cmp(&right.title)
+            .then(left.href.cmp(&right.href))
+    });
+    let mut children = vec![leaf(&href, "Overview", current)];
+    children.extend(nested);
+    children.extend(leaves);
+    node.children = children;
+    node.section_key = path.to_string();
+    node.href = href.clone();
+    node.current = current == href || current.starts_with(&href);
+    node.open = node.current;
+    node
 }
 
 fn normalize_route(route: &str) -> String {

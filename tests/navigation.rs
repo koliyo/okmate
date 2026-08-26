@@ -89,3 +89,35 @@ async fn review_page_contains_queue_region() {
     assert!(body.contains("id=\"diagnostics\""), "{body}");
     assert!(body.contains("data-search="), "{body}");
 }
+
+#[tokio::test]
+async fn collection_nav_uses_section_overview_and_span_summary() {
+    let root = temp_dir("nav-plans-src");
+    write_index(&root);
+    fs::create_dir_all(root.join("plans")).unwrap();
+    fs::write(root.join("plans").join("index.md"), "# Plans\n").unwrap();
+    fs::write(
+        root.join("plans").join("nested.md"),
+        valid_strict_concept("Nested", "", "Body.\n"),
+    )
+    .unwrap();
+    let output = temp_dir("nav-plans-out");
+    okmate::site::build(&root, &output, Profile::Strict).unwrap();
+    let html = fs::read_to_string(output.join("plans").join("nested").join("index.html")).unwrap();
+    assert!(html.contains("data-okmate-nav-section=\"plans\""), "{html}");
+    assert!(html.contains("href=\"/plans/\""), "{html}");
+    assert!(html.contains(">Overview<"), "{html}");
+    assert!(html.contains("class=\"okmate-nav-menu\""), "{html}");
+    assert!(
+        html.contains("<span class=\"nav-link nav-category\">"),
+        "{html}"
+    );
+    assert!(
+        !html.contains("nav-category\" href="),
+        "category summary must not be a @get link: {html}"
+    );
+    assert!(
+        !html.contains("nav-category\" data-on:click"),
+        "category summary must not be a @get link: {html}"
+    );
+}
