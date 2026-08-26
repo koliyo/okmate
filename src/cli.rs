@@ -11,6 +11,7 @@ use crate::{
 #[derive(Parser)]
 #[command(
     name = "okmate",
+    version,
     about = "Okmate (open knowledge mate) — Askama + Axum knowledge application over the portable okf engine",
     arg_required_else_help = true,
     subcommand_required = true
@@ -327,5 +328,20 @@ mod tests {
     fn clap_accepts_explicit_port() {
         let cli = Cli::try_parse_from(["okmate", "view", "--port", "9001"]).unwrap();
         assert_eq!(view_port(&cli), PortArg::Exact(9001));
+    }
+
+    #[test]
+    fn unpackaged_cli_requires_a_subcommand() {
+        assert!(Cli::try_parse_from(["okmate"]).is_err());
+    }
+
+    #[test]
+    fn version_matches_cargo_package() {
+        let error = match Cli::try_parse_from(["okmate", "--version"]) {
+            Err(error) => error,
+            Ok(_) => panic!("expected --version to exit via clap"),
+        };
+        let rendered = error.to_string();
+        assert!(rendered.contains(clap::crate_version!()), "{rendered}");
     }
 }
