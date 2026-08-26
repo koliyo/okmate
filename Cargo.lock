@@ -1500,6 +1500,26 @@ dependencies = [
 ]
 
 [[package]]
+name = "h35-desktop"
+version = "0.1.0"
+dependencies = [
+ "muda",
+ "objc2",
+ "objc2-app-kit",
+ "objc2-foundation",
+ "png",
+ "rfd",
+ "serde",
+ "serde_json",
+ "tao",
+ "thiserror 2.0.20",
+ "tokio",
+ "tracing",
+ "uuid",
+ "wry",
+]
+
+[[package]]
 name = "hashbrown"
 version = "0.17.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2362,19 +2382,16 @@ dependencies = [
  "clap",
  "datastar",
  "futures-util",
+ "h35-desktop",
  "http-body-util",
- "muda",
  "notify",
  "okf",
- "rfd",
  "serde",
  "serde_json",
- "tao",
  "tokio",
  "toml 1.1.4+spec-1.1.0",
  "tower",
  "tower-http",
- "wry",
 ]
 
 [[package]]
@@ -3643,6 +3660,7 @@ version = "1.25.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "f053576934f05a761a402421fbbe3d425d9366f75f978806a037b3ca481abecc"
 dependencies = [
+ "getrandom 0.4.3",
  "js-sys",
  "serde_core",
  "wasm-bindgen",

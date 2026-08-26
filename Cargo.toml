@@ -20,7 +20,7 @@ path = "src/main.rs"
 
 [features]
 default = ["desktop"]
-desktop = ["dep:tao", "dep:wry", "dep:rfd", "dep:muda"]
+desktop = ["dep:h35-desktop"]
 
 [dependencies]
 anyhow = "1.0"
@@ -36,10 +36,7 @@ toml = "1.1"
 tower-http = { version = "0.6", features = ["fs"] }
 datastar = { version = "0.4", features = ["axum"] }
 futures-util = { version = "0.3", default-features = false, features = ["std"] }
-tao = { version = "0.36", optional = true }
-wry = { version = "0.56", optional = true, features = ["devtools"] }
-rfd = { version = "0.15", optional = true }
-muda = { version = "0.19.2", optional = true, default-features = false, features = ["gtk"] }
+h35-desktop = { path = "../rocci/h35-desktop", optional = true }
 
 [dev-dependencies]
 http-body-util = "0.1"

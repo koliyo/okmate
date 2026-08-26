@@ -12,7 +12,7 @@ Repository: [github.com/koliyo/okmate](https://github.com/koliyo/okmate)
 - **HTTP:** Axum 0.8
 - **Morph / SSE:** official Datastar Rust SDK 0.4 (`axum` feature) plus a
   pinned `assets/datastar.js`
-- **Desktop:** tao / wry / rfd, in this crate (`src/desktop.rs`)
+- **Desktop:** [`h35-desktop`](https://github.com/koliyo/rocci) (`src/desktop.rs` calls `preview`)
 
 The `okf` engine lives in [`okf/`](okf/). This crate depends on that engine
 only. Check, inspect, search, build, and view a bundle with this binary
