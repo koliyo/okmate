@@ -7,6 +7,7 @@ the same change.
 
 ## 2026-08-26
 
+- Drafted paired audit and plan for okmate viewer-shell parity with last rocci-okf (panes, outline spy, keep-nav). Exploratory; do not log complete until hosted CI succeeds.
 - Hoisted `okmate-ops` from `tools/okmate-ops` to the repository root. Exploratory; do not log complete until hosted CI succeeds.
 - Implemented standalone macOS self-update phases 1–6 on `standalone-self-update` (Sparkle client, tag release workflow, signing fail-closed, README). Exploratory; do not log complete until hosted CI succeeds.
 - Drafted okmate dashboard parity with the last rocci-okf review shell (home recents, review queue, concept meta, rocci-cli port defaults). Exploratory; do not log complete until hosted CI succeeds.

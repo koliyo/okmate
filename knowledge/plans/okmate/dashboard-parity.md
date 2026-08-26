@@ -4,7 +4,7 @@ title: Okmate dashboard parity with rocci-okf
 description: Restore the old rocci-okf review dashboard content in Askama and match rocci-cli preview port assignment.
 tags: [domain/okmate, concern/rendering, concern/tooling]
 status: draft
-generated: { by: process:cursor, at: 2026-08-26T17:05:00Z }
+generated: { by: process:cursor, at: 2026-08-26T20:40:00Z }
 stale_after: 2026-11-26
 authority: exploratory
 owners: [human:nils]
@@ -44,6 +44,16 @@ sources:
     title: classify_concept_action
     author: process:git
     last_modified: 2026-08-26
+  - id: shell-audit
+    resource: ../../audits/okmate/viewer-shell-parity.md
+    title: Viewer shell versus last rocci-okf
+    author: process:cursor
+    last_modified: 2026-08-26
+  - id: shell-plan
+    resource: viewer-shell-parity.md
+    title: Viewer shell parity implementation plan
+    author: process:cursor
+    last_modified: 2026-08-26
 ---
 
 # Okmate dashboard parity with rocci-okf
@@ -54,7 +64,7 @@ Make `okmate view` home, review, and concept pages carry the same governance con
 
 ## Out of bound
 
-Graph or search HTML. Review write/approve. Restoring `#okf-*` IDs, `/__rocci_okf/`, or hardcoded `PRIORITY_1_RECORDS`. Settings edge-matrix. Changing `okf` action classification. `ROC_BASIC_WEBSERVER_PORT`.[^extract][^review-engine]
+Graph or search HTML. Review write/approve. Restoring `#okf-*` IDs, `/__rocci_okf/`, or hardcoded `PRIORITY_1_RECORDS`. Settings edge-matrix. Changing `okf` action classification. `ROC_BASIC_WEBSERVER_PORT`. Three-pane resize, outline spy, and keep-nav sidebar belong to [viewer-shell-parity](viewer-shell-parity.md).[^extract][^review-engine][^shell-audit][^shell-plan]
 
 ## Constraints that do not move
 
@@ -133,3 +143,5 @@ Graph or search HTML. Review write/approve. Restoring `#okf-*` IDs, `/__rocci_ok
 [^cli]: `view --port` currently defaults to 8000 for every mode.
 [^preview]: Preview binds the requested port and errors if it is taken.
 [^review-engine]: Action labels and `is_action_required` come from `okf::classify_concept_action`.
+[^shell-audit]: Chrome findings: panes, outline spy, heading IDs, keep-nav.
+[^shell-plan]: Implementation phases for shell parity; not this plan.
