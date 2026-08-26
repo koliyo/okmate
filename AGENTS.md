@@ -20,7 +20,7 @@
 | Portable OKF parse, validate, search, artifacts | `okf/` |
 | CLI, live preview, Askama HTML, desktop window | this crate (`src/`, `templates/`) |
 | Canonical knowledge bundle | `knowledge/` |
-| Maintainer CI, promote, PR checkout | `tools/okmate-ops` |
+| Maintainer CI, promote, PR checkout | `okmate-ops` |
 
 - Keep `knowledge/**/*.md` inert Markdown with OKF YAML. Do not add executable
   declarations.
@@ -31,7 +31,7 @@
 - `cargo test -p okf`
 - `cargo test -p okmate --no-default-features`
 - After knowledge edits: `okmate check knowledge --profile strict`
-- When `tools/okmate-ops` is present: `uv run okmate-ops ci`.
+- When `okmate-ops` is present: `uv run okmate-ops ci`.
 
 ## Rolling `dev` tag
 

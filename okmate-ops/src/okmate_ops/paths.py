@@ -10,6 +10,6 @@ def repo_root() -> Path:
         return Path(env)
     here = Path(__file__).resolve()
     for parent in here.parents:
-        if (parent / "tools" / "okmate-ops").is_dir() and (parent / "Cargo.toml").is_file():
+        if (parent / "okmate-ops").is_dir() and (parent / "Cargo.toml").is_file():
             return parent
     raise SystemExit("could not find okmate repository root")

@@ -31,4 +31,4 @@ jobs:
         run: cargo run -q --no-default-features -p okmate -- check knowledge --profile strict --format terminal
       - uses: astral-sh/setup-uv@v7
       - name: Test okmate-ops
-        run: uv run --directory tools/okmate-ops --group dev pytest
+        run: uv run --directory okmate-ops --group dev pytest

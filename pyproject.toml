@@ -9,7 +9,7 @@ dependencies = ["okmate-ops"]
 package = false
 
 [tool.uv.workspace]
-members = ["tools/okmate-ops"]
+members = ["okmate-ops"]
 
 [tool.uv.sources]
 okmate-ops = { workspace = true }

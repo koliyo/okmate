@@ -10,7 +10,7 @@ authority: exploratory
 owners: [human:nils]
 sources:
   - id: pyproject
-    resource: ../../../tools/okmate-ops/pyproject.toml
+    resource: ../../../okmate-ops/pyproject.toml
     title: okmate-ops uv project metadata
     author: process:cursor
     last_modified: 2026-08-26

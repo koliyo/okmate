@@ -29,7 +29,7 @@ wheels = [
 [[package]]
 name = "okmate-ops"
 version = "0.1.0"
-source = { editable = "tools/okmate-ops" }
+source = { editable = "okmate-ops" }
 
 [package.dev-dependencies]
 dev = [
@@ -50,7 +50,7 @@ dependencies = [
 ]
 
 [package.metadata]
-requires-dist = [{ name = "okmate-ops", editable = "tools/okmate-ops" }]
+requires-dist = [{ name = "okmate-ops", editable = "okmate-ops" }]
 
 [[package]]
 name = "packaging"

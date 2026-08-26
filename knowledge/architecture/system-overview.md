@@ -4,7 +4,7 @@ title: Okmate system overview
 description: Okmate is a standalone OKF application; the portable engine lives in okf/ and the binary owns CLI, HTML, and desktop preview.
 tags: [domain/okmate, domain/okf, concern/architecture]
 status: draft
-generated: { by: process:cursor, at: 2026-08-26T16:30:00Z }
+generated: { by: process:cursor, at: 2026-08-26T20:20:00Z }
 stale_after: 2026-11-26
 authority: descriptive
 owners: [human:nils]
@@ -50,7 +50,7 @@ means strict owners and evidence, not that this repository is Rocci.[^readme]
 | Parse, graph, search, build artifacts | `okf/` |
 | CLI, live preview, Askama site, desktop | this crate |
 | Canonical product knowledge | `knowledge/` |
-| Local CI replay, promote, PR checkout | `tools/okmate-ops` |
+| Local CI replay, promote, PR checkout | `okmate-ops` |
 
 `check`, `inspect`, `search`, and `build` stay single-root. Agents list
 resolved folders first with `okmate roots --format paths`.[^readme]

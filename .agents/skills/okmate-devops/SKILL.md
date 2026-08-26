@@ -17,7 +17,7 @@ commands.
    - Triggers: push to `main`, pull requests, `workflow_dispatch`
    - Job `Test` on `ubuntu-latest`: `cargo fmt --all -- --check`, then
      `cargo test -p okf && cargo test -p okmate --no-default-features`
-3. When `tools/okmate-ops` is present, replay the same jobs locally with
+3. When `okmate-ops` is present, replay the same jobs locally with
    `uv run okmate-ops ci`.
 4. `gh` talks to `https://api.github.com`. In a sandbox, run `gh` unsandboxed.
 
