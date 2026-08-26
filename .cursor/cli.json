@@ -1,0 +1,36 @@
+{
+  "permissions": {
+    "allow": [
+      "WebFetch(*github.com*)",
+      "WebFetch(*githubusercontent.com*)",
+      "WebFetch(*github.io*)",
+      "WebFetch(github.com)",
+      "WebFetch(*.github.com)",
+      "WebFetch(api.github.com)",
+      "WebFetch(raw.githubusercontent.com)",
+      "WebFetch(*.githubusercontent.com)",
+      "WebFetch(*.github.io)",
+      "WebFetch(data-star.dev)",
+      "WebFetch(*.data-star.dev)",
+      "WebFetch(docs.rs)",
+      "WebFetch(crates.io)",
+      "WebFetch(rust-lang.org)",
+      "WebFetch(*.rust-lang.org)"
+    ],
+    "deny": []
+  },
+  "webFetchDomainAllowlist": [
+    "github.com",
+    "*.github.com",
+    "api.github.com",
+    "raw.githubusercontent.com",
+    "*.githubusercontent.com",
+    "*.github.io",
+    "data-star.dev",
+    "*.data-star.dev",
+    "docs.rs",
+    "crates.io",
+    "rust-lang.org",
+    "*.rust-lang.org"
+  ]
+}

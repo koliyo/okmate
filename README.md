@@ -78,3 +78,26 @@ desktop window, **Choose folder…** uses `rfd` via wry IPC (`pick-folder`), not
 an HTTP pick-folder route. Without a window, paste the folder path.
 
 Git cache is `OKMATE_CACHE` (default `~/.okmate/cache`).
+
+## Development
+
+```sh
+cargo fmt --all -- --check
+cargo test -p okf
+cargo test -p okmate --no-default-features
+```
+
+When `tools/okmate-ops` is present, replay those jobs with
+`uv run --no-dev okmate-ops ci`. To publish a GitHub release from
+`origin/main`, run `uv run okmate-ops promote tag vX.Y.Z` (or `--from BRANCH`).
+That waits for hosted CI on the target SHA, then pushes the tag.
+`uv run okmate-ops promote tag dev` force-moves the rolling `dev` prerelease
+tag. A later `git pull` then reports `! [rejected] dev -> dev (would clobber
+existing tag)` unless this repo force-updates that tag on fetch:
+
+```sh
+git config --local --add remote.origin.fetch '+refs/tags/dev:refs/tags/dev'
+```
+
+Do not force-fetch all tags; `v*` releases stay immutable. To replace local
+`dev` once without changing config, run `git fetch origin tag dev --force`.

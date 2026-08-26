@@ -1,0 +1,4 @@
+interface:
+  display_name: "Manage Okmate Knowledge"
+  short_description: "Query and maintain Okmate knowledge"
+  default_prompt: "Use $manage-okmate-knowledge to query, validate, or update the Okmate knowledge bundle."

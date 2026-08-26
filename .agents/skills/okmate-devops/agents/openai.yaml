@@ -1,0 +1,4 @@
+interface:
+  display_name: "Okmate DevOps"
+  short_description: "Inspect and fix GitHub Actions CI for okmate"
+  default_prompt: "Use $okmate-devops to inspect CI status, diagnose failures, or verify workflows using gh."
