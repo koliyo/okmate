@@ -41,7 +41,7 @@ def steps_for(job: str, root: Path) -> list[Step]:
                     "check",
                     "knowledge",
                     "--profile",
-                    "rocci",
+                    "strict",
                     "--format",
                     "terminal",
                 )

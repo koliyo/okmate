@@ -25,14 +25,14 @@ pub enum CheckFormat {
 #[derive(Clone, Copy, Debug, ValueEnum)]
 pub enum ProfileArg {
     Base,
-    Rocci,
+    Strict,
 }
 
 impl From<ProfileArg> for Profile {
     fn from(value: ProfileArg) -> Self {
         match value {
             ProfileArg::Base => Self::Base,
-            ProfileArg::Rocci => Self::Rocci,
+            ProfileArg::Strict => Self::Strict,
         }
     }
 }

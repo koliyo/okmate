@@ -18,7 +18,7 @@ commands.
    - Job `Test` on `ubuntu-latest`: `cargo fmt --all -- --check`, then
      `cargo test -p okf && cargo test -p okmate --no-default-features`
 3. When `tools/okmate-ops` is present, replay the same jobs locally with
-   `uv run --no-dev okmate-ops ci`.
+   `uv run okmate-ops ci`.
 4. `gh` talks to `https://api.github.com`. In a sandbox, run `gh` unsandboxed.
 
 ## Rolling `dev` tag
@@ -61,11 +61,11 @@ cargo test -p okmate --no-default-features
 When the knowledge bundle exists:
 
 ```sh
-cargo run -q --no-default-features -p okmate -- check knowledge --profile rocci --format terminal
+cargo run -q --no-default-features -p okmate -- check knowledge --profile strict --format terminal
 ```
 
 ## Report results
 
 - Name the workflow, run ID, and failing job.
 - Separate hosted failures from local reproduction.
-- Do not invent check names from Rocci's workspace matrix.
+- Do not invent check names. Use the jobs defined in this repository.

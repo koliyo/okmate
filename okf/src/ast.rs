@@ -42,7 +42,7 @@ impl Span {
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum Profile {
     Base,
-    Rocci,
+    Strict,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -55,7 +55,7 @@ impl LoadOptions {
     pub fn new(profile: Profile) -> Self {
         Self {
             profile,
-            provenance: profile == Profile::Rocci,
+            provenance: profile == Profile::Strict,
         }
     }
 

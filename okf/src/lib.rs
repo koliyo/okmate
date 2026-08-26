@@ -156,7 +156,7 @@ pub fn load_with_cache(
     logs.sort_by(|a, b| a.path.cmp(&b.path));
     validate_unique_ids(&concepts, &mut diagnostics);
     validate_route_collisions(&concepts, &indexes, &mut diagnostics);
-    if options.profile == Profile::Rocci {
+    if options.profile == Profile::Strict {
         validate_index_membership(&concepts, &indexes, &mut diagnostics);
     }
     let parse = parse_started.elapsed();
@@ -169,7 +169,7 @@ pub fn load_with_cache(
         let provenance_started = Instant::now();
         validate_lifecycle_and_sources_with(&root, &concepts, &mut diagnostics, true);
         Some(provenance_started.elapsed())
-    } else if options.profile == Profile::Rocci {
+    } else if options.profile == Profile::Strict {
         validate_lifecycle_and_sources_with(&root, &concepts, &mut diagnostics, false);
         Some(Duration::ZERO)
     } else {

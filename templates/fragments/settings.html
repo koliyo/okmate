@@ -11,7 +11,7 @@
   {% if settings_roots.is_empty() %}
     <div class="okmate-settings-empty">
       <p>No roots yet. Add a folder on this computer (usually named <code>knowledge</code>, with <code>index.md</code>) or a git repository below.</p>
-      <p class="okmate-settings-help">Example: <code>~/Projects/rocci/knowledge</code></p>
+      <p class="okmate-settings-help">Example: <code>~/Projects/okmate/knowledge</code></p>
     </div>
   {% else %}
     <div class="okmate-settings-cards">
@@ -55,9 +55,9 @@
   <p class="okmate-settings-help">Pick the directory that contains <code>index.md</code> (often named <code>knowledge</code>). Paste the folder path here; Choose folder is available in the desktop window.</p>
   <form method="post" action="/__okmate/settings" class="okmate-settings-stack" data-on:submit="@post('/__okmate/settings')">
     <input type="hidden" name="action" value="add_directory">
-    <label>Short id <input id="okmate-dir-id" name="id" placeholder="rocci"></label>
+    <label>Short id <input id="okmate-dir-id" name="id" placeholder="local"></label>
     <p class="okmate-settings-help">Stable name used in <code>okf:id/…</code> links.</p>
-    <label>Folder path <input id="okmate-dir-path" name="path" placeholder="~/Projects/rocci/knowledge"></label>
+    <label>Folder path <input id="okmate-dir-path" name="path" placeholder="~/Projects/okmate/knowledge"></label>
     <p class="okmate-settings-help">Absolute path, or <code>~</code> for your home directory. You can paste a path if Choose folder is hidden.</p>
     <button type="button" id="okmate-choose-folder" hidden>Choose folder…</button>
     <button type="submit">Add folder</button>

@@ -17,9 +17,9 @@ fn temp(name: &str) -> PathBuf {
     path
 }
 
-fn valid_rocci_concept(id: &str, extra_yaml: &str, body: &str) -> String {
+fn valid_strict_concept(id: &str, extra_yaml: &str, body: &str) -> String {
     format!(
-        "---\ntype: Architecture\ntitle: {id}\ndescription: Test concept {id}.\ntags: [domain/rocci, concern/architecture]\nstatus: draft\ngenerated: {{ by: process:test, at: 2026-08-17T00:00:00Z }}\nauthority: descriptive\nowners: [human:nils]\n{extra_yaml}---\n\n# {id}\n\n{body}\n"
+        "---\ntype: Architecture\ntitle: {id}\ndescription: Test concept {id}.\ntags: [domain/okf, concern/architecture]\nstatus: draft\ngenerated: {{ by: process:test, at: 2026-08-17T00:00:00Z }}\nauthority: descriptive\nowners: [human:nils]\n{extra_yaml}---\n\n# {id}\n\n{body}\n"
     )
 }
 
@@ -39,10 +39,10 @@ fn test_okf_profile_matrix() {
         "Base profile should accept minimal record"
     );
 
-    let rocci_bundle = load(&root, Profile::Rocci).expect("load rocci");
+    let strict_bundle = load(&root, Profile::Strict).expect("load strict");
     assert!(
-        rocci_bundle.has_errors(),
-        "Rocci profile should reject minimal record lacking tags/owners"
+        strict_bundle.has_errors(),
+        "strict profile should reject minimal record lacking tags/owners"
     );
 
     let _ = fs::remove_dir_all(root);
@@ -80,7 +80,7 @@ fn test_okf_unknown_metadata_and_body_offsets() {
     let root = temp("metadata");
     fs::write(
         root.join("concept.md"),
-        valid_rocci_concept(
+        valid_strict_concept(
             "Concept",
             "custom_tool_metadata:\n  accuracy: 0.99\n  reviewed_by: \"bot\"\n",
             "This is the body content.\n",
@@ -88,7 +88,7 @@ fn test_okf_unknown_metadata_and_body_offsets() {
     )
     .unwrap();
 
-    let bundle = load(&root, Profile::Rocci).expect("load bundle");
+    let bundle = load(&root, Profile::Strict).expect("load bundle");
     assert_eq!(bundle.concepts.len(), 1);
     let concept = &bundle.concepts[0];
 
@@ -111,7 +111,7 @@ fn test_okf_filter_permutations_and_search() {
     let root = temp("filters");
     fs::write(
         root.join("concept_a.md"),
-        valid_rocci_concept(
+        valid_strict_concept(
             "Alpha",
             "verified:\n  - { by: human:nils, at: 2026-08-17T00:00:00Z }\nstale_after: 2099-01-01\n",
             "Explains template lowering and routing algorithm.\n",
@@ -120,7 +120,7 @@ fn test_okf_filter_permutations_and_search() {
     .unwrap();
     fs::write(
         root.join("concept_b.md"),
-        valid_rocci_concept(
+        valid_strict_concept(
             "Beta",
             "stale_after: 2000-01-01\n",
             "Explains parser recovery behavior.\n",
@@ -131,14 +131,14 @@ fn test_okf_filter_permutations_and_search() {
     // Filter by human-reviewed trust tier and non-stale
     let filter = KnowledgeFilter {
         types: vec!["Architecture".into()],
-        tags: vec!["domain/rocci".into()],
+        tags: vec!["domain/okf".into()],
         statuses: vec!["draft".into()],
         authorities: vec!["descriptive".into()],
         trust_tiers: vec![TrustTier::HumanReviewed],
         stale: Some(false),
     };
 
-    let catalog = inspect_filtered(&root, InspectKind::Catalog, None, Profile::Rocci, &filter)
+    let catalog = inspect_filtered(&root, InspectKind::Catalog, None, Profile::Strict, &filter)
         .expect("inspect filtered");
     assert!(catalog.contains("Alpha"), "catalog should contain Alpha");
     assert!(
@@ -147,7 +147,7 @@ fn test_okf_filter_permutations_and_search() {
     );
 
     // Search query with filter
-    let results = search(&root, "routing algorithm", Profile::Rocci, &filter).expect("search");
+    let results = search(&root, "routing algorithm", Profile::Strict, &filter).expect("search");
     assert!(results.contains("Alpha"), "search should find Alpha");
 
     let _ = fs::remove_dir_all(root);
@@ -163,12 +163,12 @@ fn test_okf_deterministic_build_artifacts() {
     .unwrap();
     fs::write(
         root.join("record.md"),
-        valid_rocci_concept("Record", "", "Detailed architecture decisions.\n"),
+        valid_strict_concept("Record", "", "Detailed architecture decisions.\n"),
     )
     .unwrap();
 
     let dist = root.join("dist");
-    let summary = build(&root, &dist, Profile::Rocci).expect("build okf");
+    let summary = build(&root, &dist, Profile::Strict).expect("build okf");
     assert_eq!(summary.concepts, 1);
 
     assert!(dist.join("catalog.json").is_file());
@@ -180,7 +180,7 @@ fn test_okf_deterministic_build_artifacts() {
     let search_1 = fs::read_to_string(dist.join("search.json")).unwrap();
 
     // Repeat build and verify exact byte-identity
-    build(&root, &dist, Profile::Rocci).expect("rebuild okf");
+    build(&root, &dist, Profile::Strict).expect("rebuild okf");
     let catalog_2 = fs::read_to_string(dist.join("catalog.json")).unwrap();
     let search_2 = fs::read_to_string(dist.join("search.json")).unwrap();
 
@@ -195,7 +195,7 @@ fn test_okf_rejects_declarations_and_raw_html() {
     let root = temp("rejects");
     fs::write(
         root.join("bad_decl.md"),
-        valid_rocci_concept(
+        valid_strict_concept(
             "BadDecl",
             "",
             "Some text\n\n@render {\n  Html.text(\"forbidden\")\n}\n",
@@ -203,7 +203,7 @@ fn test_okf_rejects_declarations_and_raw_html() {
     )
     .unwrap();
 
-    let report = check(&root, Profile::Rocci).expect("check");
+    let report = check(&root, Profile::Strict).expect("check");
     assert!(
         report
             .diagnostics
@@ -268,7 +268,7 @@ fn article_html_rewrites_bundle_root_links() {
     fs::write(architecture.join("index.md"), "# Architecture\n").unwrap();
     fs::write(
         architecture.join("overview.md"),
-        valid_rocci_concept(
+        valid_strict_concept(
             "Overview",
             "",
             "See the [decision](/decisions/choice.md#context) and [relative](../decisions/choice.md).\n\nThe [matrix](../migration-matrix.tsv) stays a file link.\n",
@@ -280,12 +280,12 @@ fn article_html_rewrites_bundle_root_links() {
     fs::write(decisions.join("index.md"), "# Decisions\n").unwrap();
     fs::write(
         decisions.join("choice.md"),
-        valid_rocci_concept("Choice", "", "## Context\n\nAccepted.\n"),
+        valid_strict_concept("Choice", "", "## Context\n\nAccepted.\n"),
     )
     .unwrap();
     fs::write(root.join("migration-matrix.tsv"), "id\tpath\n").unwrap();
 
-    let bundle = load(&root, Profile::Rocci).expect("load bundle");
+    let bundle = load(&root, Profile::Strict).expect("load bundle");
     let overview = bundle
         .concepts
         .iter()
@@ -353,18 +353,18 @@ fn load_timed_records_nonzero_parse_on_tiny_fixture() {
     assert_eq!(loaded.bundle.concepts.len(), 1);
     assert_eq!(loaded.timings.provenance, None);
 
-    let rocci = load_timed(&root, LoadOptions::new(Profile::Rocci)).expect("load timed rocci");
-    assert!(rocci.timings.provenance.is_some());
+    let strict = load_timed(&root, LoadOptions::new(Profile::Strict)).expect("load timed strict");
+    assert!(strict.timings.provenance.is_some());
 
     let preview = load_timed(
         &root,
-        LoadOptions::new(Profile::Rocci).with_provenance(false),
+        LoadOptions::new(Profile::Strict).with_provenance(false),
     )
-    .expect("load timed rocci without provenance");
+    .expect("load timed strict without provenance");
     assert_eq!(preview.timings.provenance, Some(std::time::Duration::ZERO));
     assert!(
         preview.bundle.has_errors(),
-        "Rocci schema should still reject a minimal record when provenance is off"
+        "strict schema should still reject a minimal record when provenance is off"
     );
     assert!(!preview.bundle.diagnostics.iter().any(|diagnostic| {
         diagnostic.code.starts_with("OKF4006")
@@ -380,17 +380,17 @@ fn parse_cache_skips_unchanged_files_on_second_load() {
     let root = temp("parse-cache");
     fs::write(
         root.join("a.md"),
-        valid_rocci_concept("A", "", "Alpha body.\n"),
+        valid_strict_concept("A", "", "Alpha body.\n"),
     )
     .unwrap();
     fs::write(
         root.join("b.md"),
-        valid_rocci_concept("B", "", "Beta body.\n"),
+        valid_strict_concept("B", "", "Beta body.\n"),
     )
     .unwrap();
     fs::write(
         root.join("c.md"),
-        valid_rocci_concept("C", "", "Gamma body.\n"),
+        valid_strict_concept("C", "", "Gamma body.\n"),
     )
     .unwrap();
 
@@ -410,7 +410,7 @@ fn parse_cache_skips_unchanged_files_on_second_load() {
 
     fs::write(
         root.join("b.md"),
-        valid_rocci_concept("B", "", "Beta body changed.\n"),
+        valid_strict_concept("B", "", "Beta body changed.\n"),
     )
     .unwrap();
     let third = load_with_cache(&root, options, Some(&mut cache)).expect("third load");
@@ -433,7 +433,7 @@ fn parallel_load_is_deterministic_across_runs() {
     for name in ["a", "b", "c", "d", "e"] {
         fs::write(
             root.join(format!("{name}.md")),
-            valid_rocci_concept(name, "", &format!("{name} body.\n")),
+            valid_strict_concept(name, "", &format!("{name} body.\n")),
         )
         .unwrap();
     }
@@ -471,17 +471,17 @@ fn parse_cache_roundtrips_through_a_directory() {
     let root = temp("parse-cache-disk-root");
     fs::write(
         root.join("a.md"),
-        valid_rocci_concept("A", "", "Alpha body.\n"),
+        valid_strict_concept("A", "", "Alpha body.\n"),
     )
     .unwrap();
     fs::write(
         root.join("b.md"),
-        valid_rocci_concept("B", "", "Beta body.\n"),
+        valid_strict_concept("B", "", "Beta body.\n"),
     )
     .unwrap();
     fs::write(
         root.join("c.md"),
-        valid_rocci_concept("C", "", "Gamma body.\n"),
+        valid_strict_concept("C", "", "Gamma body.\n"),
     )
     .unwrap();
 
@@ -504,7 +504,7 @@ fn parse_cache_roundtrips_through_a_directory() {
 
     fs::write(
         root.join("b.md"),
-        valid_rocci_concept("B", "", "Beta body changed.\n"),
+        valid_strict_concept("B", "", "Beta body changed.\n"),
     )
     .unwrap();
     let third = load_with_cache(&root, options, Some(&mut restored)).expect("edited file");
@@ -541,7 +541,7 @@ fn nested_concept_loads_and_preview_opens() {
     .unwrap();
     fs::write(
         area.join("nested-collections.md"),
-        valid_rocci_concept("Nested", "", "Nested body.\n"),
+        valid_strict_concept("Nested", "", "Nested body.\n"),
     )
     .unwrap();
 
@@ -573,12 +573,12 @@ fn concept_id_colliding_with_collection_is_an_error() {
     let root = temp("route-collision");
     write_bundle_root(&root);
     let plans = root.join("plans");
-    fs::create_dir_all(plans.join("rocci")).unwrap();
+    fs::create_dir_all(plans.join("area")).unwrap();
     fs::write(plans.join("index.md"), "# Plans\n").unwrap();
-    fs::write(plans.join("rocci").join("index.md"), "# Rocci\n").unwrap();
+    fs::write(plans.join("area").join("index.md"), "# Area\n").unwrap();
     fs::write(
-        plans.join("rocci.md"),
-        "---\ntype: Note\ntitle: Rocci\n---\n\n# Rocci\n",
+        plans.join("area.md"),
+        "---\ntype: Note\ntitle: Area\n---\n\n# Area\n",
     )
     .unwrap();
 
@@ -596,7 +596,7 @@ fn concept_id_colliding_with_collection_is_an_error() {
 }
 
 #[test]
-fn rocci_profile_warns_when_nearest_index_omits_a_concept() {
+fn strict_profile_warns_when_nearest_index_omits_a_concept() {
     let root = temp("index-membership");
     write_bundle_root(&root);
     let area = root.join("plans").join("okf");
@@ -605,13 +605,13 @@ fn rocci_profile_warns_when_nearest_index_omits_a_concept() {
     fs::write(area.join("index.md"), "# OKF\n").unwrap();
     fs::write(
         area.join("nested-collections.md"),
-        valid_rocci_concept("Nested", "", "Body.\n"),
+        valid_strict_concept("Nested", "", "Body.\n"),
     )
     .unwrap();
 
     let bundle = load_timed(
         &root,
-        LoadOptions::new(Profile::Rocci).with_provenance(false),
+        LoadOptions::new(Profile::Strict).with_provenance(false),
     )
     .expect("load membership")
     .bundle;
@@ -636,7 +636,7 @@ fn okf_scheme_links_are_not_bundle_paths() {
     .unwrap();
     fs::write(
         root.join("overview.md"),
-        valid_rocci_concept(
+        valid_strict_concept(
             "Overview",
             "",
             "See [notes](okf:notes/plans/okf/nested-collections.md#goal).\n",
@@ -644,7 +644,7 @@ fn okf_scheme_links_are_not_bundle_paths() {
     )
     .unwrap();
 
-    let bundle = load(&root, Profile::Rocci).expect("load");
+    let bundle = load(&root, Profile::Strict).expect("load");
     let overview = bundle
         .concepts
         .iter()

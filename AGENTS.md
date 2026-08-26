@@ -22,18 +22,16 @@
 | Canonical knowledge bundle | `knowledge/` |
 | Maintainer CI, promote, PR checkout | `tools/okmate-ops` |
 
-- Okmate must not depend on any `rocci-*` crate.
-- Keep `knowledge/**/*.md` inert Markdown with OKF YAML. Do not add Rocdown or
-  executable declarations.
+- Keep `knowledge/**/*.md` inert Markdown with OKF YAML. Do not add executable
+  declarations.
 
 ## Validate proportionally
 
 - `cargo fmt --all -- --check`
 - `cargo test -p okf`
 - `cargo test -p okmate --no-default-features`
-- After knowledge edits: `okmate check knowledge --profile rocci` (the `rocci`
-  profile means strict owners and evidence, not that this repository is Rocci).
-- When `tools/okmate-ops` is present: `uv run --no-dev okmate-ops ci`.
+- After knowledge edits: `okmate check knowledge --profile strict`
+- When `tools/okmate-ops` is present: `uv run okmate-ops ci`.
 
 ## Rolling `dev` tag
 

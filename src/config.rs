@@ -207,14 +207,6 @@ pub fn load() -> Result<UserConfig> {
     if path.is_file() {
         return load_from_path(&path);
     }
-    if let Some(imported) = import_rocci_config()? {
-        if let Some(parent) = path.parent() {
-            fs::create_dir_all(parent)
-                .with_context(|| format!("failed to create {}", parent.display()))?;
-        }
-        save(&imported, &path)?;
-        return Ok(imported);
-    }
     Ok(UserConfig::default())
 }
 
@@ -301,26 +293,6 @@ pub fn expand_tilde(path: &str) -> PathBuf {
         return home.join(rest);
     }
     PathBuf::from(path)
-}
-
-fn import_rocci_config() -> Result<Option<UserConfig>> {
-    let path = rocci_okf_config_path()?;
-    if !path.is_file() {
-        return Ok(None);
-    }
-    Ok(Some(load_from_path(&path)?))
-}
-
-fn rocci_okf_config_path() -> Result<PathBuf> {
-    if let Ok(path) = env::var("ROCCI_OKF_CONFIG")
-        && !path.is_empty()
-    {
-        return Ok(PathBuf::from(path));
-    }
-    Ok(home_dir()
-        .unwrap_or_else(|| PathBuf::from("."))
-        .join(".rocci")
-        .join("okf.toml"))
 }
 
 fn home_dir() -> Option<PathBuf> {

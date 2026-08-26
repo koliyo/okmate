@@ -26,7 +26,7 @@ enum Commands {
     Check {
         #[arg(default_value = "knowledge")]
         root: PathBuf,
-        #[arg(long, value_enum, default_value_t = ProfileArg::Rocci)]
+        #[arg(long, value_enum, default_value_t = ProfileArg::Strict)]
         profile: ProfileArg,
         #[arg(long, value_enum, default_value_t = CheckFormat::Terminal)]
         format: CheckFormat,
@@ -35,7 +35,7 @@ enum Commands {
     Inspect {
         #[command(subcommand)]
         target: InspectTarget,
-        #[arg(long, value_enum, default_value_t = ProfileArg::Rocci)]
+        #[arg(long, value_enum, default_value_t = ProfileArg::Strict)]
         profile: ProfileArg,
     },
     /// Search metadata and heading chunks as JSON.
@@ -43,7 +43,7 @@ enum Commands {
         query: String,
         #[arg(default_value = "knowledge")]
         root: PathBuf,
-        #[arg(long, value_enum, default_value_t = ProfileArg::Rocci)]
+        #[arg(long, value_enum, default_value_t = ProfileArg::Strict)]
         profile: ProfileArg,
         #[command(flatten)]
         filters: FiltersArg,
@@ -53,7 +53,7 @@ enum Commands {
         benchmark: PathBuf,
         #[arg(default_value = "knowledge")]
         root: PathBuf,
-        #[arg(long, value_enum, default_value_t = ProfileArg::Rocci)]
+        #[arg(long, value_enum, default_value_t = ProfileArg::Strict)]
         profile: ProfileArg,
     },
     /// Preview an OKF bundle with live reload.
@@ -63,7 +63,7 @@ enum Commands {
         /// Write preview output here instead of a temp directory.
         #[arg(short, long)]
         output: Option<PathBuf>,
-        #[arg(long, value_enum, default_value_t = ProfileArg::Rocci)]
+        #[arg(long, value_enum, default_value_t = ProfileArg::Strict)]
         profile: ProfileArg,
         /// Skip the preview window; print the URL and keep serving.
         #[arg(long)]
@@ -94,7 +94,7 @@ enum Commands {
         root: PathBuf,
         #[arg(short, long, default_value = "dist/knowledge")]
         output: PathBuf,
-        #[arg(long, value_enum, default_value_t = ProfileArg::Rocci)]
+        #[arg(long, value_enum, default_value_t = ProfileArg::Strict)]
         profile: ProfileArg,
     },
 }

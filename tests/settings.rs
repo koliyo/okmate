@@ -6,7 +6,7 @@ use std::net::SocketAddr;
 use axum::body::Body;
 use axum::extract::connect_info::MockConnectInfo;
 use axum::http::{Request, StatusCode};
-use common::{temp_dir, valid_rocci_concept, write_index};
+use common::{temp_dir, valid_strict_concept, write_index};
 use http_body_util::BodyExt;
 use okf::Profile;
 use tower::ServiceExt;
@@ -20,7 +20,7 @@ fn app(
     okmate::http::router(okmate::http::AppState {
         output,
         root,
-        profile: Profile::Rocci,
+        profile: Profile::Strict,
         config_path: config,
     })
     .layer(MockConnectInfo(SocketAddr::from((peer, 40000))))
@@ -44,11 +44,11 @@ fn fixture() -> (std::path::PathBuf, std::path::PathBuf, std::path::PathBuf) {
     write_index(&root);
     fs::write(
         root.join("hello.md"),
-        valid_rocci_concept("Hello", "", "Body.\n"),
+        valid_strict_concept("Hello", "", "Body.\n"),
     )
     .unwrap();
     let output = temp_dir("settings-out");
-    okmate::site::build(&root, &output, Profile::Rocci).unwrap();
+    okmate::site::build(&root, &output, Profile::Strict).unwrap();
     let config = temp_dir("settings-cfg").join("config.toml");
     (root, output, config)
 }
@@ -63,7 +63,7 @@ async fn datastar_post_returns_settings_patch_without_html_shell() {
                 .header("datastar-request", "true")
                 .header("content-type", "application/x-www-form-urlencoded")
                 .body(Body::from(
-                    "action=add_directory&id=rocci&path=/tmp/knowledge",
+                    "action=add_directory&id=local&path=/tmp/knowledge",
                 ))
                 .unwrap(),
         )
@@ -77,7 +77,7 @@ async fn datastar_post_returns_settings_patch_without_html_shell() {
         "patch should not be a full document: {body}"
     );
     let saved = fs::read_to_string(&config).unwrap();
-    assert!(saved.contains("id = \"rocci\""));
+    assert!(saved.contains("id = \"local\""));
 }
 
 #[tokio::test]

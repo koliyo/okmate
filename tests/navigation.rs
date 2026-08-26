@@ -4,7 +4,7 @@ use std::fs;
 
 use axum::body::Body;
 use axum::http::{Request, StatusCode};
-use common::{temp_dir, valid_rocci_concept, write_index};
+use common::{temp_dir, valid_strict_concept, write_index};
 use http_body_util::BodyExt;
 use okf::Profile;
 use tower::ServiceExt;
@@ -13,7 +13,7 @@ fn app(root: std::path::PathBuf, output: std::path::PathBuf) -> axum::Router {
     okmate::http::router(okmate::http::AppState {
         output,
         root,
-        profile: Profile::Rocci,
+        profile: Profile::Strict,
         config_path: std::env::temp_dir().join("okmate-nav-unused.toml"),
     })
 }
@@ -36,11 +36,11 @@ fn fixture() -> (std::path::PathBuf, std::path::PathBuf) {
     write_index(&root);
     fs::write(
         root.join("hello.md"),
-        valid_rocci_concept("Hello", "", "Intro.\n\n## Details\n\nBody.\n"),
+        valid_strict_concept("Hello", "", "Intro.\n\n## Details\n\nBody.\n"),
     )
     .unwrap();
     let output = temp_dir("nav-out");
-    okmate::site::build(&root, &output, Profile::Rocci).unwrap();
+    okmate::site::build(&root, &output, Profile::Strict).unwrap();
     (root, output)
 }
 

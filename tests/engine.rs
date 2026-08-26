@@ -3,7 +3,7 @@ mod common;
 use std::fs;
 use std::process::Command;
 
-use common::{okmate_bin, temp_dir, valid_rocci_concept, write_index};
+use common::{okmate_bin, temp_dir, valid_strict_concept, write_index};
 use okf::{InspectKind, KnowledgeFilter, Profile};
 
 fn write_two_concepts() -> std::path::PathBuf {
@@ -11,7 +11,7 @@ fn write_two_concepts() -> std::path::PathBuf {
     write_index(&root);
     fs::write(
         root.join("alpha.md"),
-        valid_rocci_concept(
+        valid_strict_concept(
             "Alpha",
             "verified:\n  - { by: human:nils, at: 2026-08-17T00:00:00Z }\nstale_after: 2099-01-01\n",
             "Explains template lowering and routing algorithm.\n",
@@ -20,7 +20,7 @@ fn write_two_concepts() -> std::path::PathBuf {
     .unwrap();
     fs::write(
         root.join("beta.md"),
-        valid_rocci_concept(
+        valid_strict_concept(
             "Beta",
             "stale_after: 2000-01-01\n",
             "Explains parser recovery behavior.\n",
@@ -49,17 +49,17 @@ fn inspect_catalog_concept_and_graph_match_okf() {
     let root = write_two_concepts();
     let root_s = root.to_str().unwrap();
 
-    let catalog = run_ok(&["inspect", "--profile", "rocci", "catalog", root_s]);
-    let expected = okf::inspect(&root, InspectKind::Catalog, None, Profile::Rocci).unwrap();
+    let catalog = run_ok(&["inspect", "--profile", "strict", "catalog", root_s]);
+    let expected = okf::inspect(&root, InspectKind::Catalog, None, Profile::Strict).unwrap();
     assert_eq!(parse_json(&catalog), parse_json(&expected));
 
     let concept = run_ok(&["inspect", "concept", "alpha", root_s]);
     let expected =
-        okf::inspect(&root, InspectKind::Concept, Some("alpha"), Profile::Rocci).unwrap();
+        okf::inspect(&root, InspectKind::Concept, Some("alpha"), Profile::Strict).unwrap();
     assert_eq!(parse_json(&concept), parse_json(&expected));
 
     let graph = run_ok(&["inspect", "graph", root_s]);
-    let expected = okf::inspect(&root, InspectKind::Graph, None, Profile::Rocci).unwrap();
+    let expected = okf::inspect(&root, InspectKind::Graph, None, Profile::Strict).unwrap();
     assert_eq!(parse_json(&graph), parse_json(&expected));
 }
 
@@ -82,7 +82,7 @@ fn inspect_catalog_filters_match_okf() {
         ..KnowledgeFilter::default()
     };
     let expected =
-        okf::inspect_filtered(&root, InspectKind::Catalog, None, Profile::Rocci, &filter).unwrap();
+        okf::inspect_filtered(&root, InspectKind::Catalog, None, Profile::Strict, &filter).unwrap();
     assert_eq!(parse_json(&stdout), parse_json(&expected));
     let catalog = parse_json(&stdout);
     let ids: Vec<&str> = catalog
@@ -99,11 +99,11 @@ fn inspect_catalog_filters_match_okf() {
 fn search_matches_okf_json() {
     let root = write_two_concepts();
     let root_s = root.to_str().unwrap();
-    let stdout = run_ok(&["search", "routing algorithm", root_s, "--profile", "rocci"]);
+    let stdout = run_ok(&["search", "routing algorithm", root_s, "--profile", "strict"]);
     let expected = okf::search(
         &root,
         "routing algorithm",
-        Profile::Rocci,
+        Profile::Strict,
         &KnowledgeFilter::default(),
     )
     .unwrap();
@@ -134,9 +134,9 @@ expected_concepts = ["alpha"]
         bench.to_str().unwrap(),
         root.to_str().unwrap(),
         "--profile",
-        "rocci",
+        "strict",
     ]);
-    let expected = okf::benchmark_retrieval(&root, &bench, Profile::Rocci).unwrap();
+    let expected = okf::benchmark_retrieval(&root, &bench, Profile::Strict).unwrap();
     assert_eq!(
         parse_json(&stdout),
         parse_json(&serde_json::to_string_pretty(&expected).unwrap())

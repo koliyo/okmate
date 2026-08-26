@@ -37,7 +37,7 @@ okmate roots --format paths
 
 ```sh
 okmate roots --format paths | while IFS= read -r root; do
-  okmate inspect --profile rocci catalog "$root"
+  okmate inspect --profile strict catalog "$root"
 done
 ```
 
@@ -54,23 +54,22 @@ When the concept ID is known, inspect its normalized representation:
 
 ```sh
 okmate inspect \
-  --profile rocci concept CONCEPT_ID knowledge
+  --profile strict concept CONCEPT_ID knowledge
 ```
 
 Inspect the catalog for metadata-wide questions and the graph for relationships:
 
 ```sh
 okmate inspect \
-  --profile rocci catalog knowledge
+  --profile strict catalog knowledge
 okmate inspect \
-  --profile rocci graph knowledge
+  --profile strict graph knowledge
 ```
 
 Place `--profile` before the `catalog`, `concept`, or `graph` target. Prefer
 targeted record and source reads over loading the entire JSON catalog.
 
-`--profile rocci` is the engine's strict owners-and-evidence profile. It does
-not mean this repository is Rocci.
+`--profile strict` is the engine's owners-and-evidence profile.
 
 ## Author or revise records
 
@@ -133,8 +132,6 @@ not mean this repository is Rocci.
    bullet under today's `## YYYY-MM-DD` heading (create it at the top if
    needed). Do not reword another session's bullet in the same change; Git
    `merge=union` combines unique lines and would keep both wordings.
-   Rocci documents that convention at
-   https://github.com/koliyo/rocci/blob/main/knowledge/research/okf/knowledge-log-concurrency.md.
    Do not log a phase as complete until the required GitHub workflow has
    succeeded on that revision; cite the run IDs in the log entry.
 
@@ -144,7 +141,7 @@ Run the strict profile after every knowledge edit:
 
 ```sh
 okmate check knowledge \
-  --profile rocci --format terminal
+  --profile strict --format terminal
 ```
 
 Use the base profile only when explicitly testing portable OKF behavior:

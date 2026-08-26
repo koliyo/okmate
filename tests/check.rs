@@ -3,7 +3,7 @@ mod common;
 use std::fs;
 use std::process::Command;
 
-use common::{okmate_bin, temp_dir, valid_rocci_concept, write_index};
+use common::{okmate_bin, temp_dir, valid_strict_concept, write_index};
 use okf::Profile;
 
 fn run_check_json(root: &std::path::Path) -> (bool, String) {
@@ -11,7 +11,7 @@ fn run_check_json(root: &std::path::Path) -> (bool, String) {
         .arg("check")
         .arg(root)
         .arg("--profile")
-        .arg("rocci")
+        .arg("strict")
         .arg("--format")
         .arg("json")
         .output()
@@ -43,11 +43,11 @@ fn check_json_matches_okf_on_valid_bundle() {
     write_index(&root);
     fs::write(
         root.join("hello.md"),
-        valid_rocci_concept("Hello", "", "A valid concept body."),
+        valid_strict_concept("Hello", "", "A valid concept body."),
     )
     .unwrap();
 
-    let engine = okf::check(&root, Profile::Rocci).unwrap();
+    let engine = okf::check(&root, Profile::Strict).unwrap();
     let (ok, stdout) = run_check_json(&root);
     assert_eq!(ok, !engine.has_errors());
     let cli: serde_json::Value = serde_json::from_str(stdout.trim()).unwrap();
@@ -65,8 +65,8 @@ fn check_json_matches_okf_on_invalid_bundle() {
     )
     .unwrap();
 
-    let engine = okf::check(&root, Profile::Rocci).unwrap();
-    assert!(engine.has_errors(), "fixture should fail rocci check");
+    let engine = okf::check(&root, Profile::Strict).unwrap();
+    assert!(engine.has_errors(), "fixture should fail strict check");
     let (ok, stdout) = run_check_json(&root);
     assert!(!ok);
     let cli: serde_json::Value = serde_json::from_str(stdout.trim()).unwrap();

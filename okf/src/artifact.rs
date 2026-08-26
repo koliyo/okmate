@@ -90,7 +90,7 @@ pub fn build_artifacts(bundle: &Bundle, output: &Path) -> Result<BuildSummary> {
 
 pub fn llms_text(bundle: &Bundle) -> String {
     let mut output = String::from(
-        "# Rocci knowledge\n\n> Local, generated index. Canonical records remain in knowledge/**/*.md.\n\n",
+        "# Knowledge\n\n> Local, generated index. Canonical records remain in knowledge/**/*.md.\n\n",
     );
     for concept in &bundle.concepts {
         let title = string_field(&concept.metadata, "title").unwrap_or(&concept.id);

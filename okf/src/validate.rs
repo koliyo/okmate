@@ -52,12 +52,12 @@ pub fn validate_metadata(
     let at = Some(location(source, span));
     match metadata.get("type").and_then(Value::as_str) {
         Some(value) if !value.trim().is_empty() => {
-            if profile == Profile::Rocci && !PROFILE_TYPES.contains(&value) {
+            if profile == Profile::Strict && !PROFILE_TYPES.contains(&value) {
                 diagnostics.push(Diagnostic::warning(
                     "OKF2002",
                     relative,
                     at.clone(),
-                    format!("unknown Rocci concept type `{value}`"),
+                    format!("unknown concept type `{value}`"),
                 ));
             }
         }
@@ -148,14 +148,14 @@ pub fn validate_metadata(
             ));
         }
     }
-    if profile == Profile::Rocci {
+    if profile == Profile::Strict {
         for required in ["title", "description", "status", "generated"] {
             if !metadata.contains_key(required) {
                 diagnostics.push(Diagnostic::error(
                     "OKF2003",
                     relative,
                     at.clone(),
-                    format!("Rocci profile requires `{required}`"),
+                    format!("strict profile requires `{required}`"),
                 ));
             }
         }
@@ -171,7 +171,7 @@ pub fn validate_metadata(
                 "OKF2004",
                 relative,
                 at.clone(),
-                "Rocci profile requires tags with at least one domain/* value",
+                "strict profile requires tags with at least one domain/* value",
             ));
         }
         if let Some(tags) = tags {
@@ -201,7 +201,7 @@ pub fn validate_metadata(
                 "OKF2003",
                 relative,
                 at.clone(),
-                "Rocci profile requires `authority`",
+                "strict profile requires `authority`",
             )),
         }
         if !metadata.get("owners").is_some_and(|owners| {
@@ -213,7 +213,7 @@ pub fn validate_metadata(
                 "OKF2003",
                 relative,
                 at,
-                "Rocci profile requires string-list `owners`",
+                "strict profile requires string-list `owners`",
             ));
         }
     }
@@ -986,7 +986,7 @@ mod tests {
         .unwrap();
 
         GIT_INVOCATIONS.store(0, Ordering::SeqCst);
-        let bundle = load(&root, Profile::Rocci).expect("load rocci fixture");
+        let bundle = load(&root, Profile::Strict).expect("load strict fixture");
         let git_calls = GIT_INVOCATIONS.load(Ordering::SeqCst);
         assert!(
             git_calls <= 3,

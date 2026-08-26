@@ -3,7 +3,7 @@ mod common;
 use std::fs;
 use std::process::Command;
 
-use common::{okmate_bin, temp_dir, valid_rocci_concept, write_index};
+use common::{okmate_bin, temp_dir, valid_strict_concept, write_index};
 
 #[test]
 fn build_writes_engine_catalog_html_landmarks_and_pages_json() {
@@ -11,7 +11,7 @@ fn build_writes_engine_catalog_html_landmarks_and_pages_json() {
     write_index(&root);
     fs::write(
         root.join("hello.md"),
-        valid_rocci_concept(
+        valid_strict_concept(
             "Hello",
             "",
             "Intro paragraph.\n\n## Details\n\nMore about the concept.\n",
@@ -26,7 +26,7 @@ fn build_writes_engine_catalog_html_landmarks_and_pages_json() {
         .arg("-o")
         .arg(&output)
         .arg("--profile")
-        .arg("rocci")
+        .arg("strict")
         .status()
         .unwrap();
     assert!(status.success());

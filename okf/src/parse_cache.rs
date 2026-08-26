@@ -211,7 +211,7 @@ pub(crate) fn capture_cached(
 fn profile_name(profile: Profile) -> &'static str {
     match profile {
         Profile::Base => "base",
-        Profile::Rocci => "rocci",
+        Profile::Strict => "strict",
     }
 }
 

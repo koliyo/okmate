@@ -30,8 +30,8 @@ pub fn write_index(root: &Path) {
     .unwrap();
 }
 
-pub fn valid_rocci_concept(id: &str, extra_yaml: &str, body: &str) -> String {
+pub fn valid_strict_concept(id: &str, extra_yaml: &str, body: &str) -> String {
     format!(
-        "---\ntype: Architecture\ntitle: {id}\ndescription: Test concept {id}.\ntags: [domain/rocci, concern/architecture]\nstatus: draft\ngenerated: {{ by: process:test, at: 2026-08-17T00:00:00Z }}\nauthority: descriptive\nowners: [human:nils]\n{extra_yaml}---\n\n# {id}\n\n{body}\n"
+        "---\ntype: Architecture\ntitle: {id}\ndescription: Test concept {id}.\ntags: [domain/okf, concern/architecture]\nstatus: draft\ngenerated: {{ by: process:test, at: 2026-08-17T00:00:00Z }}\nauthority: descriptive\nowners: [human:nils]\n{extra_yaml}---\n\n# {id}\n\n{body}\n"
     )
 }
