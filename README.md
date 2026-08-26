@@ -14,24 +14,15 @@ Repository: [github.com/koliyo/okmate](https://github.com/koliyo/okmate)
   pinned `assets/datastar.js`
 - **Desktop:** tao / wry / rfd, in this crate (`src/desktop.rs`)
 
-This crate does not interpret `.rocci` templates. `cargo test` does not require
-Roc.
-
-## Depends on `okf` only
-
-Okmate must not depend on any `rocci-*` crate. The `okf` engine lives in
-[`okf/`](okf/). For a side-by-side Rocci checkout you only need the knowledge
-bundle path (`../rocci/knowledge`).
-
-Rocci keeps the inert `knowledge/` bundle. Check, inspect, search, build, and
-view that bundle with this binary (`okmate check knowledge --profile rocci`).
-CLI-only builds omit the webview: `cargo test -p okmate --no-default-features`
-(or `cargo run --no-default-features`). `view` without `--no-window` needs the
+The `okf` engine lives in [`okf/`](okf/). This crate depends on that engine
+only. Check, inspect, search, build, and view a bundle with this binary
+(`okmate check knowledge --profile strict`). CLI-only builds omit the
+webview: `cargo test -p okmate --no-default-features` (or
+`cargo run --no-default-features`). `view` without `--no-window` needs the
 default `desktop` feature.
 
 Settings live under `~/.okmate/` (`OKMATE_CONFIG`, `OKMATE_CACHE`,
-`OKMATE_STATE`). If `~/.okmate/config.toml` is missing, Okmate may import
-`~/.rocci/okf.toml` once. Do not treat `~/.rocci/` as the long-term path.
+`OKMATE_STATE`).
 
 ## CLI
 
@@ -47,11 +38,11 @@ Settings live under `~/.okmate/` (`OKMATE_CONFIG`, `OKMATE_CACHE`,
 | `okmate sync [id]` | Fetch configured git roots |
 
 ```sh
-okmate check knowledge --profile rocci --format json
+okmate check knowledge --profile strict --format json
 okmate inspect catalog knowledge
 okmate inspect concept architecture/system-overview knowledge
 okmate inspect graph knowledge
-okmate search "system overview" knowledge --profile rocci
+okmate search "system overview" knowledge --profile strict
 okmate benchmark knowledge/retrieval-benchmark.toml knowledge
 okmate build knowledge -o dist/knowledge
 okmate view knowledge --no-window
@@ -86,6 +77,10 @@ cargo fmt --all -- --check
 cargo test -p okf
 cargo test -p okmate --no-default-features
 ```
+
+Release-build the `okmate` binary with `uv run --no-dev okmate-ops build`.
+To install it into `~/.local/bin`, run `uv run --no-dev okmate-ops install cli`.
+On macOS, assemble `Okmate.app` with `uv run --no-dev okmate-ops package desktop`.
 
 Replay those jobs with `uv run --no-dev okmate-ops ci`. To publish a GitHub
 release from
