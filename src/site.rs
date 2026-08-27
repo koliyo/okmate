@@ -10,6 +10,7 @@ use crate::views::{
     Crumb, Document, NavNode, action_rows, compact_type_label, concept_meta, diagnostic_rows,
     governance_stats, recent_leaf_documents, review_rows, toc_from_headings,
 };
+use crate::workspace::{Workspace, WorkspaceMember, id_from_path, normalize_route};
 
 const APP_CSS: &str = include_str!("../assets/app.css");
 const DATASTAR_JS: &str = include_str!("../assets/datastar.js");
@@ -28,32 +29,46 @@ struct NavPage {
     description: String,
     #[serde(skip_serializing_if = "String::is_empty")]
     collection: String,
+    #[serde(skip_serializing_if = "String::is_empty")]
+    root: String,
 }
 
 pub fn build(root: &Path, output: &Path, profile: Profile) -> Result<BuildSummary> {
     let summary = okf::build(root, output, profile)?;
     let bundle = okf::load(root, profile)?;
-    write_html_pages(&bundle, output)?;
-    write_pages_json(&bundle, output)?;
-    write_assets(output)?;
+    let workspace = Workspace::from_loaded(id_from_path(root), root.to_path_buf(), bundle);
+    write_site(&workspace, output)?;
     Ok(summary)
 }
 
-pub fn write_html_pages(bundle: &Bundle, output: &Path) -> Result<()> {
+pub fn build_workspace(workspace: &Workspace, output: &Path) -> Result<()> {
+    write_site(workspace, output)
+}
+
+fn write_site(workspace: &Workspace, output: &Path) -> Result<()> {
+    write_html_pages(workspace, output)?;
+    write_pages_json(workspace, output)?;
+    write_assets(output)?;
+    Ok(())
+}
+
+pub fn write_html_pages(workspace: &Workspace, output: &Path) -> Result<()> {
     let mut routes = vec!["/".to_string(), "/review/".into(), "/settings/".into()];
-    for concept in &bundle.concepts {
-        routes.push(format!("/{}/", concept.id));
-    }
-    for index in &bundle.indexes {
-        let Some(collection) = index.path.strip_suffix("/index.md") else {
-            continue;
-        };
-        routes.push(format!("/{collection}/"));
+    for member in workspace.members() {
+        for concept in &member.bundle.concepts {
+            routes.push(workspace.document_href(&member.id, &concept.id));
+        }
+        for index in &member.bundle.indexes {
+            let Some(collection) = index.path.strip_suffix("/index.md") else {
+                continue;
+            };
+            routes.push(workspace.collection_href(&member.id, collection));
+        }
     }
     routes.sort();
     routes.dedup();
     for route in routes {
-        let Some(page) = page_for_route(bundle, &route) else {
+        let Some(page) = page_for_route(workspace, &route) else {
             continue;
         };
         write_route(output, &route, render_document(page)?)?;
@@ -61,61 +76,72 @@ pub fn write_html_pages(bundle: &Bundle, output: &Path) -> Result<()> {
     Ok(())
 }
 
-pub fn page_for_route(bundle: &Bundle, route: &str) -> Option<Document> {
+pub fn page_for_route(workspace: &Workspace, route: &str) -> Option<Document> {
     let route = normalize_route(route);
     match route.as_str() {
         "/" => {
+            let member = workspace.primary()?;
+            let bundle = &member.bundle;
             if let Some(index) = bundle.indexes.iter().find(|index| index.path == "index.md") {
                 Some(
-                    document(bundle, "/", "Knowledge", Vec::new())
+                    document(workspace, "/", "Knowledge", Vec::new())
                         .with_kind("home")
                         .with_home(bundle)
-                        .with_article(&index.article_html),
+                        .with_article(&workspace.rewrite_article(&member.id, &index.article_html)),
                 )
             } else {
                 Some(
-                    document(bundle, "/", "Knowledge", Vec::new())
+                    document(workspace, "/", "Knowledge", Vec::new())
                         .with_kind("home")
                         .with_home(bundle)
                         .with_article("<h1>Knowledge</h1>"),
                 )
             }
         }
-        "/review/" => Some(
-            document(
-                bundle,
-                "/review/",
-                "Knowledge Governance & Review Queue",
-                Vec::new(),
+        "/review/" => {
+            let bundle = &workspace.primary()?.bundle;
+            Some(
+                document(
+                    workspace,
+                    "/review/",
+                    "Knowledge Governance & Review Queue",
+                    Vec::new(),
+                )
+                .with_kind("review")
+                .with_review(bundle),
             )
-            .with_kind("review")
-            .with_review(bundle),
-        ),
-        "/settings/" => Some(settings_document(bundle)),
+        }
+        "/settings/" => Some(settings_document(workspace)),
         other => {
-            let id = other.trim_matches('/');
+            let (member, id) = workspace.parse_document_route(other)?;
+            let bundle = &member.bundle;
             if let Some(concept) = bundle.concepts.iter().find(|concept| concept.id == id) {
                 let title = okf::string_field(&concept.metadata, "title").unwrap_or(&concept.id);
                 Some(
-                    document(bundle, other, title, toc_from_headings(&concept.headings))
-                        .with_kind("page")
-                        .with_article(&concept.article_html)
-                        .with_meta(concept, &bundle.diagnostics),
+                    document(
+                        workspace,
+                        other,
+                        title,
+                        toc_from_headings(&concept.headings),
+                    )
+                    .with_kind("page")
+                    .with_article(&workspace.rewrite_article(&member.id, &concept.article_html))
+                    .with_meta(concept, &bundle.diagnostics),
                 )
             } else {
                 bundle
                     .indexes
                     .iter()
-                    .find(|index| index.path.strip_suffix("/index.md") == Some(id))
+                    .find(|index| index.path.strip_suffix("/index.md") == Some(id.as_str()))
                     .map(|index| {
                         document(
-                            bundle,
+                            workspace,
                             other,
                             &collection_title(index),
                             toc_from_headings(&index.headings),
                         )
                         .with_kind("page")
-                        .with_article(&index.article_html)
+                        .with_article(&workspace.rewrite_article(&member.id, &index.article_html))
                     })
             }
         }
@@ -133,7 +159,7 @@ fn render_document(document: Document) -> Result<String> {
 }
 
 fn document(
-    bundle: &Bundle,
+    workspace: &Workspace,
     route: &str,
     title: &str,
     toc: Vec<crate::views::TocEntry>,
@@ -141,7 +167,7 @@ fn document(
     Document {
         title: title.to_string(),
         page_kind: "page".into(),
-        nav: nav_tree(bundle, route),
+        nav: nav_tree(workspace, route),
         toc,
         article_html: String::new(),
         concept_type: String::new(),
@@ -151,7 +177,7 @@ fn document(
         action_rows: Vec::new(),
         stats: Vec::new(),
         recents: Vec::new(),
-        crumbs: breadcrumbs(bundle, route, title),
+        crumbs: breadcrumbs(workspace, route, title),
         diagnostics: Vec::new(),
         meta: crate::views::ConceptMeta::default(),
         message: String::new(),
@@ -160,9 +186,9 @@ fn document(
     }
 }
 
-fn breadcrumbs(bundle: &Bundle, route: &str, title: &str) -> Vec<Crumb> {
+fn breadcrumbs(workspace: &Workspace, route: &str, title: &str) -> Vec<Crumb> {
     let route = normalize_route(route);
-    if matches!(route.as_str(), "/" | "/review/" | "/settings/") {
+    if Workspace::chrome_route(&route) {
         return Vec::new();
     }
     let mut crumbs = vec![Crumb {
@@ -170,7 +196,9 @@ fn breadcrumbs(bundle: &Bundle, route: &str, title: &str) -> Vec<Crumb> {
         title: "Dashboard".into(),
         current: false,
     }];
-    let id = route.trim_matches('/');
+    let Some((member, id)) = workspace.parse_document_route(&route) else {
+        return crumbs;
+    };
     let parts: Vec<&str> = id.split('/').filter(|part| !part.is_empty()).collect();
     let mut acc = String::new();
     for (index, segment) in parts.iter().enumerate() {
@@ -178,12 +206,12 @@ fn breadcrumbs(bundle: &Bundle, route: &str, title: &str) -> Vec<Crumb> {
             acc.push('/');
         }
         acc.push_str(segment);
-        let href = format!("/{acc}/");
+        let href = workspace.document_href(&member.id, &acc);
         let last = index + 1 == parts.len();
         let crumb_title = if last {
             title.to_string()
         } else {
-            ancestor_title(bundle, &acc, segment)
+            ancestor_title(&member.bundle, &acc, segment)
         };
         crumbs.push(Crumb {
             href,
@@ -211,12 +239,13 @@ fn ancestor_title(bundle: &Bundle, path: &str, segment: &str) -> String {
 }
 
 pub(crate) fn settings_shell(bundle: &Bundle) -> crate::views::Document {
-    settings_document(bundle)
+    let workspace = Workspace::from_loaded("bundle", PathBuf::new(), bundle.clone());
+    settings_document(&workspace)
 }
 
-fn settings_document(bundle: &Bundle) -> Document {
+fn settings_document(workspace: &Workspace) -> Document {
     let config = crate::config::load().unwrap_or_default();
-    let mut document = document(bundle, "/settings/", "Knowledge roots", Vec::new());
+    let mut document = document(workspace, "/settings/", "Knowledge roots", Vec::new());
     document.config_path = crate::config::config_path().display().to_string();
     document.settings_roots = crate::http::settings_roots(&config);
     document.with_kind("settings")
@@ -288,10 +317,10 @@ pub(crate) fn write_settings_host(output: &Path) -> Result<()> {
     write_route(output, "/", html)
 }
 
-fn write_pages_json(bundle: &Bundle, output: &Path) -> Result<()> {
+fn write_pages_json(workspace: &Workspace, output: &Path) -> Result<()> {
     fs::write(
         output.join("pages.json"),
-        format!("{}\n", serde_json::to_string_pretty(&nav_pages(bundle))?),
+        format!("{}\n", serde_json::to_string_pretty(&nav_pages(workspace))?),
     )
     .context("failed to write pages.json")
 }
@@ -308,7 +337,7 @@ fn write_assets(output: &Path) -> Result<()> {
     fs::write(dir.join("review.js"), REVIEW_JS).context("failed to write review.js")
 }
 
-fn nav_pages(bundle: &Bundle) -> Vec<NavPage> {
+fn nav_pages(workspace: &Workspace) -> Vec<NavPage> {
     let mut pages = vec![
         NavPage {
             title: "Dashboard".into(),
@@ -316,6 +345,7 @@ fn nav_pages(bundle: &Bundle) -> Vec<NavPage> {
             path: "index.md".into(),
             description: String::new(),
             collection: String::new(),
+            root: String::new(),
         },
         NavPage {
             title: "Review queue".into(),
@@ -323,6 +353,7 @@ fn nav_pages(bundle: &Bundle) -> Vec<NavPage> {
             path: "review".into(),
             description: String::new(),
             collection: String::new(),
+            root: String::new(),
         },
         NavPage {
             title: "Settings".into(),
@@ -330,38 +361,52 @@ fn nav_pages(bundle: &Bundle) -> Vec<NavPage> {
             path: "settings".into(),
             description: String::new(),
             collection: String::new(),
+            root: String::new(),
         },
     ];
-    for concept in &bundle.concepts {
-        let id = concept.id.trim_matches('/');
-        pages.push(NavPage {
-            title: okf::string_field(&concept.metadata, "title")
-                .unwrap_or(&concept.id)
-                .to_string(),
-            route: format!("/{id}/"),
-            path: concept.path.clone(),
-            description: okf::string_field(&concept.metadata, "description")
-                .unwrap_or("")
-                .to_string(),
-            collection: collection_label(&concept.path),
-        });
-    }
-    for index in &bundle.indexes {
-        let Some(collection) = index.path.strip_suffix("/index.md") else {
-            continue;
-        };
-        pages.push(NavPage {
-            title: collection_title(index),
-            route: format!("/{collection}/"),
-            path: index.path.clone(),
-            description: String::new(),
-            collection: collection.to_string(),
-        });
+    let root_label = |id: &str| {
+        if workspace.is_multi() {
+            id.to_string()
+        } else {
+            String::new()
+        }
+    };
+    for member in workspace.members() {
+        let root = root_label(&member.id);
+        for concept in &member.bundle.concepts {
+            let id = concept.id.trim_matches('/');
+            pages.push(NavPage {
+                title: okf::string_field(&concept.metadata, "title")
+                    .unwrap_or(&concept.id)
+                    .to_string(),
+                route: workspace.document_href(&member.id, id),
+                path: concept.path.clone(),
+                description: okf::string_field(&concept.metadata, "description")
+                    .unwrap_or("")
+                    .to_string(),
+                collection: collection_label(&concept.path),
+                root: root.clone(),
+            });
+        }
+        for index in &member.bundle.indexes {
+            let Some(collection) = index.path.strip_suffix("/index.md") else {
+                continue;
+            };
+            pages.push(NavPage {
+                title: collection_title(index),
+                route: workspace.collection_href(&member.id, collection),
+                path: index.path.clone(),
+                description: String::new(),
+                collection: collection.to_string(),
+                root: root.clone(),
+            });
+        }
     }
     pages.sort_by(|left, right| {
         left.route
             .cmp(&right.route)
             .then(left.path.cmp(&right.path))
+            .then(left.root.cmp(&right.root))
     });
     pages
 }
@@ -386,14 +431,20 @@ fn collection_title(index: &okf::Index) -> String {
         .to_string()
 }
 
-fn nav_tree(bundle: &Bundle, current: &str) -> Vec<NavNode> {
+fn nav_tree(workspace: &Workspace, current: &str) -> Vec<NavNode> {
     let current = normalize_route(current);
     let mut items = vec![
         leaf("/", "Dashboard", &current),
         leaf("/review/", "Review queue", &current),
         leaf("/settings/", "Settings", &current),
     ];
-    items.extend(nav_forest(bundle, &current));
+    let member = workspace
+        .parse_document_route(&current)
+        .map(|(member, _)| member)
+        .or_else(|| workspace.primary());
+    if let Some(member) = member {
+        items.extend(nav_forest(workspace, member, &current));
+    }
     items
 }
 
@@ -408,13 +459,15 @@ fn leaf(href: &str, title: &str, current: &str) -> NavNode {
     }
 }
 
-fn nav_forest(bundle: &Bundle, current: &str) -> Vec<NavNode> {
+fn nav_forest(workspace: &Workspace, member: &WorkspaceMember, current: &str) -> Vec<NavNode> {
+    let bundle = &member.bundle;
+    let root_id = member.id.as_str();
     let mut by_path: BTreeMap<String, NavNode> = BTreeMap::new();
     for index in &bundle.indexes {
         let Some(path) = index.path.strip_suffix("/index.md") else {
             continue;
         };
-        let href = format!("/{path}/");
+        let href = workspace.collection_href(root_id, path);
         by_path.insert(
             path.to_string(),
             NavNode {
@@ -442,7 +495,7 @@ fn nav_forest(bundle: &Bundle, current: &str) -> Vec<NavNode> {
         };
         let title = okf::string_field(&concept.metadata, "title").unwrap_or(&concept.id);
         if let Some(node) = by_path.get_mut(&owner) {
-            let href = format!("/{}/", concept.id);
+            let href = workspace.document_href(root_id, &concept.id);
             node.children.push(NavNode {
                 href: href.clone(),
                 title: title.to_string(),
@@ -481,28 +534,51 @@ fn nav_forest(bundle: &Bundle, current: &str) -> Vec<NavNode> {
     fn take_node(
         path: &str,
         current: &str,
+        workspace: &Workspace,
+        root_id: &str,
         by_path: &mut BTreeMap<String, NavNode>,
         children_of: &BTreeMap<String, Vec<String>>,
     ) -> NavNode {
         let mut node = by_path.remove(path).expect("nav node");
         if let Some(child_paths) = children_of.get(path) {
             for child in child_paths {
-                node.children
-                    .push(take_node(child, current, by_path, children_of));
+                node.children.push(take_node(
+                    child,
+                    current,
+                    workspace,
+                    root_id,
+                    by_path,
+                    children_of,
+                ));
             }
         }
-        finalize_collection(path, node, current)
+        finalize_collection(workspace, root_id, path, node, current)
     }
 
     roots.sort();
     roots
         .into_iter()
-        .map(|path| take_node(&path, current, &mut by_path, &children_of))
+        .map(|path| {
+            take_node(
+                &path,
+                current,
+                workspace,
+                root_id,
+                &mut by_path,
+                &children_of,
+            )
+        })
         .collect()
 }
 
-fn finalize_collection(path: &str, mut node: NavNode, current: &str) -> NavNode {
-    let href = format!("/{path}/");
+fn finalize_collection(
+    workspace: &Workspace,
+    root_id: &str,
+    path: &str,
+    mut node: NavNode,
+    current: &str,
+) -> NavNode {
+    let href = workspace.collection_href(root_id, path);
     let mut nested = Vec::new();
     let mut leaves = Vec::new();
     for child in node.children.drain(..) {
@@ -531,12 +607,4 @@ fn finalize_collection(path: &str, mut node: NavNode, current: &str) -> NavNode 
     node.current = current == href || current.starts_with(&href);
     node.open = node.current;
     node
-}
-
-fn normalize_route(route: &str) -> String {
-    let path = route.split(['?', '#']).next().unwrap_or(route);
-    if path == "/" {
-        return "/".into();
-    }
-    format!("/{}/", path.trim_matches('/'))
 }

@@ -11,11 +11,14 @@ use tokio::sync::mpsc;
 
 use crate::http::{bind_addr, output_path, router};
 use crate::site;
+use crate::workspace::Workspace;
 
 #[derive(Clone, Debug, Default, PartialEq, Eq, Serialize, Deserialize)]
 pub struct Session {
     #[serde(default)]
     pub bundle: Option<PathBuf>,
+    #[serde(default)]
+    pub workspace: bool,
 }
 
 pub struct ViewOptions {
@@ -98,7 +101,13 @@ impl PreparedView {
 }
 
 async fn prepare(options: ViewOptions) -> Result<PreparedView> {
-    let target = match resolve_target(options.path.as_deref()) {
+    let target = match Workspace::for_view(
+        options.path.as_deref(),
+        options.profile,
+        &crate::config::config_path(),
+        &crate::config::cache_dir(),
+        load_session().bundle.as_deref(),
+    ) {
         Ok(target) => Some(target),
         Err(error) if options.allow_missing_bundle && options.path.is_none() => {
             eprintln!("okmate: {error:#}; opening settings");
@@ -109,9 +118,14 @@ async fn prepare(options: ViewOptions) -> Result<PreparedView> {
     let Some(target) = target else {
         return prepare_settings_host(options).await;
     };
-    persist_bundle(&target.root);
-    let output = output_path(options.output.as_deref(), &target.root);
-    site::build(&target.root, &output, options.profile)?;
+    persist_workspace(&target.workspace);
+    let root = target
+        .workspace
+        .primary_path()
+        .map(Path::to_path_buf)
+        .unwrap_or_else(|| PathBuf::from("workspace"));
+    let output = output_path(options.output.as_deref(), &root);
+    site::build_workspace(&target.workspace, &output)?;
 
     let addr = bind_addr(options.public, options.port);
     let listener = tokio::net::TcpListener::bind(addr)
@@ -120,18 +134,21 @@ async fn prepare(options: ViewOptions) -> Result<PreparedView> {
     let bound = listener
         .local_addr()
         .context("failed to read bound address")?;
+    let label = if target.workspace.is_multi() {
+        format!("{} roots", target.workspace.len())
+    } else {
+        root.display().to_string()
+    };
     eprintln!(
-        "okmate: serving {} at http://{}{}",
-        target.root.display(),
-        bound,
-        target.open_path
+        "okmate: serving {label} at http://{}{}",
+        bound, target.open_path
     );
 
-    let watch_root = target.root.clone();
+    let watch_workspace = target.workspace.clone();
     let watch_output = output.clone();
     let profile = options.profile;
     tokio::spawn(async move {
-        if let Err(error) = watch_rebuild(watch_root, watch_output, profile).await {
+        if let Err(error) = watch_rebuild(watch_workspace, watch_output, profile).await {
             eprintln!("okmate: watch stopped: {error:#}");
         }
     });
@@ -150,7 +167,8 @@ async fn prepare(options: ViewOptions) -> Result<PreparedView> {
         listener,
         state: crate::http::AppState {
             output,
-            root: target.root,
+            root,
+            workspace: target.workspace,
             profile: options.profile,
             config_path: crate::config::config_path(),
         },
@@ -177,6 +195,7 @@ async fn prepare_settings_host(options: ViewOptions) -> Result<PreparedView> {
         state: crate::http::AppState {
             output,
             root: PathBuf::from("/"),
+            workspace: Workspace::empty(),
             profile: options.profile,
             config_path: crate::config::config_path(),
         },
@@ -217,13 +236,29 @@ pub fn persist_bundle(root: &Path) {
     persist_bundle_to(&session_path(), root);
 }
 
+pub fn persist_workspace(workspace: &Workspace) {
+    persist_workspace_to(&session_path(), workspace);
+}
+
 pub fn persist_bundle_to(path: &Path, root: &Path) {
     let mut session = load_session_from(path);
     session.bundle = Some(root.to_path_buf());
+    session.workspace = false;
+    write_session(path, &session);
+}
+
+pub fn persist_workspace_to(path: &Path, workspace: &Workspace) {
+    let mut session = load_session_from(path);
+    session.workspace = workspace.is_multi();
+    session.bundle = workspace.primary_path().map(Path::to_path_buf);
+    write_session(path, &session);
+}
+
+fn write_session(path: &Path, session: &Session) {
     if let Some(parent) = path.parent() {
         let _ = fs::create_dir_all(parent);
     }
-    if let Ok(json) = serde_json::to_string_pretty(&session) {
+    if let Ok(json) = serde_json::to_string_pretty(session) {
         let tmp = path.with_extension("tmp");
         if fs::write(&tmp, json).is_ok() {
             let _ = fs::rename(&tmp, path);
@@ -248,7 +283,7 @@ fn home_dir() -> Option<PathBuf> {
         .map(PathBuf::from)
 }
 
-async fn watch_rebuild(root: PathBuf, output: PathBuf, profile: Profile) -> Result<()> {
+async fn watch_rebuild(workspace: Workspace, output: PathBuf, profile: Profile) -> Result<()> {
     let (tx, mut rx) = mpsc::unbounded_channel();
     let mut watcher = RecommendedWatcher::new(
         move |event| {
@@ -257,9 +292,11 @@ async fn watch_rebuild(root: PathBuf, output: PathBuf, profile: Profile) -> Resu
         Config::default(),
     )
     .context("failed to start knowledge watcher")?;
-    watcher
-        .watch(&root, RecursiveMode::Recursive)
-        .with_context(|| format!("failed to watch {}", root.display()))?;
+    for path in workspace.watch_paths() {
+        watcher
+            .watch(&path, RecursiveMode::Recursive)
+            .with_context(|| format!("failed to watch {}", path.display()))?;
+    }
 
     loop {
         let Some(event) = rx.recv().await else {
@@ -280,8 +317,13 @@ async fn watch_rebuild(root: PathBuf, output: PathBuf, profile: Profile) -> Resu
                 _ = &mut debounce => break,
             }
         }
-        if let Err(error) = site::build(&root, &output, profile) {
-            eprintln!("okmate: rebuild failed: {error:#}");
+        match workspace.reload(profile) {
+            Ok(reloaded) => {
+                if let Err(error) = site::build_workspace(&reloaded, &output) {
+                    eprintln!("okmate: rebuild failed: {error:#}");
+                }
+            }
+            Err(error) => eprintln!("okmate: reload failed: {error:#}"),
         }
     }
     Ok(())
@@ -301,6 +343,37 @@ mod tests {
         persist_bundle_to(&path, Path::new("/tmp/knowledge"));
         let session = load_session_from(&path);
         assert_eq!(session.bundle.as_deref(), Some(Path::new("/tmp/knowledge")));
+        assert!(!session.workspace);
+        persist_workspace_to(
+            &path,
+            &Workspace::from_members(vec![
+                crate::workspace::WorkspaceMember {
+                    id: "a".into(),
+                    path: PathBuf::from("/tmp/a"),
+                    bundle: empty_bundle("/tmp/a"),
+                },
+                crate::workspace::WorkspaceMember {
+                    id: "b".into(),
+                    path: PathBuf::from("/tmp/b"),
+                    bundle: empty_bundle("/tmp/b"),
+                },
+            ]),
+        );
+        let session = load_session_from(&path);
+        assert!(session.workspace);
+        assert_eq!(session.bundle.as_deref(), Some(Path::new("/tmp/a")));
         let _ = fs::remove_dir_all(dir);
+    }
+
+    fn empty_bundle(root: &str) -> okf::Bundle {
+        okf::Bundle {
+            root: PathBuf::from(root),
+            version: None,
+            concepts: Vec::new(),
+            indexes: Vec::new(),
+            logs: Vec::new(),
+            graph: Vec::new(),
+            diagnostics: Vec::new(),
+        }
     }
 }

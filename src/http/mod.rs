@@ -16,8 +16,23 @@ pub use settings::{render_fragment, render_page, settings_roots};
 pub struct AppState {
     pub output: PathBuf,
     pub root: PathBuf,
+    pub workspace: crate::workspace::Workspace,
     pub profile: Profile,
     pub config_path: PathBuf,
+}
+
+impl AppState {
+    pub fn new(output: PathBuf, root: PathBuf, profile: Profile, config_path: PathBuf) -> Self {
+        let workspace = crate::workspace::Workspace::load_single(&root, profile)
+            .unwrap_or_else(|_| crate::workspace::Workspace::empty());
+        Self {
+            output,
+            root,
+            workspace,
+            profile,
+            config_path,
+        }
+    }
 }
 
 pub fn bind_addr(public: bool, port: u16) -> SocketAddr {

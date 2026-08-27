@@ -17,12 +17,12 @@ fn app(
     config: std::path::PathBuf,
     peer: [u8; 4],
 ) -> axum::Router {
-    okmate::http::router(okmate::http::AppState {
+    okmate::http::router(okmate::http::AppState::new(
         output,
         root,
-        profile: Profile::Strict,
-        config_path: config,
-    })
+        Profile::Strict,
+        config,
+    ))
     .layer(MockConnectInfo(SocketAddr::from((peer, 40000))))
 }
 

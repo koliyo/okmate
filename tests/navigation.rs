@@ -10,12 +10,12 @@ use okf::Profile;
 use tower::ServiceExt;
 
 fn app(root: std::path::PathBuf, output: std::path::PathBuf) -> axum::Router {
-    okmate::http::router(okmate::http::AppState {
+    okmate::http::router(okmate::http::AppState::new(
         output,
         root,
-        profile: Profile::Strict,
-        config_path: std::env::temp_dir().join("okmate-nav-unused.toml"),
-    })
+        Profile::Strict,
+        std::env::temp_dir().join("okmate-nav-unused.toml"),
+    ))
 }
 
 async fn body_text(response: axum::http::Response<Body>) -> String {

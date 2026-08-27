@@ -36,8 +36,11 @@ pub fn is_datastar(headers: &HeaderMap) -> bool {
 }
 
 fn render_main_fragment(state: &AppState, path: &str) -> Option<String> {
-    let bundle = okf::load(&state.root, state.profile).ok()?;
-    let mut document = site::page_for_route(&bundle, path)?;
+    let workspace = state.workspace.reload(state.profile).ok()?;
+    if workspace.is_empty() {
+        return None;
+    }
+    let mut document = site::page_for_route(&workspace, path)?;
     if document.page_kind == "settings" {
         let config = crate::config::load_or_default(&state.config_path);
         document.config_path = state.config_path.display().to_string();
