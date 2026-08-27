@@ -73,11 +73,15 @@ def app_bundle_dir(root: Path) -> Path:
     return root / "dist" / f"{APP_NAME}.app"
 
 
-def resolve_app_bundle(root: Path, app: Path) -> Path:
-    resolved = app.expanduser()
+def resolve_repo_path(root: Path, path: Path) -> Path:
+    resolved = path.expanduser()
     if not resolved.is_absolute():
         resolved = root / resolved
     return resolved.resolve()
+
+
+def resolve_app_bundle(root: Path, app: Path) -> Path:
+    return resolve_repo_path(root, app)
 
 
 def h35_desktop_root(root: Path) -> Path:
@@ -132,8 +136,9 @@ def package_appcast(argv: list[str]) -> int:
         raise SystemExit(PACKAGE_APPCAST_USAGE)
     require_darwin("Appcast generation")
     root = repo_root()
-    inbox, prefix = argv
-    run(h35_ops_argv(root, ["appcast", inbox, prefix]), cwd=root, env=package_env(root))
+    inbox = resolve_repo_path(root, Path(argv[0]))
+    prefix = argv[1]
+    run(h35_ops_argv(root, ["appcast", str(inbox), prefix]), cwd=root, env=package_env(root))
     return 0
 
 

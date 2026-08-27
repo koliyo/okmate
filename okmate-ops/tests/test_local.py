@@ -204,8 +204,13 @@ def test_package_appcast_runs_h35_appcast(monkeypatch, tmp_path) -> None:
     monkeypatch.setattr("okmate_ops.local.require_darwin", lambda kind: None)
     monkeypatch.setattr("okmate_ops.local.run", fake_run)
 
-    inbox = str(tmp_path / "inbox")
     prefix = "https://example.test/download/"
+    relative = "dist/inbox"
+    (root / relative).mkdir(parents=True)
+    assert package_appcast([relative, prefix]) == 0
+    assert calls == [_ops_argv(h35, "appcast", str((root / relative).resolve()), prefix)]
+    calls.clear()
+    inbox = str((tmp_path / "inbox").resolve())
     assert package_appcast([inbox, prefix]) == 0
     assert calls == [_ops_argv(h35, "appcast", inbox, prefix)]
 
