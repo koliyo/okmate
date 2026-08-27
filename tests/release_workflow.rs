@@ -14,5 +14,7 @@ fn release_workflow_filters_v_star_tags() {
     assert!(workflow.contains("h35-desktop"));
     assert!(workflow.contains("dist/OKMate.app"));
     assert!(workflow.contains("dist/inbox/OKMate.zip"));
+    assert!(workflow.contains("gh release delete"));
+    assert!(workflow.contains("gh release create"));
     assert!(workflow.contains("--notes \"OKMate $tag\""));
 }

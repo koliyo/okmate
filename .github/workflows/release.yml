@@ -54,10 +54,9 @@ jobs:
           set -euo pipefail
           tag=${GITHUB_REF_NAME}
           if gh release view "$tag" >/dev/null 2>&1; then
-            gh release upload "$tag" dist/inbox/OKMate.zip dist/inbox/appcast.xml --clobber
-          else
-            gh release create "$tag" dist/inbox/OKMate.zip dist/inbox/appcast.xml \
-              --verify-tag \
-              --title "$tag" \
-              --notes "OKMate $tag"
+            gh release delete "$tag" --yes
           fi
+          gh release create "$tag" dist/inbox/OKMate.zip dist/inbox/appcast.xml \
+            --verify-tag \
+            --title "$tag" \
+            --notes "OKMate $tag"
