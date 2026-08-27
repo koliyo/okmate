@@ -39,7 +39,8 @@ pub fn build(root: &Path, output: &Path, profile: Profile) -> Result<BuildSummar
     let summary = okf::build(root, output, profile)?;
     let bundle = okf::load(root, profile)?;
     let workspace = Workspace::from_loaded(id_from_path(root), root.to_path_buf(), bundle);
-    write_site(&workspace, output, NavMode::Separated)?;
+    write_html_pages(&workspace, output, NavMode::Separated)?;
+    write_preview_shell(&workspace, output)?;
     Ok(summary)
 }
 
@@ -47,12 +48,11 @@ pub fn build_workspace(workspace: &Workspace, output: &Path) -> Result<()> {
     build_workspace_nav(workspace, output, NavMode::Separated)
 }
 
-pub fn build_workspace_nav(workspace: &Workspace, output: &Path, nav_mode: NavMode) -> Result<()> {
-    write_site(workspace, output, nav_mode)
+pub fn build_workspace_nav(workspace: &Workspace, output: &Path, _nav_mode: NavMode) -> Result<()> {
+    write_preview_shell(workspace, output)
 }
 
-fn write_site(workspace: &Workspace, output: &Path, nav_mode: NavMode) -> Result<()> {
-    write_html_pages(workspace, output, nav_mode)?;
+fn write_preview_shell(workspace: &Workspace, output: &Path) -> Result<()> {
     write_pages_json(workspace, output)?;
     write_assets(output)?;
     Ok(())

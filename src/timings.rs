@@ -298,7 +298,11 @@ fn measure_site(workspace: &Workspace) -> Result<SiteTiming> {
         write_ms,
         file_count,
         byte_total,
-        largest_path,
+        largest_path: if largest_path.is_empty() {
+            "assets only".into()
+        } else {
+            largest_path
+        },
     })
 }
 
