@@ -9,8 +9,10 @@ attach an unsigned production archive.
 
 The tag-triggered `.github/workflows/release.yml` workflow signs, zips that
 bundle, and runs `okmate-ops package appcast`. Operators still create
-immutable `v*` tags only with `okmate-ops promote tag vX.Y.Z`. The movable
-`dev` tag is not an update channel.
+immutable `v*` tags only with `okmate-ops promote tag vX.Y.Z`, which writes
+the crate and Homebrew cask versions, pushes that commit, then tags. The
+cask installs the same `Okmate.zip` Sparkle serves. The movable `dev` tag
+is not an update channel.
 
 ## Secrets
 

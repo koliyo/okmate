@@ -89,13 +89,29 @@ On macOS, assemble `Okmate.app` with
 
 Download `Okmate.zip` from the latest
 [GitHub Release](https://github.com/koliyo/okmate/releases/latest), unzip it,
-and drag `Okmate.app` to `/Applications`. Double-click opens the knowledge
-window (`view`) and restores `~/.okmate/state` when present.
+and drag `Okmate.app` to `/Applications`. Or install the same archive with
+Homebrew (this repository is a tap):
 
-**Check for Updates…** in the Okmate menu uses Sparkle. After the second
-launch, Sparkle may ask to check automatically. An update shows release notes
-and Install / Remind Me Later / Skip. Installation replaces this `.app` and
-relaunches; it does not rewrite `~/.okmate/` config, cache, or session.
+```sh
+brew tap koliyo/okmate
+brew install --cask okmate
+```
+
+The cask installs `Okmate.app` from that release `Okmate.zip` and uses
+Homebrew’s `binary` stanza so `$(brew --prefix)/bin/okmate` (on Apple
+Silicon, `/opt/homebrew/bin/okmate`) is a symlink to
+`Okmate.app/Contents/MacOS/okmate`. That is the same crate binary: Finder
+/ no-args launch opens the window, `okmate check` and the other
+subcommands stay CLI, and Sparkle still runs only for the desktop window.
+**Check for Updates…** and `brew upgrade --cask okmate` both follow
+GitHub `releases/latest` (the same channel as `appcast.xml`). The cask is
+marked `auto_updates` so Homebrew does not fight Sparkle. Neither path
+rewrites `~/.okmate/` config, cache, or session.
+
+Double-click opens the knowledge window (`view`) and restores
+`~/.okmate/state` when present. After the second launch, Sparkle may ask
+to check automatically. An update shows release notes and Install /
+Remind Me Later / Skip.
 
 A `cargo install` or copied `okmate` binary on `PATH` does not self-update.
 Use a new install, or the `.app`, for updates.
@@ -106,22 +122,23 @@ The update plan is
 [`knowledge/plans/okmate/standalone-self-update.md`](knowledge/plans/okmate/standalone-self-update.md).
 Do not treat this README as an architecture decision.
 
-1. Bump `package.version` in `Cargo.toml` and, if it must move separately,
-   `BUNDLE_VERSION` / `CFBundleVersion` (every `v*` must increase the Sparkle
-   compare version).
-2. Wait for hosted **Test** on the SHA you will tag.
-3. Run `uv run okmate-ops promote tag vX.Y.Z` (or `--from BRANCH`). That is
-   the only operator path that creates an immutable `v*` tag.
-4. Wait for the **Release** workflow on that tag (signing secrets must be
+1. Run `uv run okmate-ops promote tag vX.Y.Z` (or `--from BRANCH`). That is
+   the only operator path that creates an immutable `v*` tag. For a versioned
+   tag it writes `X.Y.Z` to `Cargo.toml`, `okf/Cargo.toml`, `Cargo.lock`, and
+   `Casks/okmate.rb`, pushes that commit to the target branch, waits for
+   hosted **Test** on the version commit, then pushes the tag. Set
+   `BUNDLE_VERSION` only when Sparkle's compare version must move separately
+   from Cargo (every `v*` must increase it).
+2. Wait for the **Release** workflow on that tag (signing secrets must be
    present; the job fails closed instead of attaching an unsigned archive).
-5. Confirm
+3. Confirm
    `https://github.com/koliyo/okmate/releases/latest/download/appcast.xml`
    serves the new item.
 
 Replay local validation with `uv run --no-dev okmate-ops ci`. To publish a
 GitHub release tag from `origin/main`, run
 `uv run okmate-ops promote tag vX.Y.Z` (or `--from BRANCH`).
-That waits for hosted CI on the target SHA, then pushes the tag.
+The `dev` tag is not version-bumped.
 `uv run okmate-ops promote tag dev` force-moves the rolling `dev` prerelease
 tag. `dev` is not `SUFeedURL`. A later `git pull` then reports
 `! [rejected] dev -> dev (would clobber existing tag)` unless this repo

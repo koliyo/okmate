@@ -4,7 +4,7 @@ title: Standalone Okmate self-update
 description: Ship Okmate.app with Sparkle 2 so macOS users check, consent, replace, and relaunch the way common Mac apps do, using GitHub Releases as the artifact store.
 tags: [domain/okmate, domain/ops, concern/tooling, concern/architecture]
 status: draft
-generated: { by: process:cursor, at: 2026-08-26T18:10:00Z }
+generated: { by: process:cursor, at: 2026-08-27T06:05:00Z }
 stale_after: 2026-11-26
 authority: exploratory
 owners: [human:nils]
@@ -58,7 +58,12 @@ sources:
     resource: ../../../okmate-ops/src/okmate_ops/promote.py
     title: promote tag after hosted Test
     author: process:git
-    last_modified: 2026-08-26
+    last_modified: 2026-08-27
+  - id: cask
+    resource: ../../../Casks/okmate.rb
+    title: Homebrew cask for Okmate.app
+    author: process:cursor
+    last_modified: 2026-08-27
   - id: sparkle
     resource: https://sparkle-project.org/documentation/
     title: Sparkle 2 setup, signing, and appcast
@@ -140,10 +145,10 @@ launch and do not silently install.[^sparkle][^sparkle-custom]
 - `cargo test -p okmate --no-default-features` on Ubuntu remains the hosted
   `Test` gate. Sparkle and `.app` work stay behind `desktop` +
   `target_os = "macos"`.[^ci][^cargo]
-- `okmate-ops promote tag vX.Y.Z` stays the human gate that waits for
-  `Test` and pushes an immutable `v*` tag. Release packaging is a
-  tag-triggered workflow, not a second promote verb, unless a later phase
-  adds a thin helper.[^promote][^ops-plan]
+- `okmate-ops promote tag vX.Y.Z` stays the human gate that writes crate
+  versions, pushes that commit, waits for `Test`, and pushes an immutable
+  `v*` tag. Release packaging is a tag-triggered workflow, not a second
+  promote verb, unless a later phase adds a thin helper.[^promote][^ops-plan]
 - `dev` remains a force-moved prerelease tag for operators, not
   `SUFeedURL`.[^readme][^promote]
 - Serve the feed and archives over HTTPS. Sign archives with Sparkle EdDSA
@@ -207,8 +212,10 @@ concern. The desktop host owns the menu and Sparkle; Askama settings stay
 knowledge roots.[^overview][^desktop]
 
 CLI-only installs (`cargo install`, a copied `okmate` on `PATH`) stay
-manual in this plan. A later Homebrew formula or `dist` installer can cover
-them without changing Sparkle.
+manual in this plan. Homebrew installs the same GitHub Release `Okmate.zip`
+Sparkle uses and `binary`-links `$(brew --prefix)/bin/okmate` to that
+bundle (`Casks/okmate.rb`, `auto_updates`); it is not a second in-app
+updater.[^cask]
 
 ## Phases
 
@@ -328,11 +335,11 @@ lists the secrets and the staple verify commands.
 
 **Bound:** README: how a Mac user installs the first `.app` (drag to
 `/Applications`), how updates appear, that CLI-only installs do not
-self-update. Operator notes: bump Cargo version + `CFBundleVersion`, wait
-for `Test`, `okmate-ops promote tag vX.Y.Z`, wait for the release
-workflow, confirm `releases/latest/download/appcast.xml` serves the new
-item. Point at this plan; do not rewrite [system overview](/architecture/system-overview.md)
-until the behavior ships.
+self-update. Operator notes: `okmate-ops promote tag vX.Y.Z` writes crate
+and Homebrew cask versions and pushes that commit before tagging; wait
+for the release workflow, confirm `releases/latest/download/appcast.xml`
+serves the new item. Point at this plan; do not rewrite
+[system overview](/architecture/system-overview.md) until the behavior ships.
 
 **Out of bound:** Architecture Decision. Executing a real production
 release.
@@ -355,16 +362,17 @@ unchanged until this behavior is on `main`. Evidence: this worktree's
 [^readme]: CLI, `~/.okmate/`, `promote tag`, and rolling `dev` fetch.
 [^overview]: Application crate owns desktop; engine stays UI-neutral.
 [^extract]: Named `Okmate.app`; Phase 7 left signed notarized release out.
-[^ops-plan]: `promote tag` waits for hosted `Test` only.
+[^ops-plan]: `promote tag v*` writes versions, pushes, waits for `Test`, then tags.
 [^desktop]: tao/wry window; IPC is pick-folder and home; no menu or updater.
 [^cli]: `subcommand_required`; no default Finder entrypoint.
 [^preview]: Session restore from `~/.okmate/state` when `view` has no path.
 [^cargo]: Default feature is `desktop`; version `0.1.0`.
 [^ci]: Ubuntu `Test` job; no packaging or macOS runner.
-[^promote]: Annotated `v*` or force-moved `dev`; no release assets.
+[^promote]: Version commit on the target branch, then annotated `v*` or force-moved `dev`; no release assets.
 [^sparkle]: Framework embed, EdDSA, appcast, standard controller, notarize.
 [^sparkle-custom]: `SUFeedURL`, `SUPublicEDKey`, check/install consent keys.
 [^sparkle-publish]: `generate_appcast`, enclosure URLs, release notes beside the archive.
 [^axoupdater]: Install-receipt updater for cargo-dist installers, not `.app` replace.
 [^dist]: Generates its own release CI around installers and tarballs.
 [^gh-latest]: Stable `/releases/latest/download/<asset>` URLs.
+[^cask]: Tap cask installs `Okmate.zip` from the same `v*` release and `binary` links `$(brew --prefix)/bin/okmate` to the bundle executable; `auto_updates` and `github_latest` follow Sparkle’s channel.

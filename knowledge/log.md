@@ -5,6 +5,12 @@ Independent bullets under the same `## YYYY-MM-DD` heading combine instead of
 conflicting. Add a new list item; do not reword another session's bullet in
 the same change.
 
+## 2026-08-27
+
+- Added in-repo Homebrew formula for the `okmate` crate and taught `promote tag v*` to write crate versions, push that commit to the target branch, then tag. Exploratory; do not log complete until hosted CI succeeds.
+- Switched the Homebrew tap to a Sparkle-aligned cask (`Okmate.zip` from GitHub Releases, `auto_updates`, `github_latest` livecheck). Exploratory; do not log complete until hosted CI succeeds.
+- Homebrew cask now links the bundle CLI so one install provides `Okmate.app` and `okmate` from the same release zip. Exploratory; do not log complete until hosted CI succeeds.
+
 ## 2026-08-26
 
 - Drafted paired audit and plan for okmate viewer-shell parity with last rocci-okf (panes, outline spy, keep-nav). Exploratory; do not log complete until hosted CI succeeds.
