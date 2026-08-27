@@ -23,6 +23,8 @@ is not an update channel.
 | --- | --- | --- |
 | `SPARKLE_EDDSA_PRIVATE_KEY` | `release.yml` → `okmate-ops package appcast` | Sparkle EdDSA private key, passed on stdin via `--ed-key-file -`. Never pass `-s` and never echo this value. |
 | `APPLE_DEVELOPER_ID_APPLICATION` | `okmate-ops package sign` | Developer ID Application identity passed to `codesign --sign`. |
+| `APPLE_CERTIFICATE_P12` | `okmate-ops package sign` on GitHub Actions | Base64 of a PKCS#12 that contains that Developer ID cert and private key. Hosted runners have an empty keychain; the identity string alone is not enough. |
+| `APPLE_CERTIFICATE_PASSWORD` | `okmate-ops package sign` on GitHub Actions | Passphrase for that `.p12`. |
 | `APPLE_API_KEY_ID` | `okmate-ops package sign` | App Store Connect API key id for `notarytool`. |
 | `APPLE_API_ISSUER` | `okmate-ops package sign` | App Store Connect API issuer UUID. |
 | `APPLE_API_KEY` | `okmate-ops package sign` | App Store Connect API `.p8` contents. Written to a temp file only. |
@@ -113,9 +115,26 @@ security find-identity -p codesigning -v
 ```
 
 The line `Developer ID Application: Your Name (TEAMID)` is
-`APPLE_DEVELOPER_ID_APPLICATION`. `package sign` passes that string to
-`codesign --sign`; the cert and key must already be in that machine’s
-keychain.
+`APPLE_DEVELOPER_ID_APPLICATION`. Local `package sign` passes that
+string to `codesign --sign` and uses the cert already in this
+machine’s login keychain.
+
+GitHub-hosted `macos-latest` has no login keychain identities. Export
+only the Developer ID (do not run `security export -t identities`; that
+walks every identity, including VPN and browser certs):
+
+1. Keychain Access → login → My Certificates.
+2. Select `Developer ID Application: … (TEAMID)` — the same string as
+   `APPLE_DEVELOPER_ID_APPLICATION`.
+3. File → Export Items… → Personal Information Exchange (`.p12`).
+4. Choose an export passphrase (`APPLE_CERTIFICATE_PASSWORD`).
+
+```sh
+base64 < developer-id.p12 | pbcopy
+```
+
+`APPLE_CERTIFICATE_P12` is that base64 blob. `package sign` imports the
+`.p12` into a temporary keychain, signs, then deletes the keychain.
 
 ### App Store Connect API key (notarytool)
 
@@ -140,8 +159,9 @@ xcrun notarytool history \
 A `401` usually means an individual key used with `--issuer`, or a
 mistyped id.
 
-Check that the five values are visible to the signer (does not claim
-notarization):
+Check that the Apple and Sparkle values are visible to the signer
+(does not claim notarization). On a laptop the `.p12` secrets are
+optional if the Developer ID is already in the login keychain:
 
 ```sh
 SIGN_DRY_RUN=1 uv run --no-dev okmate-ops package sign dist/Okmate.app

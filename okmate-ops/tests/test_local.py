@@ -169,6 +169,8 @@ def test_package_sign_runs_h35_signer(monkeypatch, tmp_path) -> None:
         return ""
 
     monkeypatch.setenv("H35_DESKTOP", str(h35))
+    monkeypatch.delenv("GITHUB_ACTIONS", raising=False)
+    monkeypatch.delenv("APPLE_CERTIFICATE_P12", raising=False)
     monkeypatch.setattr("okmate_ops.local.repo_root", lambda: root)
     monkeypatch.setattr("okmate_ops.local.require_darwin", lambda kind: None)
     monkeypatch.setattr("okmate_ops.local.run", fake_run)

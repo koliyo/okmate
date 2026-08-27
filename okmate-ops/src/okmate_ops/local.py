@@ -9,6 +9,7 @@ import time
 from pathlib import Path
 
 from okmate_ops.paths import repo_root
+from okmate_ops.signing import imported_developer_id_keychain
 
 CLI_CRATE = "okmate"
 CLI_BINARY = "okmate"
@@ -121,7 +122,8 @@ def package_sign(argv: list[str]) -> int:
     require_darwin("Signing")
     root = repo_root()
     app = resolve_app_bundle(root, Path(argv[0]) if argv else app_bundle_dir(root))
-    run(h35_ops_argv(root, ["sign", str(app)]), cwd=root, env=package_env(root))
+    with imported_developer_id_keychain():
+        run(h35_ops_argv(root, ["sign", str(app)]), cwd=root, env=package_env(root))
     return 0
 
 
