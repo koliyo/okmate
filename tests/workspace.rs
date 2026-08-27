@@ -173,3 +173,80 @@ async fn single_root_unprefixed_routes_still_work() {
     assert!(body.contains("Solo Shared"), "{body}");
     assert!(body.contains("id=\"okmate-nav\""), "{body}");
 }
+
+fn concept_at(title: &str, at: &str) -> String {
+    format!(
+        "---\ntype: Architecture\ntitle: {title}\ndescription: Test concept {title}.\ntags: [domain/okf, concern/architecture]\nstatus: draft\ngenerated: {{ by: process:test, at: {at} }}\nauthority: descriptive\nowners: [human:nils]\n---\n\n# {title}\n\nBody.\n"
+    )
+}
+
+#[tokio::test]
+async fn workspace_home_orders_recents_and_merges_log_days() {
+    let a = temp_dir("ws-dash-a");
+    let b = temp_dir("ws-dash-b");
+    write_index(&a);
+    write_index(&b);
+    fs::create_dir_all(a.join("plans")).unwrap();
+    fs::create_dir_all(b.join("plans")).unwrap();
+    fs::write(a.join("plans").join("index.md"), "# Plans\n").unwrap();
+    fs::write(b.join("plans").join("index.md"), "# Plans\n").unwrap();
+    fs::write(
+        a.join("plans").join("older.md"),
+        concept_at("Older", "2026-08-10T00:00:00Z"),
+    )
+    .unwrap();
+    fs::write(
+        b.join("plans").join("newer.md"),
+        concept_at("Newer", "2026-08-20T00:00:00Z"),
+    )
+    .unwrap();
+    fs::write(
+        a.join("log.md"),
+        "# Knowledge log\n\n## 2026-08-10\n\n- Alpha day.\n",
+    )
+    .unwrap();
+    fs::write(
+        b.join("log.md"),
+        "# Knowledge log\n\n## 2026-08-20\n\n- Beta day.\n",
+    )
+    .unwrap();
+    let workspace = Workspace::load_members(
+        vec![("a".into(), a.clone()), ("b".into(), b.clone())],
+        Profile::Strict,
+    )
+    .unwrap();
+    let output = temp_dir("ws-dash-out");
+    okmate::site::build_workspace(&workspace, &output).unwrap();
+    let home = fs::read_to_string(output.join("index.html")).unwrap();
+    assert!(home.contains("id=\"okmate-recents\""), "{home}");
+    assert!(home.contains("id=\"okmate-log\""), "{home}");
+    assert!(!home.contains("Knowledge Collections"), "{home}");
+    let recents = home
+        .split_once("id=\"okmate-recents\"")
+        .map(|(_, rest)| rest)
+        .and_then(|rest| rest.split_once("id=\"okmate-log\""))
+        .map(|(recents, _)| recents)
+        .expect("recents section");
+    let newer = recents.find("Newer").expect("newer first");
+    let older = recents.find("Older").expect("older second");
+    assert!(newer < older, "{recents}");
+    assert!(home.contains("okmate-root\">a<"), "{home}");
+    assert!(home.contains("okmate-root\">b<"), "{home}");
+    let log = home
+        .split_once("id=\"okmate-log\"")
+        .map(|(_, rest)| rest)
+        .expect("log section");
+    let beta = log.find("2026-08-20").expect("newer log day");
+    let alpha = log.find("2026-08-10").expect("older log day");
+    assert!(beta < alpha, "{log}");
+    assert!(home.contains("Alpha day."), "{home}");
+    assert!(home.contains("Beta day."), "{home}");
+
+    let app = app(a, output, workspace);
+    let review = app
+        .oneshot(Request::get("/review/").body(Body::empty()).unwrap())
+        .await
+        .unwrap();
+    let review_body = body_text(review).await;
+    assert!(review_body.contains(">Source<"), "{review_body}");
+}

@@ -12,6 +12,7 @@
           <thead>
             <tr>
               <th>Concept</th>
+              {% if show_root %}<th>Source</th>{% endif %}
               <th>Collection</th>
               <th>Required Action</th>
             </tr>
@@ -23,6 +24,9 @@
                   <a href="{{ row.href }}" class="okmate-concept-title-link" data-on:click__prevent="@get('{{ row.href }}')"><strong>{{ row.title }}</strong></a>
                   <div class="okmate-concept-id-sub"><code>{{ row.id }}</code></div>
                 </td>
+                {% if show_root %}
+                  <td><span class="okmate-badge okmate-root">{{ row.root }}</span></td>
+                {% endif %}
                 <td><span class="okmate-badge okmate-type">{{ row.concept_type }}</span></td>
                 <td>
                   <div class="okmate-action-wrapper">
@@ -56,6 +60,7 @@
       <thead>
         <tr>
           <th>Concept</th>
+          {% if show_root %}<th>Source</th>{% endif %}
           <th>Collection</th>
           <th>Lifecycle / Authority</th>
           <th>Trust &amp; Verification</th>
@@ -69,6 +74,9 @@
               <a href="{{ row.href }}" class="okmate-concept-title-link" data-on:click__prevent="@get('{{ row.href }}')"><strong>{{ row.title }}</strong></a>
               <div class="okmate-concept-id-sub"><code>{{ row.id }}</code></div>
             </td>
+            {% if show_root %}
+              <td><span class="okmate-badge okmate-root">{{ row.root }}</span></td>
+            {% endif %}
             <td><span class="okmate-badge okmate-type">{{ row.concept_type }}</span></td>
             <td>
               <span class="okmate-badge okmate-status okmate-status-{{ row.status }}">{{ row.status }}</span>

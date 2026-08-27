@@ -8,7 +8,7 @@ use serde::Serialize;
 
 use crate::views::{
     Crumb, Document, NavNode, action_rows, compact_type_label, concept_meta, diagnostic_rows,
-    governance_stats, recent_leaf_documents, review_rows, toc_from_headings,
+    governance_stats, merged_log, recent_leaf_documents, review_rows, toc_from_headings,
 };
 use crate::workspace::{Workspace, WorkspaceMember, id_from_path, normalize_route};
 
@@ -79,38 +79,21 @@ pub fn write_html_pages(workspace: &Workspace, output: &Path) -> Result<()> {
 pub fn page_for_route(workspace: &Workspace, route: &str) -> Option<Document> {
     let route = normalize_route(route);
     match route.as_str() {
-        "/" => {
-            let member = workspace.primary()?;
-            let bundle = &member.bundle;
-            if let Some(index) = bundle.indexes.iter().find(|index| index.path == "index.md") {
-                Some(
-                    document(workspace, "/", "Knowledge", Vec::new())
-                        .with_kind("home")
-                        .with_home(bundle)
-                        .with_article(&workspace.rewrite_article(&member.id, &index.article_html)),
-                )
-            } else {
-                Some(
-                    document(workspace, "/", "Knowledge", Vec::new())
-                        .with_kind("home")
-                        .with_home(bundle)
-                        .with_article("<h1>Knowledge</h1>"),
-                )
-            }
-        }
-        "/review/" => {
-            let bundle = &workspace.primary()?.bundle;
-            Some(
-                document(
-                    workspace,
-                    "/review/",
-                    "Knowledge Governance & Review Queue",
-                    Vec::new(),
-                )
-                .with_kind("review")
-                .with_review(bundle),
+        "/" => Some(
+            document(workspace, "/", "Knowledge", Vec::new())
+                .with_kind("home")
+                .with_home(workspace),
+        ),
+        "/review/" => Some(
+            document(
+                workspace,
+                "/review/",
+                "Knowledge Governance & Review Queue",
+                Vec::new(),
             )
-        }
+            .with_kind("review")
+            .with_review(workspace),
+        ),
         "/settings/" => Some(settings_document(workspace)),
         other => {
             let (member, id) = workspace.parse_document_route(other)?;
@@ -177,6 +160,8 @@ fn document(
         action_rows: Vec::new(),
         stats: Vec::new(),
         recents: Vec::new(),
+        log_days: Vec::new(),
+        show_root: false,
         crumbs: breadcrumbs(workspace, route, title),
         diagnostics: Vec::new(),
         meta: crate::views::ConceptMeta::default(),
@@ -276,17 +261,20 @@ impl Document {
         self
     }
 
-    fn with_review(mut self, bundle: &Bundle) -> Self {
-        self.review_rows = review_rows(bundle);
+    fn with_review(mut self, workspace: &Workspace) -> Self {
+        self.review_rows = review_rows(workspace);
         self.action_rows = action_rows(&self.review_rows);
-        self.stats = governance_stats(bundle);
-        self.diagnostics = diagnostic_rows(bundle);
+        self.stats = governance_stats(workspace);
+        self.diagnostics = diagnostic_rows(workspace);
+        self.show_root = workspace.is_multi();
         self
     }
 
-    fn with_home(mut self, bundle: &Bundle) -> Self {
-        self.recents = recent_leaf_documents(bundle, 10);
-        self.stats = governance_stats(bundle);
+    fn with_home(mut self, workspace: &Workspace) -> Self {
+        self.recents = recent_leaf_documents(workspace, 10);
+        self.stats = governance_stats(workspace);
+        self.log_days = merged_log(workspace);
+        self.show_root = workspace.is_multi();
         self
     }
 }

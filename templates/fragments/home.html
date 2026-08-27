@@ -13,17 +13,37 @@
               {% if !doc.collection.is_empty() %}
                 <span class="okmate-badge okmate-type">{{ doc.collection }}</span>
               {% endif %}
+              {% if !doc.root.is_empty() %}
+                <span class="okmate-badge okmate-root">{{ doc.root }}</span>
+              {% endif %}
             </a>
           </li>
         {% endfor %}
       </ul>
     {% endif %}
   </section>
+  <section class="okmate-log" id="okmate-log">
+    <h2 id="bundle-log">Log</h2>
+    {% if log_days.is_empty() %}
+      <p class="okmate-log-empty">No log entries yet.</p>
+    {% else %}
+      {% for day in log_days %}
+        <h3 class="okmate-log-date">{{ day.date }}</h3>
+        <ul class="okmate-log-list">
+          {% for entry in day.entries %}
+            <li>
+              <span class="okmate-log-text">{{ entry.text }}</span>
+              {% if !entry.root.is_empty() %}
+                <span class="okmate-badge okmate-root">{{ entry.root }}</span>
+              {% endif %}
+            </li>
+          {% endfor %}
+        </ul>
+      {% endfor %}
+    {% endif %}
+  </section>
   <div class="okmate-cta-row">
     <a href="/review/" class="okmate-cta-btn" data-on:click__prevent="@get('/review/')">Open review queue</a>
   </div>
   {% include "fragments/stats.html" %}
-  <hr class="okmate-rule">
-  <h2 id="knowledge-collections">Knowledge Collections</h2>
 </div>
-{{ article_html|safe }}

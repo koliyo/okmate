@@ -23,6 +23,11 @@ fn build_writes_engine_catalog_html_landmarks_and_pages_json() {
         valid_strict_concept("Stale", "stale_after: 2000-01-01\n", "Expired record.\n"),
     )
     .unwrap();
+    fs::write(
+        root.join("log.md"),
+        "# Knowledge log\n\n## 2026-08-20\n\n- Built a sample record.\n",
+    )
+    .unwrap();
     let output = temp_dir("build-out");
 
     let status = Command::new(okmate_bin())
@@ -47,9 +52,12 @@ fn build_writes_engine_catalog_html_landmarks_and_pages_json() {
     assert!(home.contains("id=\"okmate-main\""), "{home}");
     assert!(home.contains("id=\"okmate-recents\""), "{home}");
     assert!(home.contains("okmate-recents-list"), "{home}");
+    assert!(home.contains("id=\"okmate-log\""), "{home}");
+    assert!(home.contains("2026-08-20"), "{home}");
+    assert!(home.contains("Built a sample record."), "{home}");
     assert!(!home.contains("okmate-toc-link"), "{home}");
     assert!(home.contains("Open review queue"), "{home}");
-    assert!(home.contains("Knowledge Collections"), "{home}");
+    assert!(!home.contains("Knowledge Collections"), "{home}");
     assert!(home.contains("Total"), "{home}");
 
     let concept = fs::read_to_string(output.join("hello").join("index.html")).unwrap();
