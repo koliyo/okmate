@@ -54,15 +54,18 @@ jobs:
         run: |
           set -euo pipefail
           tag=${GITHUB_REF_NAME}
-          extra=()
-          if [[ "$tag" == "dev" ]]; then
-            extra+=(--prerelease)
-          fi
           if gh release view "$tag" >/dev/null 2>&1; then
             gh release delete "$tag" --yes
           fi
-          gh release create "$tag" dist/inbox/OKMate.zip dist/inbox/appcast.xml \
-            --verify-tag \
-            --title "$tag" \
-            --notes "OKMate $tag" \
-            "${extra[@]}"
+          if [[ "$tag" == "dev" ]]; then
+            gh release create "$tag" dist/inbox/OKMate.zip dist/inbox/appcast.xml \
+              --verify-tag \
+              --title "$tag" \
+              --notes "OKMate $tag" \
+              --prerelease
+          else
+            gh release create "$tag" dist/inbox/OKMate.zip dist/inbox/appcast.xml \
+              --verify-tag \
+              --title "$tag" \
+              --notes "OKMate $tag"
+          fi
