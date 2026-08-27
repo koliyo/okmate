@@ -195,10 +195,12 @@ pub fn review_rows(bundle: &Bundle) -> Vec<ReviewRow> {
             let status = okf::string_field(&concept.metadata, "status").unwrap_or("draft");
             let authority =
                 okf::string_field(&concept.metadata, "authority").unwrap_or("descriptive");
-            let concept_type = okf::string_field(&concept.metadata, "type").unwrap_or("Concept");
+            let concept_type = compact_type_label(
+                okf::string_field(&concept.metadata, "type").unwrap_or("Concept"),
+            );
             let trust = okf::search::concept_trust_tier(&concept.metadata);
             let (trust_slug, trust_label) = match trust {
-                okf::TrustTier::HumanReviewed => ("human", "human-reviewed"),
+                okf::TrustTier::HumanReviewed => ("human", "reviewed"),
                 okf::TrustTier::Generated => ("generated", "generated"),
                 okf::TrustTier::Unverified => ("unverified", "unverified"),
             };
@@ -236,6 +238,14 @@ pub fn review_rows(bundle: &Bundle) -> Vec<ReviewRow> {
             }
         })
         .collect()
+}
+
+pub fn compact_type_label(kind: &str) -> &str {
+    match kind {
+        "Implementation Plan" => "Plan",
+        "Research Report" => "Research",
+        _ => kind,
+    }
 }
 
 fn action_rank(kind: okf::ActionKind) -> u8 {
@@ -532,6 +542,8 @@ mod tests {
         assert!(html.contains("Open review queue"));
         assert!(html.contains("Knowledge Collections"));
         assert!(html.contains("Total"));
+        assert!(!html.contains("okmate-toc-link"), "{html}");
+        assert!(!html.contains("okmate-outline-menu"), "{html}");
     }
 
     #[test]

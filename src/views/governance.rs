@@ -146,7 +146,7 @@ pub fn diagnostic_rows(bundle: &Bundle) -> Vec<DiagnosticRow> {
 pub fn concept_meta(concept: &Concept, diagnostics: &[Diagnostic]) -> ConceptMeta {
     let trust = okf::search::concept_trust_tier(&concept.metadata);
     let (trust_slug, trust_label) = match trust {
-        TrustTier::HumanReviewed => ("human", "human-reviewed"),
+        TrustTier::HumanReviewed => ("human", "reviewed"),
         TrustTier::Generated => ("generated", "generated"),
         TrustTier::Unverified => ("unverified", "unverified"),
     };
@@ -189,9 +189,14 @@ pub fn concept_meta(concept: &Concept, diagnostics: &[Diagnostic]) -> ConceptMet
             .and_then(|value| value.as_str())
             .unwrap_or("");
         if !by.is_empty() {
+            let value = if at.len() >= 10 {
+                format!("{by} · {}", &at[..10])
+            } else {
+                by.to_string()
+            };
             provenance.push(ProvenanceItem {
                 label: "Generated".into(),
-                value: format!("{by} @ {at}"),
+                value,
                 unverified: false,
             });
         }

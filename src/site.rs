@@ -7,8 +7,8 @@ use okf::{BuildSummary, Bundle, Profile};
 use serde::Serialize;
 
 use crate::views::{
-    Crumb, Document, NavNode, action_rows, concept_meta, diagnostic_rows, governance_stats,
-    recent_leaf_documents, review_rows, toc_from_headings,
+    Crumb, Document, NavNode, action_rows, compact_type_label, concept_meta, diagnostic_rows,
+    governance_stats, recent_leaf_documents, review_rows, toc_from_headings,
 };
 
 const APP_CSS: &str = include_str!("../assets/app.css");
@@ -67,7 +67,7 @@ pub fn page_for_route(bundle: &Bundle, route: &str) -> Option<Document> {
         "/" => {
             if let Some(index) = bundle.indexes.iter().find(|index| index.path == "index.md") {
                 Some(
-                    document(bundle, "/", "Knowledge", toc_from_headings(&index.headings))
+                    document(bundle, "/", "Knowledge", Vec::new())
                         .with_kind("home")
                         .with_home(bundle)
                         .with_article(&index.article_html),
@@ -234,9 +234,9 @@ impl Document {
     }
 
     fn with_meta(mut self, concept: &okf::Concept, diagnostics: &[okf::Diagnostic]) -> Self {
-        self.concept_type = okf::string_field(&concept.metadata, "type")
-            .unwrap_or("Concept")
-            .to_string();
+        self.concept_type =
+            compact_type_label(okf::string_field(&concept.metadata, "type").unwrap_or("Concept"))
+                .to_string();
         self.status = okf::string_field(&concept.metadata, "status")
             .unwrap_or("draft")
             .to_string();

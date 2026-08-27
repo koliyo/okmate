@@ -47,6 +47,7 @@ fn build_writes_engine_catalog_html_landmarks_and_pages_json() {
     assert!(home.contains("id=\"okmate-main\""), "{home}");
     assert!(home.contains("id=\"okmate-recents\""), "{home}");
     assert!(home.contains("okmate-recents-list"), "{home}");
+    assert!(!home.contains("okmate-toc-link"), "{home}");
     assert!(home.contains("Open review queue"), "{home}");
     assert!(home.contains("Knowledge Collections"), "{home}");
     assert!(home.contains("Total"), "{home}");

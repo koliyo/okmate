@@ -6,7 +6,7 @@
       {% if !status.is_empty() %}<span class="okmate-badge okmate-status okmate-status-{{ status }}">{{ status }}</span>{% endif %}
       {% if !authority.is_empty() %}<span class="okmate-badge okmate-auth okmate-auth-{{ authority }}">{{ authority }}</span>{% endif %}
       {% if !meta.trust_label.is_empty() %}<span class="okmate-badge okmate-trust okmate-trust-{{ meta.trust_slug }}">{{ meta.trust_label }}</span>{% endif %}
-      {% if meta.stale %}<span class="okmate-badge okmate-badge-stale">Stale (expired {{ meta.stale_after }})</span>{% endif %}
+      {% if meta.stale %}<span class="okmate-badge okmate-badge-stale">stale</span>{% endif %}
     </div>
     {% if !meta.alert.is_empty() %}
       <div class="okmate-alert-banner" role="alert">
@@ -19,14 +19,14 @@
       <p class="okmate-lead">{{ meta.description }}</p>
     {% endif %}
     {% if !meta.provenance.is_empty() %}
-      <ul class="okmate-provenance">
+      <div class="okmate-meta-grid">
         {% for item in meta.provenance %}
-          <li>
+          <div class="okmate-meta-item">
             <span class="okmate-meta-label">{{ item.label }}</span>
             {% if item.unverified %}<em>{{ item.value }}</em>{% else %}<code>{{ item.value }}</code>{% endif %}
-          </li>
+          </div>
         {% endfor %}
-      </ul>
+      </div>
     {% endif %}
     {% if !meta.drift_sources.is_empty() %}
       <ul class="okmate-provenance">
