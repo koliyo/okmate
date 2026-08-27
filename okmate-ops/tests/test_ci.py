@@ -5,7 +5,32 @@ from okmate_ops.paths import repo_root
 
 
 def test_list_jobs_are_stable() -> None:
-    assert JOB_NAMES == ("test", "knowledge")
+    assert JOB_NAMES == ("lint", "test", "knowledge")
+
+
+def test_parse_subset() -> None:
+    args = parse_ci_args(["lint", "test"])
+    assert args.jobs == ["lint", "test"]
+    assert args.keep_going is False
+
+
+def test_lint_job_matches_hosted_ci() -> None:
+    argv_lists = [s.argv for s in steps_for("lint", repo_root())]
+    assert any(argv[:3] == ("cargo", "fmt", "--all") for argv in argv_lists)
+    assert any(
+        argv
+        == (
+            "cargo",
+            "clippy",
+            "--workspace",
+            "--all-targets",
+            "--no-default-features",
+            "--",
+            "-D",
+            "warnings",
+        )
+        for argv in argv_lists
+    )
 
 
 def test_parse_list_flag() -> None:
@@ -16,7 +41,7 @@ def test_parse_list_flag() -> None:
 
 def test_test_job_matches_hosted_ci() -> None:
     argv_lists = [s.argv for s in steps_for("test", repo_root())]
-    assert any(argv[:3] == ("cargo", "fmt", "--all") for argv in argv_lists)
+    assert all(argv[:2] != ("cargo", "fmt") for argv in argv_lists)
     assert any(argv == ("cargo", "test", "-p", "okf") for argv in argv_lists)
     assert any(
         argv == ("cargo", "test", "-p", "okmate", "--no-default-features") for argv in argv_lists

@@ -159,10 +159,10 @@ pub fn measure(options: &TimingsOptions) -> Result<TimingsSnapshot> {
             | TimingsScenario::Log
             | TimingsScenario::All
     ) {
-        if matches!(include, TimingsScenario::Click | TimingsScenario::All) {
-            if let Some(route) = first_leaf_route(&workspace) {
-                pages.push(measure_page(&workspace, &route)?);
-            }
+        if matches!(include, TimingsScenario::Click | TimingsScenario::All)
+            && let Some(route) = first_leaf_route(&workspace)
+        {
+            pages.push(measure_page(&workspace, &route)?);
         }
         if matches!(include, TimingsScenario::Review | TimingsScenario::All) {
             pages.push(measure_page(&workspace, "/review/")?);

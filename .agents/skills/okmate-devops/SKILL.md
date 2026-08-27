@@ -15,8 +15,9 @@ commands.
    drawing CI provenance conclusions or editing workflows.
 2. Hosted workflow: `.github/workflows/ci.yml`
    - Triggers: push to `main`, pull requests, `workflow_dispatch`
-   - Job `Test` on `ubuntu-latest`: `cargo fmt --all -- --check`, then
-     `cargo test -p okf && cargo test -p okmate --no-default-features`
+   - Job `Code Formatting & Lints` on `ubuntu-latest`: `okmate-ops ci lint`
+     (`cargo fmt`, `cargo clippy --workspace --all-targets --no-default-features -D warnings`)
+   - Job `Test` on `ubuntu-latest`: `cargo test -p okf && cargo test -p okmate --no-default-features`
 3. When `okmate-ops` is present, replay the same jobs locally with
    `uv run okmate-ops ci`.
 4. `gh` talks to `https://api.github.com`. In a sandbox, run `gh` unsandboxed.
@@ -56,6 +57,7 @@ gh run rerun RUN_ID --failed
 
 ```sh
 cargo fmt --all -- --check
+cargo clippy --workspace --all-targets --no-default-features -- -D warnings
 cargo test -p okf
 cargo test -p okmate --no-default-features
 ```

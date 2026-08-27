@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import argparse
+import shutil
 import subprocess
 from dataclasses import dataclass
 from pathlib import Path
@@ -8,6 +9,7 @@ from pathlib import Path
 from okmate_ops.paths import repo_root
 
 JOB_NAMES = (
+    "lint",
     "test",
     "knowledge",
 )
@@ -18,10 +20,35 @@ class Step:
     argv: tuple[str, ...]
 
 
+def _rustup_available() -> bool:
+    return shutil.which("rustup") is not None
+
+
 def steps_for(job: str, root: Path) -> list[Step]:
+    if job == "lint":
+        steps = [
+            Step(("cargo", "fmt", "--all", "--", "--check")),
+            Step(
+                (
+                    "cargo",
+                    "clippy",
+                    "--workspace",
+                    "--all-targets",
+                    "--no-default-features",
+                    "--",
+                    "-D",
+                    "warnings",
+                )
+            ),
+        ]
+        if _rustup_available():
+            return [
+                Step(("rustup", "component", "add", "rustfmt", "clippy")),
+                *steps,
+            ]
+        return steps
     if job == "test":
         return [
-            Step(("cargo", "fmt", "--all", "--", "--check")),
             Step(("cargo", "test", "-p", "okf")),
             Step(("cargo", "test", "-p", "okmate", "--no-default-features")),
         ]

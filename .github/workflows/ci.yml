@@ -14,17 +14,26 @@ permissions:
   contents: read
 
 jobs:
+  lint:
+    name: Code Formatting & Lints
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          components: rustfmt, clippy
+      - uses: Swatinem/rust-cache@v2
+      - uses: astral-sh/setup-uv@v7
+      - name: Run lint job
+        run: uv run --no-dev okmate-ops ci lint
+
   test:
     name: Test
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
       - uses: dtolnay/rust-toolchain@stable
-        with:
-          components: rustfmt
       - uses: Swatinem/rust-cache@v2
-      - name: Format
-        run: cargo fmt --all -- --check
       - name: Test engine and app
         run: cargo test -p okf && cargo test -p okmate --no-default-features
       - name: Check knowledge bundle

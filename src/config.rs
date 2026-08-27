@@ -64,19 +64,10 @@ impl PollSetting {
     }
 }
 
-#[derive(Clone, Debug, PartialEq)]
+#[derive(Clone, Debug, Default, PartialEq)]
 pub struct UserConfig {
     pub poll: PollSetting,
     pub roots: Vec<RootConfig>,
-}
-
-impl Default for UserConfig {
-    fn default() -> Self {
-        Self {
-            poll: PollSetting::default(),
-            roots: Vec::new(),
-        }
-    }
 }
 
 impl UserConfig {

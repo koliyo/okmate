@@ -146,7 +146,8 @@ impl Workspace {
             return Ok(None);
         }
         let resolved = crate::roots::resolve_all(&config, cache_parent, SyncMode::Auto);
-        let enabled: Vec<ResolvedRoot> = resolved.into_iter().filter(ResolvedRoot::enabled).collect();
+        let enabled: Vec<ResolvedRoot> =
+            resolved.into_iter().filter(ResolvedRoot::enabled).collect();
         if enabled.len() < 2 {
             return Ok(None);
         }
@@ -291,9 +292,7 @@ impl Workspace {
     fn rewrite_okf(&self, rest: &str) -> Option<String> {
         let (path, fragment) = split_fragment(rest);
         let (root_id, bundle_path) = path.split_once('/')?;
-        if self.get(root_id).is_none() {
-            return None;
-        }
+        self.get(root_id)?;
         let id = bundle_path.strip_suffix(".md").unwrap_or(bundle_path);
         Some(with_fragment(&self.document_href(root_id, id), fragment))
     }

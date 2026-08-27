@@ -5,7 +5,7 @@ import sys
 import time
 from typing import IO, Callable
 
-DEFAULT_CHECKS = ("Test",)
+DEFAULT_CHECKS = ("Code Formatting & Lints", "Test")
 BAR_WIDTH = 24
 DEFAULT_BAR_WINDOW_S = 600.0
 

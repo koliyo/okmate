@@ -28,6 +28,7 @@
 ## Validate proportionally
 
 - `cargo fmt --all -- --check`
+- `cargo clippy --workspace --all-targets --no-default-features -- -D warnings`
 - `cargo test -p okf`
 - `cargo test -p okmate --no-default-features`
 - After knowledge edits: `okmate check knowledge --profile strict`

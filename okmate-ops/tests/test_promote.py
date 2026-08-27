@@ -167,7 +167,7 @@ def test_wait_for_promote_ci_waits_default_checks(monkeypatch) -> None:
     )
     wait_for_promote_ci("abc")
     assert seen == list(DEFAULT_CHECKS)
-    assert DEFAULT_CHECKS == ("Test",)
+    assert DEFAULT_CHECKS == ("Code Formatting & Lints", "Test")
 
 
 def _git(cwd: Path, *args: str) -> subprocess.CompletedProcess[str]:
