@@ -13,7 +13,7 @@
   function render() {
     const query = input.value.trim().toLowerCase();
     hits = pages.filter((page) => {
-      const haystack = `${page.title} ${page.route} ${page.path || ""} ${page.collection || ""}`.toLowerCase();
+      const haystack = `${page.title} ${page.route} ${page.path || ""} ${page.collection || ""} ${page.root || ""}`.toLowerCase();
       return !query || haystack.includes(query);
     }).slice(0, 12);
     if (active >= hits.length) {
@@ -23,7 +23,7 @@
       ...hits.map((page, index) => {
         const item = document.createElement("li");
         item.className = index === active ? "is-active" : "";
-        item.textContent = page.title;
+        item.textContent = page.root ? `${page.title} (${page.root})` : page.title;
         const route = document.createElement("span");
         route.textContent = page.route;
         item.appendChild(route);

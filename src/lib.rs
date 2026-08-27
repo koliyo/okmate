@@ -11,6 +11,7 @@ pub mod preview;
 pub mod roots;
 pub mod site;
 pub mod views;
+pub mod workspace;
 
 use std::path::Path;
 

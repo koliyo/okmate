@@ -4,8 +4,9 @@ use okf::Bundle;
 mod governance;
 
 pub use governance::{
-    ConceptMeta, DiagnosticRow, ProvenanceItem, RecentDoc, StatCard, concept_meta, diagnostic_rows,
-    governance_stats, recent_leaf_documents,
+    ConceptMeta, DASHBOARD_LOG_LIMIT, DiagnosticRow, LogDay, LogEntry, ProvenanceItem, RecentDoc,
+    StatCard, concept_meta, diagnostic_rows, governance_stats, merged_log, recent_leaf_documents,
+    review_needs_attention, take_log_entries,
 };
 
 #[derive(Clone, Debug, Default)]
@@ -16,6 +17,9 @@ pub struct NavNode {
     pub open: bool,
     pub children: Vec<NavNode>,
     pub section_key: String,
+    pub root: String,
+    pub summary: String,
+    pub attention: bool,
 }
 
 #[derive(Clone, Debug)]
@@ -60,6 +64,7 @@ pub struct ReviewRow {
     pub is_action_required: bool,
     pub search: String,
     pub action_rank: u8,
+    pub root: String,
 }
 
 macro_rules! document_template {
@@ -79,6 +84,10 @@ macro_rules! document_template {
             pub action_rows: Vec<ReviewRow>,
             pub stats: Vec<StatCard>,
             pub recents: Vec<RecentDoc>,
+            pub log_days: Vec<LogDay>,
+            pub show_root: bool,
+            pub nav_mode: String,
+            pub show_nav_mode: bool,
             pub crumbs: Vec<Crumb>,
             pub diagnostics: Vec<DiagnosticRow>,
             pub meta: ConceptMeta,
@@ -102,6 +111,10 @@ macro_rules! document_template {
                     action_rows: document.action_rows,
                     stats: document.stats,
                     recents: document.recents,
+                    log_days: document.log_days,
+                    show_root: document.show_root,
+                    nav_mode: document.nav_mode,
+                    show_nav_mode: document.show_nav_mode,
                     crumbs: document.crumbs,
                     diagnostics: document.diagnostics,
                     meta: document.meta,
@@ -116,6 +129,7 @@ macro_rules! document_template {
 
 document_template!(PageTemplate, "page.html");
 document_template!(HomeTemplate, "home.html");
+document_template!(LogTemplate, "log.html");
 document_template!(ReviewTemplate, "review.html");
 document_template!(SettingsTemplate, "settings.html");
 document_template!(SettingsFragmentTemplate, "fragments/settings.html");
@@ -135,6 +149,10 @@ pub struct Document {
     pub action_rows: Vec<ReviewRow>,
     pub stats: Vec<StatCard>,
     pub recents: Vec<RecentDoc>,
+    pub log_days: Vec<LogDay>,
+    pub show_root: bool,
+    pub nav_mode: String,
+    pub show_nav_mode: bool,
     pub crumbs: Vec<Crumb>,
     pub diagnostics: Vec<DiagnosticRow>,
     pub meta: ConceptMeta,
@@ -150,6 +168,10 @@ impl Document {
 
     pub fn render_home(self) -> askama::Result<String> {
         HomeTemplate::from(self).render()
+    }
+
+    pub fn render_log(self) -> askama::Result<String> {
+        LogTemplate::from(self).render()
     }
 
     pub fn render_review(self) -> askama::Result<String> {
@@ -185,59 +207,70 @@ pub fn toc_from_headings(headings: &[okf::Heading]) -> Vec<TocEntry> {
         .collect()
 }
 
-pub fn review_rows(bundle: &Bundle) -> Vec<ReviewRow> {
-    bundle
-        .concepts
+pub fn review_rows(workspace: &crate::workspace::Workspace) -> Vec<ReviewRow> {
+    workspace
+        .members()
         .iter()
-        .map(|concept| {
-            let action = okf::classify_concept_action(concept, &bundle.diagnostics);
-            let title = okf::string_field(&concept.metadata, "title").unwrap_or(&concept.id);
-            let status = okf::string_field(&concept.metadata, "status").unwrap_or("draft");
-            let authority =
-                okf::string_field(&concept.metadata, "authority").unwrap_or("descriptive");
-            let concept_type = compact_type_label(
-                okf::string_field(&concept.metadata, "type").unwrap_or("Concept"),
-            );
-            let trust = okf::search::concept_trust_tier(&concept.metadata);
-            let (trust_slug, trust_label) = match trust {
-                okf::TrustTier::HumanReviewed => ("human", "reviewed"),
-                okf::TrustTier::Generated => ("generated", "generated"),
-                okf::TrustTier::Unverified => ("unverified", "unverified"),
-            };
-            let verifier = okf::latest_human_verification(&concept.metadata)
-                .map(|(_, value)| value.to_string())
-                .unwrap_or_else(|| "None".into());
-            let tags = okf::metadata_string_array(&concept.metadata, "tags");
-            let search = format!(
-                "{} {} {} {} {} {} {}",
-                title,
-                concept.id,
-                concept_type,
-                status,
-                authority,
-                action.detail,
-                tags.join(" ")
-            )
-            .to_lowercase();
-            ReviewRow {
-                href: format!("/{}/", concept.id),
-                title: title.to_string(),
-                id: concept.id.clone(),
-                status: status.to_string(),
-                action: action.label,
-                concept_type: concept_type.to_string(),
-                authority: authority.to_string(),
-                trust_slug: trust_slug.into(),
-                trust_label: trust_label.into(),
-                verifier,
-                action_detail: action.detail,
-                pill_class: action.pill_class.to_string(),
-                is_action_required: action.is_action_required,
-                search,
-                action_rank: action_rank(action.kind),
-            }
+        .flat_map(|member| {
+            member.bundle.concepts.iter().map(|concept| {
+                let mut row = review_row(&member.bundle, concept);
+                row.href = workspace.document_href(&member.id, &concept.id);
+                if workspace.is_multi() {
+                    row.root = member.id.clone();
+                    row.search = format!("{} {}", row.search, member.id);
+                }
+                row
+            })
         })
         .collect()
+}
+
+fn review_row(bundle: &Bundle, concept: &okf::Concept) -> ReviewRow {
+    let action = okf::classify_concept_action(concept, &bundle.diagnostics);
+    let title = okf::string_field(&concept.metadata, "title").unwrap_or(&concept.id);
+    let status = okf::string_field(&concept.metadata, "status").unwrap_or("draft");
+    let authority = okf::string_field(&concept.metadata, "authority").unwrap_or("descriptive");
+    let concept_type =
+        compact_type_label(okf::string_field(&concept.metadata, "type").unwrap_or("Concept"));
+    let trust = okf::search::concept_trust_tier(&concept.metadata);
+    let (trust_slug, trust_label) = match trust {
+        okf::TrustTier::HumanReviewed => ("human", "reviewed"),
+        okf::TrustTier::Generated => ("generated", "generated"),
+        okf::TrustTier::Unverified => ("unverified", "unverified"),
+    };
+    let verifier = okf::latest_human_verification(&concept.metadata)
+        .map(|(_, value)| value.to_string())
+        .unwrap_or_else(|| "None".into());
+    let tags = okf::metadata_string_array(&concept.metadata, "tags");
+    let search = format!(
+        "{} {} {} {} {} {} {}",
+        title,
+        concept.id,
+        concept_type,
+        status,
+        authority,
+        action.detail,
+        tags.join(" ")
+    )
+    .to_lowercase();
+    ReviewRow {
+        href: format!("/{}/", concept.id),
+        title: title.to_string(),
+        id: concept.id.clone(),
+        status: status.to_string(),
+        action: action.label,
+        concept_type: concept_type.to_string(),
+        authority: authority.to_string(),
+        trust_slug: trust_slug.into(),
+        trust_label: trust_label.into(),
+        verifier,
+        action_detail: action.detail,
+        pill_class: action.pill_class.to_string(),
+        is_action_required: action.is_action_required,
+        search,
+        action_rank: action_rank(action.kind),
+        root: String::new(),
+    }
 }
 
 pub fn compact_type_label(kind: &str) -> &str {
@@ -293,6 +326,9 @@ mod tests {
                     open: false,
                     children: Vec::new(),
                     section_key: String::new(),
+                    root: String::new(),
+                    summary: String::new(),
+                    attention: false,
                 },
                 NavNode {
                     href: "/review/".into(),
@@ -301,6 +337,9 @@ mod tests {
                     open: false,
                     children: Vec::new(),
                     section_key: String::new(),
+                    root: String::new(),
+                    summary: String::new(),
+                    attention: false,
                 },
             ],
             toc,
@@ -312,6 +351,10 @@ mod tests {
             action_rows: Vec::new(),
             stats: Vec::new(),
             recents: Vec::new(),
+            log_days: Vec::new(),
+            show_root: false,
+            nav_mode: "separated".into(),
+            show_nav_mode: false,
             crumbs: Vec::new(),
             diagnostics: Vec::new(),
             meta: ConceptMeta::default(),
@@ -449,6 +492,10 @@ mod tests {
         }
     }
 
+    fn as_workspace(bundle: Bundle) -> crate::workspace::Workspace {
+        crate::workspace::Workspace::from_loaded("bundle", std::path::PathBuf::from("."), bundle)
+    }
+
     #[test]
     fn governance_stats_count_lifecycle() {
         let bundle = test_bundle(vec![
@@ -467,8 +514,7 @@ mod tests {
                 "2026-08-02T00:00:00Z",
             ),
         ]);
-        let stats = governance_stats(&bundle);
-        assert_eq!(stats[0].label, "Total");
+        let stats = governance_stats(&as_workspace(bundle));
         assert_eq!(stats[0].value, "2");
         assert_eq!(stats[1].value, "1");
         assert_eq!(stats[2].value, "1");
@@ -489,7 +535,7 @@ mod tests {
             ));
         }
         let bundle = test_bundle(concepts);
-        let recents = recent_leaf_documents(&bundle, 10);
+        let recents = recent_leaf_documents(&as_workspace(bundle), 10);
         assert_eq!(recents.len(), 10);
         assert_eq!(recents[0].href, "/plans/doc-11/");
         assert_eq!(recents[0].title, "Doc 11");
@@ -503,7 +549,7 @@ mod tests {
         let mut document = sample_document(Vec::new());
         document.page_kind = "home".into();
         document.recents = recent_leaf_documents(
-            &test_bundle(
+            &as_workspace(test_bundle(
                 (0..12)
                     .map(|index| {
                         test_concept(
@@ -515,7 +561,7 @@ mod tests {
                         )
                     })
                     .collect(),
-            ),
+            )),
             10,
         );
         document.stats = vec![StatCard {
@@ -539,8 +585,14 @@ mod tests {
             .find("okmate-badge")
             .expect("collection badge");
         assert!(title < badge);
-        assert!(html.contains("Open review queue"));
-        assert!(html.contains("Knowledge Collections"));
+        assert!(!html.contains("Open review queue"));
+        assert!(html.contains("id=\"okmate-log\""));
+        assert!(!html.contains("Knowledge Collections"));
+        let stats_at = html.find("okmate-stat-list").expect("stats");
+        let recents_at = html.find("id=\"okmate-recents\"").expect("recents");
+        let log_at = html.find("id=\"okmate-log\"").expect("log");
+        assert!(stats_at < recents_at, "{html}");
+        assert!(recents_at < log_at, "{html}");
         assert!(html.contains("Total"));
         assert!(!html.contains("okmate-toc-link"), "{html}");
         assert!(!html.contains("okmate-outline-menu"), "{html}");

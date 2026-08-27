@@ -21,12 +21,12 @@ async fn view_router_serves_home_and_concept() {
     let output = temp_dir("view-out");
     okmate::site::build(&root, &output, Profile::Strict).unwrap();
 
-    let app = okmate::http::router(okmate::http::AppState {
-        output: output.clone(),
-        root: root.clone(),
-        profile: Profile::Strict,
-        config_path: output.join("unused-config.toml"),
-    });
+    let app = okmate::http::router(okmate::http::AppState::new(
+        output.clone(),
+        root.clone(),
+        Profile::Strict,
+        output.join("unused-config.toml"),
+    ));
     let home = app
         .clone()
         .oneshot(Request::get("/").body(Body::empty()).unwrap())
