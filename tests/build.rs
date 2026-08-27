@@ -90,7 +90,8 @@ fn build_writes_engine_catalog_html_landmarks_and_pages_json() {
     assert!(css.contains("--okmate-nav-width"), "{css}");
     assert!(css.contains(".okmate-col-resizer"), "{css}");
     assert!(css.contains(".okmate-toc-link.is-current"), "{css}");
-    assert!(css.contains("grid-template-columns: subgrid"), "{css}");
+    assert!(css.contains(".okmate-recents-list"), "{css}");
+    assert!(css.contains("flex-direction: column"), "{css}");
     assert!(output.join("__okmate").join("resize.js").is_file());
     assert!(output.join("__okmate").join("toc.js").is_file());
     assert!(home.contains("/__okmate/resize.js"), "{home}");
