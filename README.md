@@ -1,7 +1,7 @@
-# Okmate
+# OKMate
 
-Okmate (open knowledge mate) is a standalone knowledge application for Open
-Knowledge Format (OKF) bundles. The binary is `okmate`.
+OKMate (open knowledge mate) is a standalone knowledge application for Open
+Knowledge Format (OKF) bundles. The CLI binary is `okmate`.
 
 Repository: [github.com/koliyo/okmate](https://github.com/koliyo/okmate)
 
@@ -82,14 +82,14 @@ cargo test -p okmate --no-default-features
 
 Release-build the `okmate` binary with `uv run --no-dev okmate-ops build`.
 To install it into `~/.local/bin`, run `uv run --no-dev okmate-ops install cli`.
-On macOS, assemble `Okmate.app` with
+On macOS, assemble `OKMate.app` with
 `uv run --no-dev okmate-ops package desktop`.
 
-## Install Okmate.app (macOS)
+## Install OKMate.app (macOS)
 
-Download `Okmate.zip` from the latest
+Download `OKMate.zip` from the latest
 [GitHub Release](https://github.com/koliyo/okmate/releases/latest), unzip it,
-and drag `Okmate.app` to `/Applications`. Or install the same archive from
+and drag `OKMate.app` to `/Applications`. Or install the same archive from
 the [`koliyo/homebrew-okmate`](https://github.com/koliyo/homebrew-okmate)
 tap:
 
@@ -98,10 +98,10 @@ brew tap koliyo/okmate
 brew install --cask okmate
 ```
 
-The cask installs `Okmate.app` from that release `Okmate.zip` and uses
+The cask installs `OKMate.app` from that release `OKMate.zip` and uses
 Homebrew’s `binary` stanza so `$(brew --prefix)/bin/okmate` (on Apple
 Silicon, `/opt/homebrew/bin/okmate`) is a symlink to
-`Okmate.app/Contents/MacOS/okmate`. That is the same crate binary: Finder
+`OKMate.app/Contents/MacOS/okmate`. That is the same crate binary: Finder
 / no-args launch opens the window, `okmate check` and the other
 subcommands stay CLI, and Sparkle still runs only for the desktop window.
 **Check for Updates…** and `brew upgrade --cask okmate` both follow

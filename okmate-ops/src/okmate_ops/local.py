@@ -13,7 +13,7 @@ from okmate_ops.signing import imported_developer_id_keychain
 
 CLI_CRATE = "okmate"
 CLI_BINARY = "okmate"
-APP_NAME = "Okmate"
+APP_NAME = "OKMate"
 BUNDLE_IDENTIFIER = "com.koliyo.okmate"
 DEFAULT_SU_FEED_URL = (
     "https://github.com/koliyo/okmate/releases/latest/download/appcast.xml"
@@ -170,7 +170,7 @@ def build_cli() -> int:
 def install_cli(*, dest: Path | None = None) -> int:
     root = repo_root()
     dest = dest or Path.home() / ".local" / "bin"
-    print(f"Okmate CLI installer\n  Source: {root}\n  Destination: {dest}\n")
+    print(f"okmate CLI installer\n  Source: {root}\n  Destination: {dest}\n")
     if not dest.is_dir():
         answer = input(f"  '{dest}' does not exist. Create it? [y/N] ")
         if answer.strip().lower() not in {"y", "yes"}:

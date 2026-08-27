@@ -26,7 +26,7 @@ pub fn run(options: crate::preview::ViewOptions) -> Result<()> {
         .context("preview server thread exited before binding")?;
     let ready = ready?;
     h35_desktop::preview(h35_desktop::HostOptions {
-        title: "Okmate".into(),
+        title: "OKMate".into(),
         identifier: "dev.okmate.preview".into(),
         state_dir: crate::preview::state_dir(),
         url: ready.initial_url,

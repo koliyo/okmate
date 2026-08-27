@@ -21,8 +21,8 @@ cask "okmate" do
   version "{release}"
   sha256 :no_check
 
-  url "https://github.com/koliyo/okmate/releases/download/v#{version}/Okmate.zip"
-  name "Okmate"
+  url "https://github.com/koliyo/okmate/releases/download/v#{version}/OKMate.zip"
+  name "OKMate"
   desc "Open knowledge mate for OKF bundles"
   homepage "https://github.com/koliyo/okmate"
 
@@ -33,14 +33,14 @@ cask "okmate" do
 
   auto_updates true
 
-  app "Okmate.app"
-  binary "#{appdir}/Okmate.app/Contents/MacOS/okmate", target: "okmate"
+  app "OKMate.app"
+  binary "#{appdir}/OKMate.app/Contents/MacOS/okmate", target: "okmate"
 end
 """
 
 VERSION_PATHS = (CARGO_TOML, OKF_CARGO_TOML, CARGO_LOCK)
 DEFAULT_HOMEBREW_TAP = "https://github.com/koliyo/homebrew-okmate.git"
-RELEASE_ZIP = "Okmate.zip"
+RELEASE_ZIP = "OKMate.zip"
 RELEASE_DOWNLOAD = "https://github.com/koliyo/okmate/releases/download/"
 APPCAST_LATEST = "https://github.com/koliyo/okmate/releases/latest"
 
@@ -122,7 +122,7 @@ def cask_tracks_self_update(text: str, version: str) -> bool:
         and RELEASE_DOWNLOAD in text
         and APPCAST_LATEST in text
         and "strategy :github_latest" in text
-        and 'app "Okmate.app"' in text
+        and 'app "OKMate.app"' in text
         and "Contents/MacOS/okmate" in text
         and 'target: "okmate"' in text
         and text.count("binary ") == 1

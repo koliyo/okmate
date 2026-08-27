@@ -1,8 +1,8 @@
 # macOS packaging
 
-`uv run --no-dev okmate-ops package desktop` sets Okmate identity and runs
+`uv run --no-dev okmate-ops package desktop` sets OKMate identity and runs
 sibling [`h35-desktop`](https://github.com/koliyo/h35-desktop) `h35-ops package`.
-That assembles `dist/Okmate.app` with Sparkle 2.
+That assembles `dist/OKMate.app` with Sparkle 2.
 `okmate-ops package sign` wraps the host signer: Developer ID, notarytool,
 staple. Missing signing secrets fail closed; the release workflow will not
 attach an unsigned production archive.
@@ -14,7 +14,7 @@ environment are the ones `package sign` and `package appcast` see.
 Operators still create
 immutable `v*` tags only with `okmate-ops promote tag vX.Y.Z`, which writes
 the crate and Homebrew cask versions, pushes that commit, then tags. The
-cask installs the same `Okmate.zip` Sparkle serves. The movable `dev` tag
+cask installs the same `OKMate.zip` Sparkle serves. The movable `dev` tag
 is not an update channel.
 
 ## Secrets
@@ -33,16 +33,16 @@ is not an update channel.
 match `SPARKLE_EDDSA_PRIVATE_KEY`. Generate a pair with Sparkle
 `bin/generate_keys`.
 
-`SIGN_DRY_RUN=1 uv run --no-dev okmate-ops package sign dist/Okmate.app`
+`SIGN_DRY_RUN=1 uv run --no-dev okmate-ops package sign dist/OKMate.app`
 prints the intended steps without codesign or notarytool. It does not report
 a notarization success.
 
 ## Verify a stapled build
 
 ```sh
-codesign --verify --deep --strict --verbose=2 dist/Okmate.app
-xcrun stapler validate dist/Okmate.app
-spctl -a -vv dist/Okmate.app
+codesign --verify --deep --strict --verbose=2 dist/OKMate.app
+xcrun stapler validate dist/OKMate.app
+spctl -a -vv dist/OKMate.app
 ```
 
 ## Key rotation
@@ -164,5 +164,5 @@ Check that the Apple and Sparkle values are visible to the signer
 optional if the Developer ID is already in the login keychain:
 
 ```sh
-SIGN_DRY_RUN=1 uv run --no-dev okmate-ops package sign dist/Okmate.app
+SIGN_DRY_RUN=1 uv run --no-dev okmate-ops package sign dist/OKMate.app
 ```

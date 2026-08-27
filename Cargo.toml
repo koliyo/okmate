@@ -12,7 +12,7 @@ name = "okmate"
 version = "0.1.0"
 edition = "2024"
 license-file = "LICENSE"
-description = "Okmate — open knowledge mate for OKF bundles"
+description = "OKMate — open knowledge mate for OKF bundles"
 
 [[bin]]
 name = "okmate"

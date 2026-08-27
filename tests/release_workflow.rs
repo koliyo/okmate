@@ -12,4 +12,7 @@ fn release_workflow_filters_v_star_tags() {
     assert!(workflow.contains("APPLE_CERTIFICATE_PASSWORD"));
     assert!(workflow.contains("environment: release"));
     assert!(workflow.contains("h35-desktop"));
+    assert!(workflow.contains("dist/OKMate.app"));
+    assert!(workflow.contains("dist/inbox/OKMate.zip"));
+    assert!(workflow.contains("--notes \"OKMate $tag\""));
 }
