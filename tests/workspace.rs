@@ -87,8 +87,16 @@ async fn workspace_get_keeps_colliding_ids_on_prefixed_routes() {
         .unwrap();
     assert_eq!(alpha.status(), StatusCode::OK);
     let alpha_body = body_text(alpha).await;
-    assert!(alpha_body.contains("Alpha Shared"), "{alpha_body}");
-    assert!(!alpha_body.contains("Beta Shared"), "{alpha_body}");
+    assert!(
+        alpha_body.contains("<title>Alpha Shared</title>"),
+        "{alpha_body}"
+    );
+    let alpha_main = alpha_body
+        .split_once("id=\"okmate-main\"")
+        .map(|(_, rest)| rest)
+        .unwrap_or(&alpha_body);
+    assert!(alpha_main.contains("Alpha Shared"), "{alpha_main}");
+    assert!(!alpha_main.contains("Beta Shared"), "{alpha_main}");
 
     let beta = app
         .clone()
@@ -101,8 +109,16 @@ async fn workspace_get_keeps_colliding_ids_on_prefixed_routes() {
         .unwrap();
     assert_eq!(beta.status(), StatusCode::OK);
     let beta_body = body_text(beta).await;
-    assert!(beta_body.contains("Beta Shared"), "{beta_body}");
-    assert!(!beta_body.contains("Alpha Shared"), "{beta_body}");
+    assert!(
+        beta_body.contains("<title>Beta Shared</title>"),
+        "{beta_body}"
+    );
+    let beta_main = beta_body
+        .split_once("id=\"okmate-main\"")
+        .map(|(_, rest)| rest)
+        .unwrap_or(&beta_body);
+    assert!(beta_main.contains("Beta Shared"), "{beta_main}");
+    assert!(!beta_main.contains("Alpha Shared"), "{beta_main}");
 
     let unique = app
         .oneshot(Request::get("/@a/unique/").body(Body::empty()).unwrap())
@@ -123,6 +139,24 @@ async fn workspace_get_keeps_colliding_ids_on_prefixed_routes() {
         .collect();
     assert!(shared.contains(&"a"), "{pages}");
     assert!(shared.contains(&"b"), "{pages}");
+}
+
+#[test]
+fn workspace_nav_wraps_each_root_as_a_top_level_section() {
+    let (_a, _b, _workspace, output) = two_bundles();
+    let html = fs::read_to_string(output.join("index.html")).unwrap();
+    assert!(html.contains("data-okmate-nav-section=\"a\""), "{html}");
+    assert!(html.contains("data-okmate-nav-section=\"b\""), "{html}");
+    assert!(
+        html.contains("data-okmate-nav-section=\"a/plans\""),
+        "{html}"
+    );
+    assert!(
+        html.contains("data-okmate-nav-section=\"b/plans\""),
+        "{html}"
+    );
+    assert!(html.contains("href=\"/@a/plans/shared/\""), "{html}");
+    assert!(html.contains("href=\"/@b/plans/shared/\""), "{html}");
 }
 
 #[tokio::test]

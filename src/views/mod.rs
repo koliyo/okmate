@@ -16,6 +16,8 @@ pub struct NavNode {
     pub open: bool,
     pub children: Vec<NavNode>,
     pub section_key: String,
+    pub root: String,
+    pub summary: String,
 }
 
 #[derive(Clone, Debug)]
@@ -311,6 +313,8 @@ mod tests {
                     open: false,
                     children: Vec::new(),
                     section_key: String::new(),
+                    root: String::new(),
+                    summary: String::new(),
                 },
                 NavNode {
                     href: "/review/".into(),
@@ -319,6 +323,8 @@ mod tests {
                     open: false,
                     children: Vec::new(),
                     section_key: String::new(),
+                    root: String::new(),
+                    summary: String::new(),
                 },
             ],
             toc,

@@ -137,6 +137,11 @@ body.is-col-resizing {
   font-weight: 680;
 }
 .nav-category { color: var(--rd-fg); font-weight: 680; }
+.okmate-nav-root {
+  color: var(--rd-muted);
+  font-size: 0.78em;
+  font-weight: 500;
+}
 .nav-section > .nav-fold > .nav-items {
   margin-left: 0.55rem;
   padding-left: 0.45rem;

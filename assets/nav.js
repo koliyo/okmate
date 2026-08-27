@@ -110,12 +110,31 @@
     });
     nav.querySelectorAll("details[data-okmate-nav-section]").forEach(function (section) {
       var key = section.getAttribute("data-okmate-nav-section") || "";
-      var prefix = "/" + key.replace(/^\/+|\/+$/g, "") + "/";
-      if (route === prefix || (key && route.indexOf(prefix) === 0)) {
+      if (sectionMatches(route, key)) {
         section.setAttribute("data-okmate-nav-current", "");
         section.open = true;
       }
     });
+  }
+
+  function sectionMatches(route, key) {
+    if (!key) {
+      return false;
+    }
+    var prefix = "/" + key.replace(/^\/+|\/+$/g, "") + "/";
+    if (route === prefix || route.indexOf(prefix) === 0) {
+      return true;
+    }
+    var at = route.match(/^\/@([^/]+)\/(.*)$/);
+    if (!at) {
+      return false;
+    }
+    var namespaced = "/" + at[1] + "/" + at[2];
+    if (namespaced === prefix || namespaced.indexOf(prefix) === 0) {
+      return true;
+    }
+    var inner = "/" + at[2];
+    return inner === prefix || inner.indexOf(prefix) === 0;
   }
 
   function resetMainScroll() {

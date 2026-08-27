@@ -117,6 +117,8 @@ fn settings_document(
                 open: false,
                 children: Vec::new(),
                 section_key: String::new(),
+                root: String::new(),
+                summary: String::new(),
             }],
             toc: Vec::new(),
             article_html: String::new(),

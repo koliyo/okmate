@@ -36,6 +36,8 @@ fn sample() -> Document {
             open: false,
             children: Vec::new(),
             section_key: String::new(),
+            root: String::new(),
+            summary: String::new(),
         }],
         toc: vec![TocEntry {
             id: "section".into(),

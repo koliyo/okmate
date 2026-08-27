@@ -426,12 +426,23 @@ fn nav_tree(workspace: &Workspace, current: &str) -> Vec<NavNode> {
         leaf("/review/", "Review queue", &current),
         leaf("/settings/", "Settings", &current),
     ];
-    let member = workspace
-        .parse_document_route(&current)
-        .map(|(member, _)| member)
-        .or_else(|| workspace.primary());
-    if let Some(member) = member {
-        items.extend(nav_forest(workspace, member, &current));
+    if workspace.is_multi() {
+        for member in workspace.members() {
+            let prefix = format!("/@{}/", member.id);
+            let active = current.starts_with(&prefix);
+            items.push(NavNode {
+                href: String::new(),
+                title: member.id.clone(),
+                current: active,
+                open: active,
+                children: nav_forest(workspace, member, &current, &member.id),
+                section_key: member.id.clone(),
+                root: member.id.clone(),
+                summary: String::new(),
+            });
+        }
+    } else if let Some(member) = workspace.primary() {
+        items.extend(nav_forest(workspace, member, &current, ""));
     }
     items
 }
@@ -444,10 +455,25 @@ fn leaf(href: &str, title: &str, current: &str) -> NavNode {
         open: false,
         children: Vec::new(),
         section_key: String::new(),
+        root: String::new(),
+        summary: String::new(),
     }
 }
 
-fn nav_forest(workspace: &Workspace, member: &WorkspaceMember, current: &str) -> Vec<NavNode> {
+fn namespaced_key(prefix: &str, path: &str) -> String {
+    if prefix.is_empty() {
+        path.to_string()
+    } else {
+        format!("{prefix}/{path}")
+    }
+}
+
+fn nav_forest(
+    workspace: &Workspace,
+    member: &WorkspaceMember,
+    current: &str,
+    section_prefix: &str,
+) -> Vec<NavNode> {
     let bundle = &member.bundle;
     let root_id = member.id.as_str();
     let mut by_path: BTreeMap<String, NavNode> = BTreeMap::new();
@@ -464,7 +490,9 @@ fn nav_forest(workspace: &Workspace, member: &WorkspaceMember, current: &str) ->
                 current: current == href || current.starts_with(&href),
                 open: current == href || current.starts_with(&href),
                 children: Vec::new(),
-                section_key: path.to_string(),
+                section_key: namespaced_key(section_prefix, path),
+                root: String::new(),
+                summary: String::new(),
             },
         );
     }
@@ -491,6 +519,8 @@ fn nav_forest(workspace: &Workspace, member: &WorkspaceMember, current: &str) ->
                 open: false,
                 children: Vec::new(),
                 section_key: String::new(),
+                root: String::new(),
+                summary: String::new(),
             });
         }
     }
@@ -524,6 +554,7 @@ fn nav_forest(workspace: &Workspace, member: &WorkspaceMember, current: &str) ->
         current: &str,
         workspace: &Workspace,
         root_id: &str,
+        section_prefix: &str,
         by_path: &mut BTreeMap<String, NavNode>,
         children_of: &BTreeMap<String, Vec<String>>,
     ) -> NavNode {
@@ -535,12 +566,13 @@ fn nav_forest(workspace: &Workspace, member: &WorkspaceMember, current: &str) ->
                     current,
                     workspace,
                     root_id,
+                    section_prefix,
                     by_path,
                     children_of,
                 ));
             }
         }
-        finalize_collection(workspace, root_id, path, node, current)
+        finalize_collection(workspace, root_id, section_prefix, path, node, current)
     }
 
     roots.sort();
@@ -552,6 +584,7 @@ fn nav_forest(workspace: &Workspace, member: &WorkspaceMember, current: &str) ->
                 current,
                 workspace,
                 root_id,
+                section_prefix,
                 &mut by_path,
                 &children_of,
             )
@@ -562,6 +595,7 @@ fn nav_forest(workspace: &Workspace, member: &WorkspaceMember, current: &str) ->
 fn finalize_collection(
     workspace: &Workspace,
     root_id: &str,
+    section_prefix: &str,
     path: &str,
     mut node: NavNode,
     current: &str,
@@ -590,7 +624,7 @@ fn finalize_collection(
     children.extend(nested);
     children.extend(leaves);
     node.children = children;
-    node.section_key = path.to_string();
+    node.section_key = namespaced_key(section_prefix, path);
     node.href = href.clone();
     node.current = current == href || current.starts_with(&href);
     node.open = node.current;
