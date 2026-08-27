@@ -17,6 +17,7 @@ jobs:
     name: macOS appcast
     if: github.ref_name != 'dev'
     runs-on: macos-latest
+    environment: release
     steps:
       - uses: actions/checkout@v7
       - name: Checkout h35-desktop sibling

@@ -8,7 +8,10 @@ staple. Missing signing secrets fail closed; the release workflow will not
 attach an unsigned production archive.
 
 The tag-triggered `.github/workflows/release.yml` workflow signs, zips that
-bundle, and runs `okmate-ops package appcast`. Operators still create
+bundle, and runs `okmate-ops package appcast`. The job uses the GitHub
+Actions environment `release`, so repository secrets scoped to that
+environment are the ones `package sign` and `package appcast` see.
+Operators still create
 immutable `v*` tags only with `okmate-ops promote tag vX.Y.Z`, which writes
 the crate and Homebrew cask versions, pushes that commit, then tags. The
 cask installs the same `Okmate.zip` Sparkle serves. The movable `dev` tag
