@@ -3,6 +3,8 @@ from pathlib import Path
 from okmate_ops.paths import repo_root
 from okmate_ops.version import (
     CASK,
+    CASK_TEMPLATE,
+    apply_cask_version,
     apply_release_version,
     cask_tracks_self_update,
     first_package_version,
@@ -11,6 +13,7 @@ from okmate_ops.version import (
     replace_cask_version,
     replace_lock_crate_versions,
     replace_package_versions,
+    tap_files_match,
 )
 
 
@@ -49,35 +52,33 @@ def test_replace_lock_and_cask() -> None:
 
 def test_apply_release_version(tmp_path: Path) -> None:
     (tmp_path / "okf").mkdir()
-    (tmp_path / "Casks").mkdir()
     (tmp_path / "Cargo.toml").write_text('[workspace.package]\nversion = "0.1.0"\n', encoding="utf-8")
     (tmp_path / "okf" / "Cargo.toml").write_text('[package]\nversion = "0.1.0"\n', encoding="utf-8")
     (tmp_path / "Cargo.lock").write_text(
         '[[package]]\nname = "okf"\nversion = "0.1.0"\n\n[[package]]\nname = "okmate"\nversion = "0.1.0"\n',
         encoding="utf-8",
     )
-    (tmp_path / "Casks" / "okmate.rb").write_text(
-        'cask "okmate" do\n'
-        '  version "0.1.0"\n'
-        "  sha256 :no_check\n"
-        '  url "https://github.com/koliyo/okmate/releases/download/v#{version}/Okmate.zip"\n'
-        '  livecheck do\n    url "https://github.com/koliyo/okmate/releases/latest"\n    strategy :github_latest\n  end\n'
-        "  auto_updates true\n"
-        '  app "Okmate.app"\n'
-        '  binary "#{appdir}/Okmate.app/Contents/MacOS/okmate", target: "okmate"\n'
-        "end\n",
-        encoding="utf-8",
-    )
     apply_release_version(tmp_path, "9.8.7")
     assert release_files_match(tmp_path, "9.8.7")
     assert not release_files_match(tmp_path, "0.1.0")
+    assert not (tmp_path / CASK).exists()
 
 
-def test_checked_in_cask_matches_crate_and_sparkle_channel() -> None:
+def test_apply_cask_version(tmp_path: Path) -> None:
+    apply_cask_version(tmp_path, "9.8.7")
+    assert tap_files_match(tmp_path, "9.8.7")
+    apply_cask_version(tmp_path, "9.8.8")
+    assert tap_files_match(tmp_path, "9.8.8")
+
+
+def test_cask_template_tracks_sparkle_channel() -> None:
+    text = CASK_TEMPLATE.replace("{release}", "1.2.3")
+    assert cask_tracks_self_update(text, "1.2.3")
+    assert "sha256 :no_check" in text
+
+
+def test_checked_in_crate_versions_match() -> None:
     root = repo_root()
     version = first_package_version((root / "Cargo.toml").read_text(encoding="utf-8"))
     assert version
     assert release_files_match(root, version)
-    cask = (root / CASK).read_text(encoding="utf-8")
-    assert cask_tracks_self_update(cask, version)
-    assert "sha256 :no_check" in cask

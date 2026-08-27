@@ -60,7 +60,7 @@ sources:
     author: process:git
     last_modified: 2026-08-27
   - id: cask
-    resource: ../../../Casks/okmate.rb
+    resource: https://github.com/koliyo/homebrew-okmate/blob/main/Casks/okmate.rb
     title: Homebrew cask for Okmate.app
     author: process:cursor
     last_modified: 2026-08-27
@@ -214,7 +214,7 @@ knowledge roots.[^overview][^desktop]
 CLI-only installs (`cargo install`, a copied `okmate` on `PATH`) stay
 manual in this plan. Homebrew installs the same GitHub Release `Okmate.zip`
 Sparkle uses and `binary`-links `$(brew --prefix)/bin/okmate` to that
-bundle (`Casks/okmate.rb`, `auto_updates`); it is not a second in-app
+bundle (`koliyo/homebrew-okmate` `Casks/okmate.rb`, `auto_updates`); it is not a second in-app
 updater.[^cask]
 
 ## Phases

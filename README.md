@@ -89,8 +89,9 @@ On macOS, assemble `Okmate.app` with
 
 Download `Okmate.zip` from the latest
 [GitHub Release](https://github.com/koliyo/okmate/releases/latest), unzip it,
-and drag `Okmate.app` to `/Applications`. Or install the same archive with
-Homebrew (this repository is a tap):
+and drag `Okmate.app` to `/Applications`. Or install the same archive from
+the [`koliyo/homebrew-okmate`](https://github.com/koliyo/homebrew-okmate)
+tap:
 
 ```sh
 brew tap koliyo/okmate
@@ -125,9 +126,10 @@ Do not treat this README as an architecture decision.
 1. Run `uv run okmate-ops promote tag vX.Y.Z` (or `--from BRANCH`). That is
    the only operator path that creates an immutable `v*` tag. Pass `--force`
    only to move an existing `v*` (local and `origin`). For a versioned
-   tag it writes `X.Y.Z` to `Cargo.toml`, `okf/Cargo.toml`, `Cargo.lock`, and
-   `Casks/okmate.rb`, pushes that commit to the target branch, waits for
-   hosted **Test** on the version commit, then pushes the tag. Set
+   tag it writes `X.Y.Z` to `Cargo.toml`, `okf/Cargo.toml`, and
+   `Cargo.lock`, pushes that commit to the target branch, waits for
+   hosted **Test** on the version commit, then pushes the tag and updates
+   `Casks/okmate.rb` on `koliyo/homebrew-okmate`. Set
    `BUNDLE_VERSION` only when Sparkle's compare version must move separately
    from Cargo (every `v*` must increase it).
 2. Wait for the **Release** workflow on that tag (signing secrets must be

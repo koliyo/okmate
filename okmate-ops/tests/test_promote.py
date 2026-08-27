@@ -7,10 +7,11 @@ from okmate_ops.promote import (
     PROMOTE_USAGE,
     promote_command,
     promote_tag,
+    push_tap_version,
     push_version_update,
     wait_for_promote_ci,
 )
-from okmate_ops.version import first_package_version, release_files_match
+from okmate_ops.version import CASK, first_package_version, release_files_match, tap_files_match
 
 
 def test_promote_usage() -> None:
@@ -60,9 +61,12 @@ def test_promote_tag_pushes_version_then_tags(monkeypatch, tmp_path) -> None:
         lambda version, from_ref, remote_sha: f"{version}:{from_ref}:{remote_sha}",
     )
     monkeypatch.setattr("okmate_ops.promote.wait_for_promote_ci", waited.append)
+    taps: list[str] = []
+    monkeypatch.setattr("okmate_ops.promote.push_tap_version", taps.append)
 
     assert promote_tag("v1.2.3") == 0
     assert waited == ["1.2.3:main:abc"]
+    assert taps == ["1.2.3"]
     assert calls == [
         ["git", "fetch", "origin", "refs/heads/main:refs/remotes/origin/main"],
         ["git", "tag", "-a", "v1.2.3", "-m", "v1.2.3", "1.2.3:main:abc"],
@@ -86,6 +90,7 @@ def test_promote_tag_force_overwrites_versioned_tag(monkeypatch, tmp_path) -> No
         lambda version, from_ref, remote_sha: "newsha",
     )
     monkeypatch.setattr("okmate_ops.promote.wait_for_promote_ci", lambda sha: None)
+    monkeypatch.setattr("okmate_ops.promote.push_tap_version", lambda version: None)
 
     assert promote_tag("v1.2.3", force=True) == 0
     assert calls == [
@@ -110,6 +115,10 @@ def test_promote_tag_force_moves_dev(monkeypatch, tmp_path) -> None:
     monkeypatch.setattr(
         "okmate_ops.promote.push_version_update",
         lambda *args, **kwargs: (_ for _ in ()).throw(AssertionError("dev must not bump versions")),
+    )
+    monkeypatch.setattr(
+        "okmate_ops.promote.push_tap_version",
+        lambda *args, **kwargs: (_ for _ in ()).throw(AssertionError("dev must not bump the tap")),
     )
 
     assert promote_tag("dev") == 0
@@ -174,23 +183,10 @@ def test_push_version_update_commits_and_pushes(tmp_path: Path, monkeypatch) -> 
     _git(repo, "config", "user.name", "ops")
     _git(repo, "config", "commit.gpgsign", "false")
     (repo / "okf").mkdir()
-    (repo / "Casks").mkdir()
     (repo / "Cargo.toml").write_text('[workspace.package]\nversion = "0.1.0"\n', encoding="utf-8")
     (repo / "okf" / "Cargo.toml").write_text('[package]\nversion = "0.1.0"\n', encoding="utf-8")
     (repo / "Cargo.lock").write_text(
         '[[package]]\nname = "okf"\nversion = "0.1.0"\n\n[[package]]\nname = "okmate"\nversion = "0.1.0"\n',
-        encoding="utf-8",
-    )
-    (repo / "Casks" / "okmate.rb").write_text(
-        'cask "okmate" do\n'
-        '  version "0.1.0"\n'
-        "  sha256 :no_check\n"
-        '  url "https://github.com/koliyo/okmate/releases/download/v#{version}/Okmate.zip"\n'
-        '  livecheck do\n    url "https://github.com/koliyo/okmate/releases/latest"\n    strategy :github_latest\n  end\n'
-        "  auto_updates true\n"
-        '  app "Okmate.app"\n'
-        '  binary "#{appdir}/Okmate.app/Contents/MacOS/okmate", target: "okmate"\n'
-        "end\n",
         encoding="utf-8",
     )
     _git(repo, "add", ".")
@@ -208,6 +204,53 @@ def test_push_version_update_commits_and_pushes(tmp_path: Path, monkeypatch) -> 
     assert first_package_version((checkout / "Cargo.toml").read_text(encoding="utf-8")) == "2.3.4"
     same = push_version_update("2.3.4", "main", new_sha)
     assert same == new_sha
+
+
+def test_push_tap_version_commits_and_pushes(tmp_path: Path, monkeypatch) -> None:
+    origin = tmp_path / "tap.git"
+    seed = tmp_path / "seed"
+    subprocess.run(["git", "init", "--bare", "-b", "main", str(origin)], check=True)
+    subprocess.run(["git", "clone", str(origin), str(seed)], check=True)
+    _git(seed, "config", "user.email", "ops@example.com")
+    _git(seed, "config", "user.name", "ops")
+    _git(seed, "config", "commit.gpgsign", "false")
+    (seed / "Casks").mkdir()
+    (seed / CASK).write_text(
+        'cask "okmate" do\n'
+        '  version "0.1.0"\n'
+        "  sha256 :no_check\n"
+        '  url "https://github.com/koliyo/okmate/releases/download/v#{version}/Okmate.zip"\n'
+        '  livecheck do\n    url "https://github.com/koliyo/okmate/releases/latest"\n    strategy :github_latest\n  end\n'
+        "  auto_updates true\n"
+        '  app "Okmate.app"\n'
+        '  binary "#{appdir}/Okmate.app/Contents/MacOS/okmate", target: "okmate"\n'
+        "end\n",
+        encoding="utf-8",
+    )
+    _git(seed, "add", ".")
+    _git(seed, "commit", "-m", "seed")
+    _git(seed, "push", "origin", "HEAD:main")
+    monkeypatch.setenv("HOMEBREW_TAP", str(origin))
+    monkeypatch.setenv("GIT_AUTHOR_NAME", "ops")
+    monkeypatch.setenv("GIT_AUTHOR_EMAIL", "ops@example.com")
+    monkeypatch.setenv("GIT_COMMITTER_NAME", "ops")
+    monkeypatch.setenv("GIT_COMMITTER_EMAIL", "ops@example.com")
+    monkeypatch.setenv("GIT_CONFIG_GLOBAL", "/dev/null")
+    monkeypatch.setenv("GIT_CONFIG_SYSTEM", "/dev/null")
+    monkeypatch.setattr(
+        "okmate_ops.promote.run",
+        lambda argv, cwd=None: subprocess.run(argv, cwd=cwd, check=True),
+    )
+
+    def capture(argv, cwd=None):
+        return subprocess.run(argv, cwd=cwd, capture_output=True, text=True)
+
+    monkeypatch.setattr("okmate_ops.promote.git_capture", capture)
+    push_tap_version("2.3.4")
+    checkout = tmp_path / "check"
+    subprocess.run(["git", "clone", str(origin), str(checkout)], check=True)
+    assert tap_files_match(checkout, "2.3.4")
+    push_tap_version("2.3.4")
 
 
 def test_promote_tag_requires_v_prefix_or_dev() -> None:

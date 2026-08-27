@@ -25,7 +25,7 @@ sources:
     author: process:cursor
     last_modified: 2026-08-27
   - id: cask
-    resource: ../../../Casks/okmate.rb
+    resource: https://github.com/koliyo/homebrew-okmate/blob/main/Casks/okmate.rb
     title: Homebrew cask for Okmate.app from GitHub Releases
     author: process:cursor
     last_modified: 2026-08-27
@@ -44,10 +44,10 @@ Give CI and localhost one `uv run --no-dev okmate-ops` surface so hosted
   `cargo test -p okmate --no-default-features`, and `okmate check knowledge`
   when `knowledge/index.md` exists
 - `pr-checkout` — list open PRs or checkout `pr/<branch>`
-- `promote tag vX.Y.Z` — write `X.Y.Z` to Cargo crate versions, `Cargo.lock`,
-  and `Casks/okmate.rb`, push that commit to the target branch (default
-  `main`), wait for hosted `Test` on the version commit, then push the
-  immutable tag[^promote][^cask]
+- `promote tag vX.Y.Z` — write `X.Y.Z` to Cargo crate versions and
+  `Cargo.lock`, push that commit to the target branch (default `main`),
+  wait for hosted `Test` on the version commit, push the immutable tag,
+  then bump `Casks/okmate.rb` on `koliyo/homebrew-okmate`[^promote][^cask]
 - `promote tag dev` — wait for hosted `Test` and force-move the rolling
   prerelease tag (no version rewrite)[^promote]
 
@@ -64,4 +64,4 @@ committed `uv.lock`. Do not force-fetch all git tags.
 [^pyproject]: Package metadata and script entry.
 [^readme]: Development, Homebrew tap, and rolling `dev` tag documentation.
 [^promote]: Version commit on the target branch, then annotated `v*` or force-moved `dev`.
-[^cask]: In-repo tap cask installs the Sparkle `Okmate.zip` and `binary` links `$(brew --prefix)/bin/okmate`.
+[^cask]: `koliyo/homebrew-okmate` installs the Sparkle `Okmate.zip` and `binary` links `$(brew --prefix)/bin/okmate`.

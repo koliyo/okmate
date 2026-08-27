@@ -38,7 +38,8 @@ cask "okmate" do
 end
 """
 
-VERSION_PATHS = (CARGO_TOML, OKF_CARGO_TOML, CARGO_LOCK, CASK)
+VERSION_PATHS = (CARGO_TOML, OKF_CARGO_TOML, CARGO_LOCK)
+DEFAULT_HOMEBREW_TAP = "https://github.com/koliyo/homebrew-okmate.git"
 RELEASE_ZIP = "Okmate.zip"
 RELEASE_DOWNLOAD = "https://github.com/koliyo/okmate/releases/download/"
 APPCAST_LATEST = "https://github.com/koliyo/okmate/releases/latest"
@@ -98,15 +99,19 @@ def apply_release_version(root: Path, version: str) -> list[Path]:
     lock = root / CARGO_LOCK
     lock.write_text(replace_lock_crate_versions(lock.read_text(encoding="utf-8"), version), encoding="utf-8")
     changed.append(CARGO_LOCK)
+    return changed
 
+
+def apply_cask_version(root: Path, version: str) -> Path:
+    if not SEMVER_RE.fullmatch(version):
+        raise SystemExit(f"invalid release version: {version}")
     cask = root / CASK
     if cask.is_file():
         cask.write_text(replace_cask_version(cask.read_text(encoding="utf-8"), version), encoding="utf-8")
     else:
         cask.parent.mkdir(parents=True, exist_ok=True)
         cask.write_text(CASK_TEMPLATE.replace("{release}", version), encoding="utf-8")
-    changed.append(CASK)
-    return changed
+    return CASK
 
 
 def cask_tracks_self_update(text: str, version: str) -> bool:
@@ -124,15 +129,20 @@ def cask_tracks_self_update(text: str, version: str) -> bool:
     )
 
 
+def tap_files_match(root: Path, version: str) -> bool:
+    cask = root / CASK
+    if not cask.is_file():
+        return False
+    return cask_tracks_self_update(cask.read_text(encoding="utf-8"), version)
+
+
 def release_files_match(root: Path, version: str) -> bool:
     cargo = first_package_version((root / CARGO_TOML).read_text(encoding="utf-8"))
     okf = first_package_version((root / OKF_CARGO_TOML).read_text(encoding="utf-8"))
-    cask = (root / CASK).read_text(encoding="utf-8") if (root / CASK).is_file() else ""
     lock = (root / CARGO_LOCK).read_text(encoding="utf-8") if (root / CARGO_LOCK).is_file() else ""
     return (
         cargo == version
         and okf == version
-        and cask_tracks_self_update(cask, version)
         and f'name = "okmate"\nversion = "{version}"' in lock
         and f'name = "okf"\nversion = "{version}"' in lock
     )

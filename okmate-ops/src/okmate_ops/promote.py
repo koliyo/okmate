@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import os
 import subprocess
 import tempfile
 import time
@@ -7,7 +8,15 @@ from pathlib import Path
 
 from okmate_ops.ghutil import DEFAULT_CHECKS, gh_run, wait_for_check
 from okmate_ops.paths import repo_root
-from okmate_ops.version import apply_release_version, parse_release_version, release_files_match
+from okmate_ops.version import (
+    CASK,
+    DEFAULT_HOMEBREW_TAP,
+    apply_cask_version,
+    apply_release_version,
+    parse_release_version,
+    release_files_match,
+    tap_files_match,
+)
 
 PROMOTE_USAGE = "usage: okmate-ops promote tag"
 PROMOTE_TAG_USAGE = "usage: okmate-ops promote tag <tag> [--from BRANCH] [--force]"
@@ -72,6 +81,24 @@ def push_version_update(version: str, from_ref: str, remote_sha: str) -> str:
             run(["git", "worktree", "remove", "--force", str(worktree)], cwd=root)
 
 
+def push_tap_version(version: str) -> None:
+    remote = os.environ.get("HOMEBREW_TAP") or DEFAULT_HOMEBREW_TAP
+    with tempfile.TemporaryDirectory() as tmp:
+        dest = Path(tmp) / "tap"
+        run(["git", "clone", remote, str(dest)])
+        if tap_files_match(dest, version):
+            return
+        apply_cask_version(dest, version)
+        run(["git", "add", str(CASK)], cwd=dest)
+        status = git_capture(["git", "status", "--porcelain"], cwd=dest)
+        if status.returncode != 0:
+            raise SystemExit("promote tag could not read Homebrew tap status")
+        if not status.stdout.strip():
+            return
+        run(["git", "commit", "-m", f"okmate {version}"], cwd=dest)
+        run(["git", "push", "origin", "HEAD"], cwd=dest)
+
+
 def promote_tag(tag: str, from_ref: str = "main", *, force: bool = False) -> int:
     movable = tag == "dev"
     if not movable:
@@ -101,6 +128,8 @@ def promote_tag(tag: str, from_ref: str = "main", *, force: bool = False) -> int
         push_argv = ["git", "push", "--force", "origin", tag]
     run(tag_argv)
     run(push_argv)
+    if not movable:
+        push_tap_version(parse_release_version(tag))
     return 0
 
 
