@@ -32,6 +32,7 @@ Settings live under `~/.okmate/` (`OKMATE_CONFIG`, `OKMATE_CACHE`,
 | `okmate inspect catalog\|concept\|graph` | Engine JSON inspect |
 | `okmate search <query> [root]` | Metadata and heading search JSON |
 | `okmate benchmark <toml> [root]` | Retrieval benchmark |
+| `okmate timings [path]` | Local load/site/click spans (`--format terminal\|json`, `--scenario`) |
 | `okmate build [root] -o <dir>` | Engine artifacts plus Askama HTML |
 | `okmate view [path]` | Live preview; omit `--no-window` to open tao/wry |
 | `okmate roots` | Print resolved root paths (`--format json\|paths`, `--sync` / `--no-sync`) |
@@ -44,6 +45,7 @@ okmate inspect concept architecture/system-overview knowledge
 okmate inspect graph knowledge
 okmate search "system overview" knowledge --profile strict
 okmate benchmark knowledge/retrieval-benchmark.toml knowledge
+okmate timings knowledge --format json --scenario all
 okmate build knowledge -o dist/knowledge
 okmate view knowledge --no-window
 okmate roots --format json --no-sync

@@ -49,6 +49,22 @@ enum Commands {
         #[command(flatten)]
         filters: FiltersArg,
     },
+    /// Measure local load, site, and click spans (machine-local, not an SLA).
+    Timings {
+        /// Knowledge bundle directory or a Markdown file inside one.
+        path: Option<PathBuf>,
+        #[arg(long, value_enum, default_value_t = CheckFormat::Terminal)]
+        format: CheckFormat,
+        #[arg(long, value_enum, default_value_t = TimingsScenarioArg::All)]
+        scenario: TimingsScenarioArg,
+        #[arg(long, value_enum, default_value_t = ProfileArg::Strict)]
+        profile: ProfileArg,
+        /// Override preview provenance (default matches `LoadOptions` for `--profile`).
+        #[arg(long, overrides_with = "no_provenance")]
+        provenance: bool,
+        #[arg(long = "no-provenance", overrides_with = "provenance")]
+        no_provenance: bool,
+    },
     /// Run a retrieval benchmark TOML file against a knowledge bundle.
     Benchmark {
         benchmark: PathBuf,
@@ -111,6 +127,32 @@ enum Commands {
 enum RootsFormatArg {
     Paths,
     Json,
+}
+
+#[derive(Clone, Copy, Debug, Default, ValueEnum)]
+enum TimingsScenarioArg {
+    Load,
+    Site,
+    Click,
+    Review,
+    Log,
+    Watch,
+    #[default]
+    All,
+}
+
+impl From<TimingsScenarioArg> for crate::timings::TimingsScenario {
+    fn from(value: TimingsScenarioArg) -> Self {
+        match value {
+            TimingsScenarioArg::Load => Self::Load,
+            TimingsScenarioArg::Site => Self::Site,
+            TimingsScenarioArg::Click => Self::Click,
+            TimingsScenarioArg::Review => Self::Review,
+            TimingsScenarioArg::Log => Self::Log,
+            TimingsScenarioArg::Watch => Self::Watch,
+            TimingsScenarioArg::All => Self::All,
+        }
+    }
 }
 
 impl From<RootsFormatArg> for crate::roots::RootsFormat {
@@ -232,6 +274,29 @@ pub fn run() -> Result<()> {
             println!("{json}");
             Ok(())
         }
+        Commands::Timings {
+            path,
+            format,
+            scenario,
+            profile,
+            provenance,
+            no_provenance,
+        } => crate::timings::run(crate::timings::TimingsOptions {
+            path,
+            format: match format {
+                CheckFormat::Terminal => crate::timings::TimingsFormat::Terminal,
+                CheckFormat::Json => crate::timings::TimingsFormat::Json,
+            },
+            scenario: scenario.into(),
+            profile: profile.into(),
+            provenance: if no_provenance {
+                Some(false)
+            } else if provenance {
+                Some(true)
+            } else {
+                None
+            },
+        }),
         Commands::Benchmark {
             benchmark: path,
             root,
