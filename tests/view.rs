@@ -19,7 +19,14 @@ async fn view_router_serves_home_and_concept() {
     )
     .unwrap();
     let output = temp_dir("view-out");
-    okmate::site::build(&root, &output, Profile::Strict).unwrap();
+    let workspace = okmate::workspace::Workspace::load_single(&root, Profile::Strict).unwrap();
+    okmate::site::build_workspace(&workspace, &output).unwrap();
+    assert!(output.join("__okmate").join("app.css").is_file());
+    assert!(output.join("pages.json").is_file());
+    assert!(
+        !output.join("hello").join("index.html").exists(),
+        "live preview must not write one HTML file per concept"
+    );
 
     let app = okmate::http::router(okmate::http::AppState::new(
         output.clone(),
@@ -67,6 +74,33 @@ async fn view_router_serves_home_and_concept() {
     );
     assert!(concept_body.contains("Details"), "{concept_body}");
 
+    let fragment = app
+        .clone()
+        .oneshot(
+            Request::get("/hello/")
+                .header("datastar-request", "true")
+                .body(Body::empty())
+                .unwrap(),
+        )
+        .await
+        .unwrap();
+    assert_eq!(fragment.status(), StatusCode::OK);
+    let fragment_body = String::from_utf8(
+        fragment
+            .into_body()
+            .collect()
+            .await
+            .unwrap()
+            .to_bytes()
+            .to_vec(),
+    )
+    .unwrap();
+    assert!(fragment_body.contains("Details"), "{fragment_body}");
+    assert!(
+        !fragment_body.contains("id=\"okmate-nav\""),
+        "{fragment_body}"
+    );
+
     let css = app
         .oneshot(
             Request::get("/__okmate/app.css")
@@ -76,6 +110,23 @@ async fn view_router_serves_home_and_concept() {
         .await
         .unwrap();
     assert_eq!(css.status(), StatusCode::OK);
+}
+
+#[test]
+fn preview_shell_creates_missing_output_dir() {
+    let root = temp_dir("view-mkdir-src");
+    write_index(&root);
+    fs::write(
+        root.join("hello.md"),
+        valid_strict_concept("Hello", "", "Body.\n"),
+    )
+    .unwrap();
+    let workspace = okmate::workspace::Workspace::load_single(&root, Profile::Strict).unwrap();
+    let output = temp_dir("view-mkdir-parent").join("missing-out");
+    assert!(!output.exists());
+    okmate::site::build_workspace(&workspace, &output).unwrap();
+    assert!(output.join("pages.json").is_file());
+    assert!(output.join("__okmate").join("app.css").is_file());
 }
 
 #[test]

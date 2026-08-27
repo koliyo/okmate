@@ -32,8 +32,9 @@ Settings live under `~/.okmate/` (`OKMATE_CONFIG`, `OKMATE_CACHE`,
 | `okmate inspect catalog\|concept\|graph` | Engine JSON inspect |
 | `okmate search <query> [root]` | Metadata and heading search JSON |
 | `okmate benchmark <toml> [root]` | Retrieval benchmark |
+| `okmate timings [path]` | Local load/site/click spans (`--format terminal\|json`, `--scenario`) |
 | `okmate build [root] -o <dir>` | Engine artifacts plus Askama HTML |
-| `okmate view [path]` | Live preview; omit `--no-window` to open tao/wry |
+| `okmate view [path]` | Live preview; omit `--no-window` to open tao/wry; `--provenance` turns git checks on |
 | `okmate roots` | Print resolved root paths (`--format json\|paths`, `--sync` / `--no-sync`) |
 | `okmate sync [id]` | Fetch configured git roots |
 
@@ -44,6 +45,7 @@ okmate inspect concept architecture/system-overview knowledge
 okmate inspect graph knowledge
 okmate search "system overview" knowledge --profile strict
 okmate benchmark knowledge/retrieval-benchmark.toml knowledge
+okmate timings knowledge --format json --scenario all
 okmate build knowledge -o dist/knowledge
 okmate view knowledge --no-window
 okmate roots --format json --no-sync
@@ -62,6 +64,11 @@ done
 `--format json` emits `{ id, kind, path, revision, incoming, enabled, error }`
 and never includes tokens or resolved secrets. If the config is missing or
 `roots` is empty, `./knowledge` is printed when that directory exists.
+
+`view` defaults to the Strict schema with git provenance off (the same split
+as `check --profile strict`, which still runs OKF4006/4007/4008). Pass
+`--provenance` to turn preview git checks back on. Parse reuse lives under
+`OKMATE_CACHE` (`parse/v{n}/<root-id>`).
 
 `view` serves the live HTML tree on localhost (pass `--public` to bind every
 interface). With a window, `--port` defaults to `auto` (a free local port).
@@ -94,7 +101,16 @@ the [`koliyo/homebrew-okmate`](https://github.com/koliyo/homebrew-okmate)
 tap:
 
 ```sh
+brew install --cask koliyo/okmate/okmate
+```
+
+Homebrew 6 requires an explicit trust step for third-party taps. The
+fully qualified cask name taps `koliyo/okmate` and trusts only that
+cask. To trust the whole tap instead:
+
+```sh
 brew tap koliyo/okmate
+brew trust koliyo/okmate
 brew install --cask okmate
 ```
 

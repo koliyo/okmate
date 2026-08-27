@@ -1,8 +1,8 @@
 (function () {
   function bindWindow(root) {
-    if (!root || root.dataset.okmateReviewWindow === "1") return;
+    if (!root || root.dataset.okmateLogWindow === "1") return;
     if (!root.querySelector("[data-okmate-sentinel]")) return;
-    root.dataset.okmateReviewWindow = "1";
+    root.dataset.okmateLogWindow = "1";
     if (!window.IntersectionObserver) return;
     var observer = new IntersectionObserver(
       function (entries) {
@@ -10,29 +10,19 @@
           if (!entry.isIntersecting) return;
           var start = entry.target.getAttribute("data-start");
           if (start == null) return;
-          var table = document.getElementById("okmate-review-table");
-          var filter = (table && table.getAttribute("data-filter")) || "";
-          var query = (table && table.getAttribute("data-query")) || "";
-          fetch(
-            "/__okmate/review-window?start=" +
-              encodeURIComponent(start) +
-              "&filter=" +
-              encodeURIComponent(filter) +
-              "&q=" +
-              encodeURIComponent(query)
-          )
+          fetch("/__okmate/log-window?start=" + encodeURIComponent(start))
             .then(function (response) {
               return response.text();
             })
             .then(function (html) {
               var parsed = new DOMParser().parseFromString(html, "text/html");
-              var next = parsed.getElementById("okmate-review-window");
-              var current = document.getElementById("okmate-review-window");
+              var next = parsed.getElementById("okmate-log-window");
+              var current = document.getElementById("okmate-log-window");
               if (!next || !current) return;
               current.replaceWith(next);
-              var queue = document.getElementById("okmate-queue");
-              if (queue) delete queue.dataset.okmateReviewWindow;
-              bindWindow(queue);
+              var log = document.getElementById("okmate-log");
+              if (log) delete log.dataset.okmateLogWindow;
+              bindWindow(log);
             });
         });
       },
@@ -43,7 +33,7 @@
   }
 
   function scan() {
-    bindWindow(document.getElementById("okmate-queue"));
+    bindWindow(document.getElementById("okmate-log"));
   }
 
   document.addEventListener("DOMContentLoaded", scan);

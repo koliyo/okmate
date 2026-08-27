@@ -65,7 +65,7 @@ fn app(root: std::path::PathBuf, output: std::path::PathBuf, workspace: Workspac
     okmate::http::router(okmate::http::AppState {
         output,
         root,
-        workspace,
+        workspace: okmate::http::share_workspace(workspace),
         profile: Profile::Strict,
         config_path: std::env::temp_dir().join("okmate-ws-unused.toml"),
         session_path: std::env::temp_dir().join(format!(
@@ -151,7 +151,9 @@ async fn workspace_get_keeps_colliding_ids_on_prefixed_routes() {
 
 #[test]
 fn workspace_nav_wraps_each_root_as_a_top_level_section() {
-    let (_a, _b, _workspace, output) = two_bundles();
+    let (_a, _b, workspace, output) = two_bundles();
+    okmate::site::write_html_pages(&workspace, &output, okmate::preview::NavMode::Separated)
+        .unwrap();
     let html = fs::read_to_string(output.join("index.html")).unwrap();
     assert!(html.contains("data-okmate-nav-section=\"a\""), "{html}");
     assert!(html.contains("data-okmate-nav-section=\"b\""), "{html}");
@@ -170,8 +172,7 @@ fn workspace_nav_wraps_each_root_as_a_top_level_section() {
 #[test]
 fn workspace_merged_nav_unions_plans_with_distinct_leaves() {
     let (_a, _b, workspace, output) = two_bundles();
-    okmate::site::build_workspace_nav(&workspace, &output, okmate::preview::NavMode::Merged)
-        .unwrap();
+    okmate::site::write_html_pages(&workspace, &output, okmate::preview::NavMode::Merged).unwrap();
     let html = fs::read_to_string(output.join("index.html")).unwrap();
     assert!(html.contains("data-okmate-nav-section=\"plans\""), "{html}");
     assert!(
@@ -198,15 +199,22 @@ fn workspace_merged_nav_unions_plans_with_distinct_leaves() {
 async fn nav_mode_toggle_switches_trees() {
     let (a, _b, workspace, output) = two_bundles();
     let session = temp_dir("ws-nav-session").join("session.json");
-    let app = okmate::http::router(okmate::http::AppState {
+    let state = okmate::http::AppState {
         output: output.clone(),
         root: a,
-        workspace,
+        workspace: okmate::http::share_workspace(workspace),
         profile: Profile::Strict,
         config_path: std::env::temp_dir().join("okmate-ws-unused.toml"),
         session_path: session.clone(),
-    });
-    let separated = fs::read_to_string(output.join("index.html")).unwrap();
+    };
+    let app = okmate::http::router(state.clone());
+    let separated = body_text(
+        app.clone()
+            .oneshot(Request::get("/").body(Body::empty()).unwrap())
+            .await
+            .unwrap(),
+    )
+    .await;
     assert!(
         separated.contains("data-okmate-nav-section=\"a/plans\""),
         "{separated}"
@@ -226,7 +234,13 @@ async fn nav_mode_toggle_switches_trees() {
         "{}",
         merged_response.status()
     );
-    let merged = fs::read_to_string(output.join("index.html")).unwrap();
+    let merged = body_text(
+        app.clone()
+            .oneshot(Request::get("/").body(Body::empty()).unwrap())
+            .await
+            .unwrap(),
+    )
+    .await;
     assert!(
         merged.contains("data-okmate-nav-section=\"plans\""),
         "{merged}"
@@ -246,7 +260,13 @@ async fn nav_mode_toggle_switches_trees() {
         )
         .await
         .unwrap();
-    let back = fs::read_to_string(output.join("index.html")).unwrap();
+    let back = body_text(
+        okmate::http::router(state)
+            .oneshot(Request::get("/").body(Body::empty()).unwrap())
+            .await
+            .unwrap(),
+    )
+    .await;
     assert!(
         back.contains("data-okmate-nav-section=\"a/plans\""),
         "{back}"
@@ -345,6 +365,8 @@ async fn workspace_home_orders_recents_and_merges_log_days() {
     .unwrap();
     let output = temp_dir("ws-dash-out");
     okmate::site::build_workspace(&workspace, &output).unwrap();
+    okmate::site::write_html_pages(&workspace, &output, okmate::preview::NavMode::Separated)
+        .unwrap();
     let home = fs::read_to_string(output.join("index.html")).unwrap();
     assert!(home.contains("id=\"okmate-recents\""), "{home}");
     assert!(home.contains("id=\"okmate-log\""), "{home}");
@@ -445,6 +467,8 @@ fn collection_hover_uses_first_prose_paragraph_not_child_list() {
     .unwrap();
     let output = temp_dir("ws-blurb-out");
     okmate::site::build_workspace(&workspace, &output).unwrap();
+    okmate::site::write_html_pages(&workspace, &output, okmate::preview::NavMode::Separated)
+        .unwrap();
     let html = fs::read_to_string(output.join("index.html")).unwrap();
     let blurbs: Vec<_> = html
         .split("class=\"okmate-nav-blurb\"")
@@ -474,8 +498,7 @@ fn collection_hover_uses_first_prose_paragraph_not_child_list() {
         "hover must not dump the child list: {html}"
     );
 
-    okmate::site::build_workspace_nav(&workspace, &output, okmate::preview::NavMode::Merged)
-        .unwrap();
+    okmate::site::write_html_pages(&workspace, &output, okmate::preview::NavMode::Merged).unwrap();
     let merged = fs::read_to_string(output.join("index.html")).unwrap();
     let merged_blurb = merged
         .split("class=\"okmate-nav-blurb\"")

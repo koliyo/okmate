@@ -7,6 +7,10 @@ the same change.
 
 ## 2026-08-27
 
+- Viewer-responsiveness Phases 1–5 and 7 passed hosted CI on `500fc80` (workflow run [33070204563](https://github.com/koliyo/okmate/actions/runs/33070204563); Phase 6 skipped).
+- Recorded machine-local `okmate timings` baselines on the in-repo `knowledge/` root after viewer-responsiveness Phases 1–5 (Phase 6 skipped). Exploratory; do not log complete until hosted CI succeeds.
+- Revised the viewer-responsiveness plan so Phase 1 is a durable `okmate timings` pipeline (JSON/terminal spans plus live `Server-Timing`) for this work and later investigations. Exploratory; do not log complete until hosted CI succeeds.
+- Drafted paired research and plan for viewer responsiveness (in-memory Datastar clicks, preview without per-click `okf::load`, windowed review and log). Exploratory; do not log complete until hosted CI succeeds.
 - Moved the Homebrew cask to `koliyo/homebrew-okmate` so `brew tap koliyo/okmate` works. `promote tag v*` now bumps that tap after the versioned tag. Exploratory; do not log complete until hosted CI succeeds.
 - Renamed the macOS app and user-facing product to OKMate; the CLI binary, Homebrew cask token, and `~/.okmate/` paths stay `okmate`. Exploratory; do not log complete until hosted CI succeeds.
 - Drafted paired research and plan for an extended multi-bundle viewer (separated and merged sidebar, merged recents and log, collection hover). Exploratory; do not log complete until hosted CI succeeds.

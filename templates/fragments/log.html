@@ -1,8 +1,13 @@
-<section class="okmate-log" id="okmate-log">
+<section class="okmate-log" id="okmate-log" data-offset="{{ log_window.offset }}" data-total="{{ log_window.total }}">
   <h2 id="bundle-log">{% if page_kind == "log" %}Log{% else %}Recent log{% endif %}</h2>
   {% if log_days.is_empty() %}
     <p class="okmate-log-empty">No log entries yet.</p>
   {% else %}
+    <div id="okmate-log-window">
+    {% if log_window.enabled && log_window.before > 0 %}
+      <div class="okmate-window-spacer" style="height: {{ log_window.before * 28 }}px" aria-hidden="true"></div>
+      <div class="okmate-window-sentinel" data-okmate-sentinel="before" data-start="{{ log_window.prev_start }}"></div>
+    {% endif %}
     {% for day in log_days %}
       <h3 class="okmate-log-date">{{ day.date }}</h3>
       <ul class="okmate-log-list">
@@ -16,5 +21,10 @@
         {% endfor %}
       </ul>
     {% endfor %}
+    {% if log_window.enabled && log_window.after > 0 %}
+      <div class="okmate-window-sentinel" data-okmate-sentinel="after" data-start="{{ log_window.next_start }}"></div>
+      <div class="okmate-window-spacer" style="height: {{ log_window.after * 28 }}px" aria-hidden="true"></div>
+    {% endif %}
+    </div>
   {% endif %}
 </section>

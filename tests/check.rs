@@ -73,3 +73,8 @@ fn check_json_matches_okf_on_invalid_bundle() {
     let expected: serde_json::Value = serde_json::from_str(&engine.json().unwrap()).unwrap();
     assert_eq!(cli, expected);
 }
+
+#[test]
+fn check_strict_keeps_git_provenance_on() {
+    assert!(okf::LoadOptions::new(Profile::Strict).provenance);
+}

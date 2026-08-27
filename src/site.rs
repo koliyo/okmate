@@ -21,6 +21,7 @@ const NAV_JS: &str = include_str!("../assets/nav.js");
 const RESIZE_JS: &str = include_str!("../assets/resize.js");
 const TOC_JS: &str = include_str!("../assets/toc.js");
 const REVIEW_JS: &str = include_str!("../assets/review.js");
+const LOG_JS: &str = include_str!("../assets/log.js");
 
 #[derive(Serialize)]
 struct NavPage {
@@ -39,7 +40,8 @@ pub fn build(root: &Path, output: &Path, profile: Profile) -> Result<BuildSummar
     let summary = okf::build(root, output, profile)?;
     let bundle = okf::load(root, profile)?;
     let workspace = Workspace::from_loaded(id_from_path(root), root.to_path_buf(), bundle);
-    write_site(&workspace, output, NavMode::Separated)?;
+    write_html_pages(&workspace, output, NavMode::Separated)?;
+    write_preview_shell(&workspace, output)?;
     Ok(summary)
 }
 
@@ -47,12 +49,11 @@ pub fn build_workspace(workspace: &Workspace, output: &Path) -> Result<()> {
     build_workspace_nav(workspace, output, NavMode::Separated)
 }
 
-pub fn build_workspace_nav(workspace: &Workspace, output: &Path, nav_mode: NavMode) -> Result<()> {
-    write_site(workspace, output, nav_mode)
+pub fn build_workspace_nav(workspace: &Workspace, output: &Path, _nav_mode: NavMode) -> Result<()> {
+    write_preview_shell(workspace, output)
 }
 
-fn write_site(workspace: &Workspace, output: &Path, nav_mode: NavMode) -> Result<()> {
-    write_html_pages(workspace, output, nav_mode)?;
+fn write_preview_shell(workspace: &Workspace, output: &Path) -> Result<()> {
     write_pages_json(workspace, output)?;
     write_assets(output)?;
     Ok(())
@@ -158,7 +159,7 @@ pub fn page_for_route_nav(
     }
 }
 
-fn render_document(document: Document) -> Result<String> {
+pub(crate) fn render_document(document: Document) -> Result<String> {
     match document.page_kind.as_str() {
         "home" => document.render_home(),
         "log" => document.render_log(),
@@ -199,6 +200,8 @@ fn document(
         message: String::new(),
         config_path: String::new(),
         settings_roots: Vec::new(),
+        review_window: crate::views::ListWindow::default(),
+        log_window: crate::views::ListWindow::default(),
     }
 }
 
@@ -349,6 +352,7 @@ pub(crate) fn write_settings_host(output: &Path) -> Result<()> {
 }
 
 fn write_pages_json(workspace: &Workspace, output: &Path) -> Result<()> {
+    fs::create_dir_all(output).with_context(|| format!("failed to create {}", output.display()))?;
     fs::write(
         output.join("pages.json"),
         format!("{}\n", serde_json::to_string_pretty(&nav_pages(workspace))?),
@@ -365,7 +369,8 @@ fn write_assets(output: &Path) -> Result<()> {
     fs::write(dir.join("nav.js"), NAV_JS).context("failed to write nav.js")?;
     fs::write(dir.join("resize.js"), RESIZE_JS).context("failed to write resize.js")?;
     fs::write(dir.join("toc.js"), TOC_JS).context("failed to write toc.js")?;
-    fs::write(dir.join("review.js"), REVIEW_JS).context("failed to write review.js")
+    fs::write(dir.join("review.js"), REVIEW_JS).context("failed to write review.js")?;
+    fs::write(dir.join("log.js"), LOG_JS).context("failed to write log.js")
 }
 
 fn nav_pages(workspace: &Workspace) -> Vec<NavPage> {

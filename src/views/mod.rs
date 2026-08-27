@@ -2,11 +2,16 @@ use askama::Template;
 use okf::Bundle;
 
 mod governance;
+mod window;
 
 pub use governance::{
     ConceptMeta, DASHBOARD_LOG_LIMIT, DiagnosticRow, LogDay, LogEntry, ProvenanceItem, RecentDoc,
     StatCard, concept_meta, diagnostic_rows, governance_stats, merged_log, recent_leaf_documents,
     review_needs_attention, take_log_entries,
+};
+pub use window::{
+    LOG_WINDOW, ListWindow, REVIEW_WINDOW, ROW_HEIGHT_PX, WindowQuery, apply_log_window,
+    apply_review_window,
 };
 
 #[derive(Clone, Debug, Default)]
@@ -94,6 +99,8 @@ macro_rules! document_template {
             pub message: String,
             pub config_path: String,
             pub settings_roots: Vec<SettingsRoot>,
+            pub review_window: ListWindow,
+            pub log_window: ListWindow,
         }
 
         impl From<Document> for $name {
@@ -121,6 +128,8 @@ macro_rules! document_template {
                     message: document.message,
                     config_path: document.config_path,
                     settings_roots: document.settings_roots,
+                    review_window: document.review_window,
+                    log_window: document.log_window,
                 }
             }
         }
@@ -159,6 +168,8 @@ pub struct Document {
     pub message: String,
     pub config_path: String,
     pub settings_roots: Vec<SettingsRoot>,
+    pub review_window: ListWindow,
+    pub log_window: ListWindow,
 }
 
 impl Document {
@@ -361,6 +372,8 @@ mod tests {
             message: String::new(),
             config_path: "~/.okmate/config.toml".into(),
             settings_roots: Vec::new(),
+            review_window: ListWindow::default(),
+            log_window: ListWindow::default(),
         }
     }
 

@@ -10,6 +10,7 @@ pub mod port;
 pub mod preview;
 pub mod roots;
 pub mod site;
+pub mod timings;
 pub mod views;
 pub mod workspace;
 
