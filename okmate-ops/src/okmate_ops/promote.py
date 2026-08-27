@@ -10,7 +10,7 @@ from okmate_ops.paths import repo_root
 from okmate_ops.version import apply_release_version, parse_release_version, release_files_match
 
 PROMOTE_USAGE = "usage: okmate-ops promote tag"
-PROMOTE_TAG_USAGE = "usage: okmate-ops promote tag <tag> [--from BRANCH]"
+PROMOTE_TAG_USAGE = "usage: okmate-ops promote tag <tag> [--from BRANCH] [--force]"
 
 
 def run(argv: list[str], *, cwd: Path | None = None) -> None:
@@ -72,7 +72,7 @@ def push_version_update(version: str, from_ref: str, remote_sha: str) -> str:
             run(["git", "worktree", "remove", "--force", str(worktree)], cwd=root)
 
 
-def promote_tag(tag: str, from_ref: str = "main") -> int:
+def promote_tag(tag: str, from_ref: str = "main", *, force: bool = False) -> int:
     movable = tag == "dev"
     if not movable:
         parse_release_version(tag)
@@ -96,7 +96,7 @@ def promote_tag(tag: str, from_ref: str = "main") -> int:
     wait_for_promote_ci(sha)
     tag_argv = ["git", "tag", "-a", tag, "-m", tag, sha]
     push_argv = ["git", "push", "origin", tag]
-    if movable:
+    if movable or force:
         tag_argv = ["git", "tag", "-a", "-f", tag, "-m", tag, sha]
         push_argv = ["git", "push", "--force", "origin", tag]
     run(tag_argv)
@@ -109,6 +109,7 @@ def promote_tag_command(argv: list[str]) -> int:
         raise SystemExit(PROMOTE_TAG_USAGE)
     from_ref = "main"
     tag: str | None = None
+    force = False
     i = 0
     while i < len(argv):
         if argv[i] == "--from":
@@ -117,13 +118,17 @@ def promote_tag_command(argv: list[str]) -> int:
             from_ref = argv[i + 1]
             i += 2
             continue
+        if argv[i] == "--force":
+            force = True
+            i += 1
+            continue
         if tag is not None:
             raise SystemExit(PROMOTE_TAG_USAGE)
         tag = argv[i]
         i += 1
     if tag is None:
         raise SystemExit(PROMOTE_TAG_USAGE)
-    return promote_tag(tag, from_ref=from_ref)
+    return promote_tag(tag, from_ref=from_ref, force=force)
 
 
 def promote_command(argv: list[str]) -> int:

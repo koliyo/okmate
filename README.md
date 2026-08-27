@@ -123,7 +123,8 @@ The update plan is
 Do not treat this README as an architecture decision.
 
 1. Run `uv run okmate-ops promote tag vX.Y.Z` (or `--from BRANCH`). That is
-   the only operator path that creates an immutable `v*` tag. For a versioned
+   the only operator path that creates an immutable `v*` tag. Pass `--force`
+   only to move an existing `v*` (local and `origin`). For a versioned
    tag it writes `X.Y.Z` to `Cargo.toml`, `okf/Cargo.toml`, `Cargo.lock`, and
    `Casks/okmate.rb`, pushes that commit to the target branch, waits for
    hosted **Test** on the version commit, then pushes the tag. Set

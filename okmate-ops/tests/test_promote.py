@@ -35,11 +35,12 @@ def test_promote_command_routes(monkeypatch) -> None:
     called: list[str] = []
     monkeypatch.setattr(
         "okmate_ops.promote.promote_tag",
-        lambda tag, from_ref="main": called.append(f"{tag}:{from_ref}") or 0,
+        lambda tag, from_ref="main", force=False: called.append(f"{tag}:{from_ref}:{force}") or 0,
     )
     assert promote_command(["tag", "v1.2.3"]) == 0
     assert promote_command(["tag", "v1.2.3", "--from", "release"]) == 0
-    assert called == ["v1.2.3:main", "v1.2.3:release"]
+    assert promote_command(["tag", "v1.2.3", "--force"]) == 0
+    assert called == ["v1.2.3:main:False", "v1.2.3:release:False", "v1.2.3:main:True"]
 
 
 def test_promote_tag_pushes_version_then_tags(monkeypatch, tmp_path) -> None:
@@ -66,6 +67,31 @@ def test_promote_tag_pushes_version_then_tags(monkeypatch, tmp_path) -> None:
         ["git", "fetch", "origin", "refs/heads/main:refs/remotes/origin/main"],
         ["git", "tag", "-a", "v1.2.3", "-m", "v1.2.3", "1.2.3:main:abc"],
         ["git", "push", "origin", "v1.2.3"],
+    ]
+
+
+def test_promote_tag_force_overwrites_versioned_tag(monkeypatch, tmp_path) -> None:
+    calls: list[list[str]] = []
+    monkeypatch.setattr("okmate_ops.promote.repo_root", lambda: tmp_path)
+    monkeypatch.setattr(
+        "okmate_ops.promote.git_capture",
+        lambda *args, **kwargs: type("Result", (), {"returncode": 0, "stdout": "abc\n"})(),
+    )
+    monkeypatch.setattr(
+        "okmate_ops.promote.run",
+        lambda argv, cwd=None: calls.append(list(argv)),
+    )
+    monkeypatch.setattr(
+        "okmate_ops.promote.push_version_update",
+        lambda version, from_ref, remote_sha: "newsha",
+    )
+    monkeypatch.setattr("okmate_ops.promote.wait_for_promote_ci", lambda sha: None)
+
+    assert promote_tag("v1.2.3", force=True) == 0
+    assert calls == [
+        ["git", "fetch", "origin", "refs/heads/main:refs/remotes/origin/main"],
+        ["git", "tag", "-a", "-f", "v1.2.3", "-m", "v1.2.3", "newsha"],
+        ["git", "push", "--force", "origin", "v1.2.3"],
     ]
 
 
