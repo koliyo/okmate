@@ -277,20 +277,17 @@ fn measure_page(workspace: &Workspace, route: &str) -> Result<PageTiming> {
     })
 }
 
-fn measure_click(workspace: &Workspace, profile: Profile) -> Result<ClickTiming> {
+fn measure_click(workspace: &Workspace, _profile: Profile) -> Result<ClickTiming> {
     let route = first_leaf_route(workspace).context("workspace has no leaf concept")?;
     let started = Instant::now();
-    let reloaded = workspace.reload(profile)?;
-    let reload_ms = millis(started.elapsed());
-    let started = Instant::now();
     let document =
-        site::page_for_route(&reloaded, &route).with_context(|| format!("no page for {route}"))?;
+        site::page_for_route(workspace, &route).with_context(|| format!("no page for {route}"))?;
     let fragment = document
         .render_main_fragment()
         .map_err(|error| anyhow::anyhow!("{error}"))?;
     Ok(ClickTiming {
         route,
-        reload_ms,
+        reload_ms: 0.0,
         render_ms: millis(started.elapsed()),
         fragment_bytes: fragment.len(),
     })

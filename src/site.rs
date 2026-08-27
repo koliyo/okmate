@@ -158,7 +158,7 @@ pub fn page_for_route_nav(
     }
 }
 
-fn render_document(document: Document) -> Result<String> {
+pub(crate) fn render_document(document: Document) -> Result<String> {
     match document.page_kind.as_str() {
         "home" => document.render_home(),
         "log" => document.render_log(),

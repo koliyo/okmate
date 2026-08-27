@@ -1,5 +1,6 @@
 use std::net::{IpAddr, Ipv4Addr, SocketAddr};
 use std::path::{Path, PathBuf};
+use std::sync::{Arc, RwLock};
 
 use axum::Router;
 use axum::extract::{Query, State};
@@ -20,7 +21,7 @@ pub use settings::{render_fragment, render_page, settings_roots};
 pub struct AppState {
     pub output: PathBuf,
     pub root: PathBuf,
-    pub workspace: crate::workspace::Workspace,
+    pub workspace: Arc<RwLock<crate::workspace::Workspace>>,
     pub profile: Profile,
     pub config_path: PathBuf,
     pub session_path: PathBuf,
@@ -33,12 +34,22 @@ impl AppState {
         Self {
             output,
             root,
-            workspace,
+            workspace: share_workspace(workspace),
             profile,
             config_path,
             session_path: crate::preview::session_path(),
         }
     }
+
+    pub fn replace_workspace(&self, workspace: crate::workspace::Workspace) {
+        *self.workspace.write().expect("workspace lock") = workspace;
+    }
+}
+
+pub fn share_workspace(
+    workspace: crate::workspace::Workspace,
+) -> Arc<RwLock<crate::workspace::Workspace>> {
+    Arc::new(RwLock::new(workspace))
 }
 
 pub fn bind_addr(public: bool, port: u16) -> SocketAddr {
@@ -76,7 +87,8 @@ async fn set_nav_mode(
 ) -> Redirect {
     if let Some(mode) = crate::preview::NavMode::parse(&query.mode) {
         crate::preview::persist_nav_mode_to(&state.session_path, mode);
-        let _ = crate::site::build_workspace_nav(&state.workspace, &state.output, mode);
+        let workspace = state.workspace.read().expect("workspace lock");
+        let _ = crate::site::build_workspace_nav(&workspace, &state.output, mode);
     }
     redirect_back(&headers)
 }

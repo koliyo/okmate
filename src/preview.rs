@@ -1,6 +1,7 @@
 use std::env;
 use std::fs;
 use std::path::{Path, PathBuf};
+use std::sync::{Arc, RwLock};
 use std::time::Duration;
 
 use anyhow::{Context, Result, bail};
@@ -172,7 +173,8 @@ async fn prepare(options: ViewOptions) -> Result<PreparedView> {
         bound, target.open_path
     );
 
-    let watch_workspace = target.workspace.clone();
+    let workspace = crate::http::share_workspace(target.workspace);
+    let watch_workspace = workspace.clone();
     let watch_output = output.clone();
     let profile = options.profile;
     tokio::spawn(async move {
@@ -196,7 +198,7 @@ async fn prepare(options: ViewOptions) -> Result<PreparedView> {
         state: crate::http::AppState {
             output,
             root,
-            workspace: target.workspace,
+            workspace,
             profile: options.profile,
             config_path: crate::config::config_path(),
             session_path: session_path(),
@@ -224,7 +226,7 @@ async fn prepare_settings_host(options: ViewOptions) -> Result<PreparedView> {
         state: crate::http::AppState {
             output,
             root: PathBuf::from("/"),
-            workspace: Workspace::empty(),
+            workspace: crate::http::share_workspace(Workspace::empty()),
             profile: options.profile,
             config_path: crate::config::config_path(),
             session_path: session_path(),
@@ -319,7 +321,11 @@ fn home_dir() -> Option<PathBuf> {
         .map(PathBuf::from)
 }
 
-async fn watch_rebuild(workspace: Workspace, output: PathBuf, profile: Profile) -> Result<()> {
+async fn watch_rebuild(
+    workspace: Arc<RwLock<Workspace>>,
+    output: PathBuf,
+    profile: Profile,
+) -> Result<()> {
     let (tx, mut rx) = mpsc::unbounded_channel();
     let mut watcher = RecommendedWatcher::new(
         move |event| {
@@ -328,7 +334,7 @@ async fn watch_rebuild(workspace: Workspace, output: PathBuf, profile: Profile) 
         Config::default(),
     )
     .context("failed to start knowledge watcher")?;
-    for path in workspace.watch_paths() {
+    for path in workspace.read().expect("workspace lock").watch_paths() {
         watcher
             .watch(&path, RecursiveMode::Recursive)
             .with_context(|| format!("failed to watch {}", path.display()))?;
@@ -353,12 +359,14 @@ async fn watch_rebuild(workspace: Workspace, output: PathBuf, profile: Profile) 
                 _ = &mut debounce => break,
             }
         }
-        match workspace.reload(profile) {
+        let snapshot = workspace.read().expect("workspace lock").clone();
+        match snapshot.reload(profile) {
             Ok(reloaded) => {
                 let nav_mode = load_session().nav_mode;
                 if let Err(error) = site::build_workspace_nav(&reloaded, &output, nav_mode) {
                     eprintln!("okmate: rebuild failed: {error:#}");
                 }
+                *workspace.write().expect("workspace lock") = reloaded;
             }
             Err(error) => eprintln!("okmate: reload failed: {error:#}"),
         }

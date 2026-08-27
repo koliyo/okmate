@@ -9,13 +9,17 @@ use http_body_util::BodyExt;
 use okf::Profile;
 use tower::ServiceExt;
 
-fn app(root: std::path::PathBuf, output: std::path::PathBuf) -> axum::Router {
-    okmate::http::router(okmate::http::AppState::new(
+fn live_state(root: std::path::PathBuf, output: std::path::PathBuf) -> okmate::http::AppState {
+    okmate::http::AppState::new(
         output,
         root,
         Profile::Strict,
         std::env::temp_dir().join("okmate-nav-unused.toml"),
-    ))
+    )
+}
+
+fn app(root: std::path::PathBuf, output: std::path::PathBuf) -> axum::Router {
+    okmate::http::router(live_state(root, output))
 }
 
 async fn body_text(response: axum::http::Response<Body>) -> String {
@@ -70,6 +74,59 @@ async fn datastar_get_concept_returns_main_fragment() {
         !body.contains("id=\"okmate-nav\""),
         "nav should stay in the DOM: {body}"
     );
+}
+
+#[tokio::test]
+async fn datastar_get_reads_memory_until_workspace_swap() {
+    let (root, output) = fixture();
+    let state = live_state(root.clone(), output);
+    let app = okmate::http::router(state.clone());
+    let first = app
+        .oneshot(
+            Request::get("/hello/")
+                .header("datastar-request", "true")
+                .body(Body::empty())
+                .unwrap(),
+        )
+        .await
+        .unwrap();
+    let body = body_text(first).await;
+    assert!(body.contains("Hello"), "{body}");
+    assert!(!body.contains("Renamed"), "{body}");
+
+    fs::write(
+        root.join("hello.md"),
+        valid_strict_concept("Renamed", "", "Updated body.\n"),
+    )
+    .unwrap();
+    let stale = okmate::http::router(state.clone())
+        .oneshot(
+            Request::get("/hello/")
+                .header("datastar-request", "true")
+                .body(Body::empty())
+                .unwrap(),
+        )
+        .await
+        .unwrap();
+    let body = body_text(stale).await;
+    assert!(body.contains("Hello"), "{body}");
+    assert!(!body.contains("Renamed"), "{body}");
+
+    let reloaded = okmate::workspace::Workspace::load_single(&root, Profile::Strict).unwrap();
+    state.replace_workspace(reloaded);
+    let fresh = okmate::http::router(state)
+        .oneshot(
+            Request::get("/hello/")
+                .header("datastar-request", "true")
+                .body(Body::empty())
+                .unwrap(),
+        )
+        .await
+        .unwrap();
+    let body = body_text(fresh).await;
+    assert!(body.contains("Renamed"), "{body}");
+    assert!(body.contains("id=\"okmate-main\""), "{body}");
+    assert!(!body.contains("id=\"okmate-nav\""), "{body}");
 }
 
 #[tokio::test]

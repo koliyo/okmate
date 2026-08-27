@@ -65,7 +65,7 @@ fn app(root: std::path::PathBuf, output: std::path::PathBuf, workspace: Workspac
     okmate::http::router(okmate::http::AppState {
         output,
         root,
-        workspace,
+        workspace: okmate::http::share_workspace(workspace),
         profile: Profile::Strict,
         config_path: std::env::temp_dir().join("okmate-ws-unused.toml"),
         session_path: std::env::temp_dir().join(format!(
@@ -201,7 +201,7 @@ async fn nav_mode_toggle_switches_trees() {
     let app = okmate::http::router(okmate::http::AppState {
         output: output.clone(),
         root: a,
-        workspace,
+        workspace: okmate::http::share_workspace(workspace),
         profile: Profile::Strict,
         config_path: std::env::temp_dir().join("okmate-ws-unused.toml"),
         session_path: session.clone(),

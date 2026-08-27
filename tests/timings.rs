@@ -59,6 +59,7 @@ fn timings_click_includes_small_document_route() {
     let value: serde_json::Value = serde_json::from_str(stdout.trim()).unwrap();
     let click = &value["click"];
     assert_eq!(click["route"], "/hello/");
+    assert_eq!(click["reload_ms"].as_f64(), Some(0.0));
     assert!(click["fragment_bytes"].as_u64().unwrap() > 0, "{value}");
     assert!(value["pages"][0]["fragment_bytes"].as_u64().unwrap() > 0);
 }
