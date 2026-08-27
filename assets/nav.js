@@ -175,6 +175,9 @@
     if (window.__okmateResize && typeof window.__okmateResize.enhance === "function") {
       window.__okmateResize.enhance();
     }
+    if (window.__okmateReading && typeof window.__okmateReading.enhance === "function") {
+      window.__okmateReading.enhance();
+    }
   }
 
   function observeMain() {
@@ -235,8 +238,49 @@
     rememberScroll();
   });
 
+  function placeBlurb(blurb) {
+    var summary = blurb.closest("summary");
+    var nav = navRoot();
+    if (!summary || !nav) {
+      return;
+    }
+    var navBox = nav.getBoundingClientRect();
+    var row = summary.getBoundingClientRect();
+    var left = Math.round(navBox.right + 8);
+    var top = Math.round(row.top);
+    var room = window.innerWidth - left - 12;
+    blurb.style.left = left + "px";
+    blurb.style.top = top + "px";
+    blurb.style.maxWidth = Math.max(12 * 16, Math.min(16 * 16, room)) + "px";
+    var height = blurb.offsetHeight;
+    if (top + height > window.innerHeight - 8) {
+      blurb.style.top = Math.max(8, window.innerHeight - height - 8) + "px";
+    }
+  }
+
+  function bindBlurbs() {
+    var nav = navRoot();
+    if (!nav || nav.__okmateBlurbs) {
+      return;
+    }
+    nav.__okmateBlurbs = true;
+    function onAim(event) {
+      var summary = event.target.closest && event.target.closest("details.nav-section > summary");
+      if (!summary || !nav.contains(summary)) {
+        return;
+      }
+      var blurb = summary.querySelector(":scope > .okmate-nav-blurb");
+      if (blurb) {
+        placeBlurb(blurb);
+      }
+    }
+    nav.addEventListener("mouseover", onAim);
+    nav.addEventListener("focusin", onAim);
+  }
+
   function enhance() {
     observeMain();
+    bindBlurbs();
     syncNav(window.location.pathname);
     restoreSections();
     restoreScroll();

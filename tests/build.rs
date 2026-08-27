@@ -97,17 +97,28 @@ fn build_writes_engine_catalog_html_landmarks_and_pages_json() {
 
     let settings = fs::read_to_string(output.join("settings").join("index.html")).unwrap();
     assert!(settings.contains("id=\"okmate-settings\""));
+    assert!(settings.contains("id=\"okmate-main-width\""));
+    assert!(settings.contains("id=\"okmate-main-wrap\""));
 
     assert!(output.join("__okmate").join("app.css").is_file());
     let css = fs::read_to_string(output.join("__okmate").join("app.css")).unwrap();
     assert!(css.contains("--okmate-nav-width"), "{css}");
+    assert!(css.contains("--okmate-main-max-width"), "{css}");
+    assert!(css.contains("overflow-x: hidden"), "{css}");
+    assert!(css.contains("overflow-x: auto"), "{css}");
+    assert!(css.contains("overflow-wrap: anywhere"), "{css}");
+    assert!(css.contains("data-okmate-wrap"), "{css}");
+    assert!(css.contains("pointer-events: none"), "{css}");
+    assert!(css.contains("66ch"), "{css}");
     assert!(css.contains(".okmate-col-resizer"), "{css}");
     assert!(css.contains(".okmate-toc-link.is-current"), "{css}");
     assert!(css.contains(".okmate-recents-list"), "{css}");
     assert!(css.contains("flex-direction: column"), "{css}");
     assert!(output.join("__okmate").join("resize.js").is_file());
+    assert!(output.join("__okmate").join("reading.js").is_file());
     assert!(output.join("__okmate").join("toc.js").is_file());
     assert!(home.contains("/__okmate/resize.js"), "{home}");
+    assert!(home.contains("/__okmate/reading.js"), "{home}");
     assert!(home.contains("/__okmate/toc.js"), "{home}");
     assert!(home.contains("/__okmate/nav.js"), "{home}");
     let pages: serde_json::Value =

@@ -395,6 +395,7 @@ mod tests {
         assert!(html.contains("/__okmate/goto.js"), "{html}");
         assert!(html.contains("/__okmate/nav.js"), "{html}");
         assert!(html.contains("/__okmate/resize.js"), "{html}");
+        assert!(html.contains("/__okmate/reading.js"), "{html}");
         assert!(html.contains("/__okmate/toc.js"), "{html}");
     }
 
@@ -403,6 +404,8 @@ mod tests {
         let html = sample_document(Vec::new()).render_settings().unwrap();
         assert!(html.contains("id=\"okmate-settings\""));
         assert!(html.contains("id=\"okmate-nav\""));
+        assert!(html.contains("id=\"okmate-main-width\""));
+        assert!(html.contains("id=\"okmate-main-wrap\""));
         assert!(html.contains("No roots yet"));
         assert!(html.contains("Choose folder"));
         assert!(html.contains("pick-folder"));

@@ -19,6 +19,7 @@ const DATASTAR_JS: &str = include_str!("../assets/datastar.js");
 const GOTO_JS: &str = include_str!("../assets/goto.js");
 const NAV_JS: &str = include_str!("../assets/nav.js");
 const RESIZE_JS: &str = include_str!("../assets/resize.js");
+const READING_JS: &str = include_str!("../assets/reading.js");
 const TOC_JS: &str = include_str!("../assets/toc.js");
 const REVIEW_JS: &str = include_str!("../assets/review.js");
 const LOG_JS: &str = include_str!("../assets/log.js");
@@ -368,6 +369,7 @@ fn write_assets(output: &Path) -> Result<()> {
     fs::write(dir.join("goto.js"), GOTO_JS).context("failed to write goto.js")?;
     fs::write(dir.join("nav.js"), NAV_JS).context("failed to write nav.js")?;
     fs::write(dir.join("resize.js"), RESIZE_JS).context("failed to write resize.js")?;
+    fs::write(dir.join("reading.js"), READING_JS).context("failed to write reading.js")?;
     fs::write(dir.join("toc.js"), TOC_JS).context("failed to write toc.js")?;
     fs::write(dir.join("review.js"), REVIEW_JS).context("failed to write review.js")?;
     fs::write(dir.join("log.js"), LOG_JS).context("failed to write log.js")

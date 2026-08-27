@@ -1,5 +1,24 @@
 <div id="okmate-settings">
-  <h1>Knowledge roots</h1>
+  <h1>Settings</h1>
+  <h2>Reading</h2>
+  <p>These stay in this browser. They do not change knowledge roots.</p>
+  <div class="okmate-settings-stack">
+    <label class="okmate-reading-width">Measure
+      <span class="okmate-reading-width-row">
+        <input id="okmate-main-width" type="range" min="45" max="90" step="1" value="66">
+        <output id="okmate-main-width-value" for="okmate-main-width">66ch</output>
+      </span>
+    </label>
+    <p class="okmate-settings-help">Maximum line length in characters. The column stays this wide when you enlarge the window.</p>
+    <button type="button" id="okmate-main-width-reset" hidden>Use 66ch</button>
+    <label class="okmate-reading-wrap">
+      <input id="okmate-main-wrap" type="checkbox" checked>
+      Wrap lines
+    </label>
+    <p class="okmate-settings-help">When wrapping is off, long lines stay on one line and the pane scrolls sideways.</p>
+  </div>
+
+  <h2>Knowledge roots</h2>
   <p>A knowledge root is a local OKF bundle OKMate can check, search, and preview. Agents list resolved folders with <code>okmate roots</code>.</p>
   {% if !config_path.is_empty() %}
     <p class="okmate-settings-help">Saved in <code>{{ config_path }}</code>.</p>
@@ -7,7 +26,7 @@
   {% if !message.is_empty() %}
     <p class="okmate-settings-msg">{{ message }}</p>
   {% endif %}
-  <h2>Configured roots</h2>
+  <h3>Configured roots</h3>
   {% if settings_roots.is_empty() %}
     <div class="okmate-settings-empty">
       <p>No roots yet. Add a folder on this computer (usually named <code>knowledge</code>, with <code>index.md</code>) or a git repository below.</p>
@@ -51,7 +70,7 @@
     </div>
   {% endif %}
 
-  <h2>Add a folder on this computer</h2>
+  <h3>Add a folder on this computer</h3>
   <p class="okmate-settings-help">Pick the directory that contains <code>index.md</code> (often named <code>knowledge</code>). Paste the folder path here; Choose folder is available in the desktop window.</p>
   <form method="post" action="/__okmate/settings" class="okmate-settings-stack" data-on:submit="@post('/__okmate/settings')">
     <input type="hidden" name="action" value="add_directory">
@@ -87,7 +106,7 @@
   })();
   </script>
 
-  <h2>Add a git repository</h2>
+  <h3>Add a git repository</h3>
   <p class="okmate-settings-help">Prefer <code>token_env</code> over pasting a token.</p>
   <form method="post" action="/__okmate/settings" class="okmate-settings-stack" data-on:submit="@post('/__okmate/settings')">
     <input type="hidden" name="action" value="add_git">

@@ -186,12 +186,12 @@ body.is-col-resizing {
 }
 .okmate-nav-blurb {
   display: none;
-  position: absolute;
-  left: 0.68rem;
-  top: calc(100% + 0.25rem);
-  z-index: 8;
+  position: fixed;
+  left: 0;
+  top: 0;
+  z-index: 20;
   box-sizing: border-box;
-  max-width: min(16rem, calc(100% - 0.4rem));
+  max-width: 16rem;
   padding: 0.45rem 0.6rem;
   border: 1px solid var(--rd-border);
   border-radius: 0.45rem;
@@ -201,6 +201,7 @@ body.is-col-resizing {
   font-weight: 500;
   line-height: 1.4;
   white-space: pre-wrap;
+  pointer-events: none;
   box-shadow: 0 0.35rem 0.9rem rgb(0 0 0 / 28%);
 }
 .nav-section > summary:hover > .okmate-nav-blurb,
@@ -220,10 +221,27 @@ body.is-col-resizing {
   min-width: 0;
   min-height: 0;
   width: 100%;
-  max-width: 42rem;
+  max-width: min(var(--okmate-main-max-width, 66ch), 100%);
   margin: 0 auto;
   padding: 2.5rem 1.25rem 4rem;
+  overflow-x: hidden;
   overflow-y: auto;
+  overflow-wrap: anywhere;
+  background: color-mix(in srgb, var(--rd-bg) 82%, #4b5568);
+}
+
+html[data-okmate-wrap="off"] #okmate-main {
+  overflow-x: auto;
+  overflow-wrap: normal;
+  white-space: nowrap;
+}
+html[data-okmate-wrap="off"] #okmate-main pre {
+  white-space: pre;
+}
+
+#okmate-main pre {
+  max-width: 100%;
+  overflow-x: auto;
 }
 
 #okmate-main h1 { font-size: 2rem; line-height: 1.2; margin: 0 0 1rem; }
@@ -413,6 +431,28 @@ body.is-col-resizing {
   justify-content: space-between;
   gap: 0.75rem;
 }
+.okmate-reading-width-row {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+.okmate-reading-width-row input[type="range"] {
+  flex: 1;
+  min-width: 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
+}
+.okmate-reading-width-row output {
+  min-width: 7.5rem;
+  color: var(--rd-muted);
+  font-size: 0.9rem;
+}
+.okmate-reading-wrap {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
 .okmate-settings-stack { display: grid; gap: 0.65rem; margin: 0 0 1.75rem; }
 .okmate-settings-stack label { display: grid; gap: 0.25rem; }
 .okmate-settings-stack input, .okmate-settings-stack select {
@@ -597,7 +637,7 @@ body.is-col-resizing {
 }
 .okmate-badge-group {
   display: flex;
-  flex-wrap: nowrap;
+  flex-wrap: wrap;
   align-items: center;
   gap: 0.3rem;
   margin-bottom: 0.7rem;
@@ -699,8 +739,12 @@ body.is-col-resizing {
   .okmate-nav-menu { display: block; margin-bottom: 0.75rem; }
   .okmate-desktop-nav { display: none; }
   #okmate-main {
-    width: min(42rem, calc(100% - 2rem));
-    overflow: visible;
+    width: min(var(--okmate-main-max-width, 66ch), calc(100% - 2rem));
+    overflow-x: hidden;
+    overflow-y: visible;
+  }
+  html[data-okmate-wrap="off"] #okmate-main {
+    overflow-x: auto;
   }
   .okmate-search-input { margin-left: 0; min-width: 0; width: 100%; }
   .okmate-stat-list { grid-template-columns: repeat(3, minmax(0, 1fr)); }
