@@ -9,6 +9,7 @@ the same change.
 
 - Moved the Homebrew cask to `koliyo/homebrew-okmate` so `brew tap koliyo/okmate` works. `promote tag v*` now bumps that tap after the versioned tag. Exploratory; do not log complete until hosted CI succeeds.
 - Renamed the macOS app and user-facing product to OKMate; the CLI binary, Homebrew cask token, and `~/.okmate/` paths stay `okmate`. Exploratory; do not log complete until hosted CI succeeds.
+- Drafted paired research and plan for an extended multi-bundle viewer (separated and merged sidebar, merged recents and log, collection hover). Exploratory; do not log complete until hosted CI succeeds.
 - Added in-repo Homebrew formula for the `okmate` crate and taught `promote tag v*` to write crate versions, push that commit to the target branch, then tag. Exploratory; do not log complete until hosted CI succeeds.
 - Switched the Homebrew tap to a Sparkle-aligned cask (`Okmate.zip` from GitHub Releases, `auto_updates`, `github_latest` livecheck). Exploratory; do not log complete until hosted CI succeeds.
 - Homebrew cask now links the bundle CLI so one install provides `Okmate.app` and `okmate` from the same release zip. Exploratory; do not log complete until hosted CI succeeds.

@@ -6,3 +6,4 @@ Application, desktop preview, and agent setup.
 * [Standalone app self-update](standalone-self-update.md) - Sparkle 2 in OKMate.app; GitHub Releases feed.
 * [Dashboard parity with rocci-okf](dashboard-parity.md) - Home governance, review queue, concept meta, and preview ports.
 * [Viewer shell parity with last rocci-okf](viewer-shell-parity.md) - Three panes, resize, outline spy, and keep-nav sidebar.
+* [Extended multi-bundle viewer](extended-multi-bundle.md) - Workspace nav modes, merged dashboard recents and log, collection hover.
