@@ -2,7 +2,7 @@
 okf_version: "0.2"
 ---
 
-# Okmate knowledge
+# OKMate knowledge
 
 * [Architecture](architecture/) - Current system contracts and boundaries.
 * [Decisions](decisions/) - Implemented and approved choices with their consequences.

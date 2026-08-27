@@ -25,7 +25,7 @@ jobs:
       - uses: dtolnay/rust-toolchain@stable
       - uses: Swatinem/rust-cache@v2
       - uses: astral-sh/setup-uv@v7
-      - name: Assemble Okmate.app
+      - name: Assemble OKMate.app
         run: uv run --no-dev okmate-ops package desktop
       - name: Sign and notarize
         env:
@@ -35,7 +35,7 @@ jobs:
           APPLE_API_KEY_ID: ${{ secrets.APPLE_API_KEY_ID }}
           APPLE_API_ISSUER: ${{ secrets.APPLE_API_ISSUER }}
           APPLE_API_KEY: ${{ secrets.APPLE_API_KEY }}
-        run: uv run --no-dev okmate-ops package sign dist/Okmate.app
+        run: uv run --no-dev okmate-ops package sign dist/OKMate.app
       - name: Zip archive and generate appcast
         env:
           SPARKLE_EDDSA_PRIVATE_KEY: ${{ secrets.SPARKLE_EDDSA_PRIVATE_KEY }}
@@ -43,7 +43,7 @@ jobs:
           set -euo pipefail
           tag=${GITHUB_REF_NAME}
           mkdir -p dist/inbox
-          ditto -c -k --keepParent dist/Okmate.app dist/inbox/Okmate.zip
+          ditto -c -k --keepParent dist/OKMate.app dist/inbox/OKMate.zip
           uv run --no-dev okmate-ops package appcast \
             dist/inbox \
             "https://github.com/koliyo/okmate/releases/download/${tag}/"
@@ -54,10 +54,10 @@ jobs:
           set -euo pipefail
           tag=${GITHUB_REF_NAME}
           if gh release view "$tag" >/dev/null 2>&1; then
-            gh release upload "$tag" dist/inbox/Okmate.zip dist/inbox/appcast.xml --clobber
+            gh release upload "$tag" dist/inbox/OKMate.zip dist/inbox/appcast.xml --clobber
           else
-            gh release create "$tag" dist/inbox/Okmate.zip dist/inbox/appcast.xml \
+            gh release create "$tag" dist/inbox/OKMate.zip dist/inbox/appcast.xml \
               --verify-tag \
               --title "$tag" \
-              --notes "Okmate $tag"
+              --notes "OKMate $tag"
           fi

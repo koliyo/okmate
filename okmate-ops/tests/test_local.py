@@ -24,6 +24,7 @@ from okmate_ops.local import (
 def test_cli_crate() -> None:
     assert CLI_CRATE == "okmate"
     assert CLI_BINARY == "okmate"
+    assert APP_NAME == "OKMate"
 
 
 def test_build_usage() -> None:
@@ -178,7 +179,7 @@ def test_package_sign_runs_h35_signer(monkeypatch, tmp_path) -> None:
     assert package_sign([]) == 0
     assert calls == [_ops_argv(h35, "sign", str(root / "dist" / f"{APP_NAME}.app"))]
     calls.clear()
-    assert package_sign(["dist/Okmate.app"]) == 0
+    assert package_sign(["dist/OKMate.app"]) == 0
     assert calls == [_ops_argv(h35, "sign", str(root / "dist" / f"{APP_NAME}.app"))]
 
 

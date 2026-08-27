@@ -1,6 +1,8 @@
 use std::ffi::OsStr;
 use std::path::Path;
 
+const APP_BUNDLE_STEMS: &[&str] = &["OKMate", "Okmate"];
+
 pub fn running_inside_app_bundle(exe: &Path) -> bool {
     let macos = exe.parent();
     let contents = macos.and_then(Path::parent);
@@ -15,7 +17,7 @@ pub fn running_inside_app_bundle(exe: &Path) -> bool {
         (Some(macos), Some(contents), Some(name), Some(ext))
             if macos == OsStr::new("MacOS")
                 && contents == OsStr::new("Contents")
-                && name == OsStr::new("Okmate")
+                && APP_BUNDLE_STEMS.iter().any(|stem| name == OsStr::new(stem))
                 && ext == OsStr::new("app")
     )
 }
@@ -47,8 +49,10 @@ mod tests {
 
     #[test]
     fn detects_okmate_app_layout() {
-        let exe = PathBuf::from("/Applications/Okmate.app/Contents/MacOS/okmate");
+        let exe = PathBuf::from("/Applications/OKMate.app/Contents/MacOS/okmate");
         assert!(running_inside_app_bundle(&exe));
+        let legacy = PathBuf::from("/Applications/Okmate.app/Contents/MacOS/okmate");
+        assert!(running_inside_app_bundle(&legacy));
     }
 
     #[test]
@@ -63,7 +67,7 @@ mod tests {
 
     #[test]
     fn bundled_empty_launch_becomes_view() {
-        let exe = "/tmp/Okmate.app/Contents/MacOS/okmate".to_string();
+        let exe = "/tmp/OKMate.app/Contents/MacOS/okmate".to_string();
         assert_eq!(
             argv_for_parse(vec![exe.clone()], true),
             vec![exe.clone(), "view".into()]
@@ -82,7 +86,7 @@ mod tests {
 
     #[test]
     fn explicit_args_are_unchanged() {
-        let exe = "/tmp/Okmate.app/Contents/MacOS/okmate".to_string();
+        let exe = "/tmp/OKMate.app/Contents/MacOS/okmate".to_string();
         assert_eq!(
             argv_for_parse(vec![exe.clone(), "check".into()], true),
             vec![exe, "check".into()]

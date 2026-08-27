@@ -219,11 +219,11 @@ def test_push_tap_version_commits_and_pushes(tmp_path: Path, monkeypatch) -> Non
         'cask "okmate" do\n'
         '  version "0.1.0"\n'
         "  sha256 :no_check\n"
-        '  url "https://github.com/koliyo/okmate/releases/download/v#{version}/Okmate.zip"\n'
+        '  url "https://github.com/koliyo/okmate/releases/download/v#{version}/OKMate.zip"\n'
         '  livecheck do\n    url "https://github.com/koliyo/okmate/releases/latest"\n    strategy :github_latest\n  end\n'
         "  auto_updates true\n"
-        '  app "Okmate.app"\n'
-        '  binary "#{appdir}/Okmate.app/Contents/MacOS/okmate", target: "okmate"\n'
+        '  app "OKMate.app"\n'
+        '  binary "#{appdir}/OKMate.app/Contents/MacOS/okmate", target: "okmate"\n'
         "end\n",
         encoding="utf-8",
     )

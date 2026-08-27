@@ -44,10 +44,10 @@ def test_replace_package_versions_skips_dependency_tables() -> None:
 def test_replace_lock_and_cask() -> None:
     lock = '[[package]]\nname = "okf"\nversion = "0.1.0"\n\n[[package]]\nname = "okmate"\nversion = "0.1.0"\n'
     assert 'version = "3.1.4"' in replace_lock_crate_versions(lock, "3.1.4")
-    cask = 'cask "okmate" do\n  version "0.1.0"\n  url "https://github.com/koliyo/okmate/releases/download/v#{version}/Okmate.zip"\nend\n'
+    cask = 'cask "okmate" do\n  version "0.1.0"\n  url "https://github.com/koliyo/okmate/releases/download/v#{version}/OKMate.zip"\nend\n'
     updated = replace_cask_version(cask, "3.1.4")
     assert 'version "3.1.4"' in updated
-    assert "v#{version}/Okmate.zip" in updated
+    assert "v#{version}/OKMate.zip" in updated
 
 
 def test_apply_release_version(tmp_path: Path) -> None:

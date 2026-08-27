@@ -12,7 +12,7 @@ use crate::{
 #[command(
     name = "okmate",
     version,
-    about = "Okmate (open knowledge mate) — Askama + Axum knowledge application over the portable okf engine",
+    about = "OKMate (open knowledge mate) — Askama + Axum knowledge application over the portable okf engine",
     arg_required_else_help = true,
     subcommand_required = true
 )]
