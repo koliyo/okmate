@@ -169,6 +169,30 @@ body.is-col-resizing {
   color: var(--rd-primary);
   border-color: color-mix(in srgb, var(--rd-primary) 35%, var(--rd-border));
 }
+.okmate-nav-blurb {
+  display: none;
+  position: absolute;
+  left: 0.68rem;
+  top: calc(100% + 0.25rem);
+  z-index: 8;
+  box-sizing: border-box;
+  max-width: min(16rem, calc(100% - 0.4rem));
+  padding: 0.45rem 0.6rem;
+  border: 1px solid var(--rd-border);
+  border-radius: 0.45rem;
+  background: var(--rd-bg);
+  color: var(--rd-fg);
+  font-size: 0.78rem;
+  font-weight: 500;
+  line-height: 1.4;
+  white-space: pre-wrap;
+  box-shadow: 0 0.35rem 0.9rem rgb(0 0 0 / 28%);
+}
+.nav-section > summary:hover > .okmate-nav-blurb,
+.nav-section > summary:focus-within > .okmate-nav-blurb,
+.nav-section > summary:focus-visible > .okmate-nav-blurb {
+  display: block;
+}
 .nav-section > .nav-fold > .nav-items {
   margin-left: 0.55rem;
   padding-left: 0.45rem;

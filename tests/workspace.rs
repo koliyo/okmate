@@ -378,3 +378,87 @@ async fn workspace_home_orders_recents_and_merges_log_days() {
     let review_body = body_text(review).await;
     assert!(review_body.contains(">Source<"), "{review_body}");
 }
+
+#[test]
+fn collection_hover_uses_first_prose_paragraph_not_child_list() {
+    let a = temp_dir("ws-blurb-a");
+    let b = temp_dir("ws-blurb-b");
+    write_index(&a);
+    write_index(&b);
+    fs::create_dir_all(a.join("plans")).unwrap();
+    fs::create_dir_all(b.join("plans")).unwrap();
+    fs::create_dir_all(a.join("empty")).unwrap();
+    fs::write(
+        a.join("plans").join("index.md"),
+        "# Plans\n\nAlpha plans live here.\n\n- [Shared](shared.md)\n",
+    )
+    .unwrap();
+    fs::write(
+        b.join("plans").join("index.md"),
+        "# Plans\n\nBeta plans live here.\n",
+    )
+    .unwrap();
+    fs::write(a.join("empty").join("index.md"), "# Empty\n").unwrap();
+    fs::write(
+        a.join("plans").join("shared.md"),
+        valid_strict_concept("Alpha Shared", "", "Shared body.\n"),
+    )
+    .unwrap();
+    fs::write(
+        b.join("plans").join("shared.md"),
+        valid_strict_concept("Beta Shared", "", "Shared body.\n"),
+    )
+    .unwrap();
+    let workspace = Workspace::load_members(
+        vec![("a".into(), a.clone()), ("b".into(), b.clone())],
+        Profile::Strict,
+    )
+    .unwrap();
+    let output = temp_dir("ws-blurb-out");
+    okmate::site::build_workspace(&workspace, &output).unwrap();
+    let html = fs::read_to_string(output.join("index.html")).unwrap();
+    let blurbs: Vec<_> = html
+        .split("class=\"okmate-nav-blurb\"")
+        .skip(1)
+        .map(|rest| rest.split("</span>").next().unwrap_or(rest))
+        .collect();
+    assert!(
+        blurbs
+            .iter()
+            .any(|blurb| blurb.contains("Alpha plans live here.")),
+        "{html}"
+    );
+    assert!(
+        !html.contains("class=\"okmate-nav-blurb\">Empty"),
+        "empty collection body must omit the popover: {html}"
+    );
+    assert!(html.contains(">Overview<"), "{html}");
+    assert!(
+        !html
+            .split("class=\"okmate-nav-blurb\"")
+            .skip(1)
+            .any(|rest| rest
+                .split("</span>")
+                .next()
+                .unwrap_or("")
+                .contains("[Shared]")),
+        "hover must not dump the child list: {html}"
+    );
+
+    okmate::site::build_workspace_nav(&workspace, &output, okmate::preview::NavMode::Merged)
+        .unwrap();
+    let merged = fs::read_to_string(output.join("index.html")).unwrap();
+    let merged_blurb = merged
+        .split("class=\"okmate-nav-blurb\"")
+        .nth(1)
+        .and_then(|rest| rest.split("</span>").next())
+        .expect("merged blurb");
+    assert!(
+        merged_blurb.contains("a: Alpha plans live here."),
+        "{merged_blurb}"
+    );
+    assert!(
+        merged_blurb.contains("b: Beta plans live here."),
+        "{merged_blurb}"
+    );
+}

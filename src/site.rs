@@ -522,7 +522,7 @@ fn nav_forest(
                 children: Vec::new(),
                 section_key: namespaced_key(section_prefix, path),
                 root: String::new(),
-                summary: String::new(),
+                summary: first_prose_paragraph(&index.article_html),
             },
         );
     }
@@ -841,5 +841,88 @@ fn finalize_merged_collection(
     if owners.len() == 1 {
         node.root = owners[0].clone();
     }
+    node.summary = merged_collection_summary(workspace, path, owners);
     node
+}
+
+fn merged_collection_summary(workspace: &Workspace, path: &str, owners: &[String]) -> String {
+    let mut parts = Vec::new();
+    for root_id in owners {
+        let Some(member) = workspace
+            .members()
+            .iter()
+            .find(|member| member.id == *root_id)
+        else {
+            continue;
+        };
+        let Some(index) = member
+            .bundle
+            .indexes
+            .iter()
+            .find(|index| index.path.strip_suffix("/index.md") == Some(path))
+        else {
+            continue;
+        };
+        let text = first_prose_paragraph(&index.article_html);
+        if text.is_empty() {
+            continue;
+        }
+        parts.push((root_id.as_str(), text));
+    }
+    match parts.as_slice() {
+        [] => String::new(),
+        [(_, text)] => text.clone(),
+        many => many
+            .iter()
+            .map(|(root, text)| format!("{root}: {text}"))
+            .collect::<Vec<_>>()
+            .join("\n"),
+    }
+}
+
+fn first_prose_paragraph(article_html: &str) -> String {
+    let mut rest = article_html;
+    loop {
+        let trimmed = rest.trim_start();
+        let Some(after_open) = trimmed.strip_prefix("<h") else {
+            rest = trimmed;
+            break;
+        };
+        let Some(end) = after_open.find("</h") else {
+            rest = trimmed;
+            break;
+        };
+        let after_end = &after_open[end..];
+        let Some(close) = after_end.find('>') else {
+            rest = trimmed;
+            break;
+        };
+        rest = &after_end[close + 1..];
+    }
+    let rest = rest.trim_start();
+    let Some(after_p) = rest.strip_prefix("<p") else {
+        return String::new();
+    };
+    let Some(gt) = after_p.find('>') else {
+        return String::new();
+    };
+    let inner = &after_p[gt + 1..];
+    let Some(end) = inner.find("</p>") else {
+        return String::new();
+    };
+    plaintext(&inner[..end])
+}
+
+fn plaintext(html: &str) -> String {
+    let mut out = String::new();
+    let mut in_tag = false;
+    for ch in html.chars() {
+        match ch {
+            '<' => in_tag = true,
+            '>' => in_tag = false,
+            _ if !in_tag => out.push(ch),
+            _ => {}
+        }
+    }
+    out.split_whitespace().collect::<Vec<_>>().join(" ")
 }
