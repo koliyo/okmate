@@ -66,6 +66,8 @@ pub fn router(state: AppState) -> Router {
     Router::new()
         .route("/__okmate/nav-mode", get(set_nav_mode))
         .route("/__okmate/settings", post(settings::post))
+        .route("/__okmate/review-window", get(pages::review_window))
+        .route("/__okmate/log-window", get(pages::log_window))
         .nest_service("/__okmate", ServeDir::new(output.join("__okmate")))
         .fallback_service(ServeDir::new(output).append_index_html_on_directories(true))
         .layer(middleware::from_fn_with_state(

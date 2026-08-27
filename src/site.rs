@@ -21,6 +21,7 @@ const NAV_JS: &str = include_str!("../assets/nav.js");
 const RESIZE_JS: &str = include_str!("../assets/resize.js");
 const TOC_JS: &str = include_str!("../assets/toc.js");
 const REVIEW_JS: &str = include_str!("../assets/review.js");
+const LOG_JS: &str = include_str!("../assets/log.js");
 
 #[derive(Serialize)]
 struct NavPage {
@@ -199,6 +200,8 @@ fn document(
         message: String::new(),
         config_path: String::new(),
         settings_roots: Vec::new(),
+        review_window: crate::views::ListWindow::default(),
+        log_window: crate::views::ListWindow::default(),
     }
 }
 
@@ -365,7 +368,8 @@ fn write_assets(output: &Path) -> Result<()> {
     fs::write(dir.join("nav.js"), NAV_JS).context("failed to write nav.js")?;
     fs::write(dir.join("resize.js"), RESIZE_JS).context("failed to write resize.js")?;
     fs::write(dir.join("toc.js"), TOC_JS).context("failed to write toc.js")?;
-    fs::write(dir.join("review.js"), REVIEW_JS).context("failed to write review.js")
+    fs::write(dir.join("review.js"), REVIEW_JS).context("failed to write review.js")?;
+    fs::write(dir.join("log.js"), LOG_JS).context("failed to write log.js")
 }
 
 fn nav_pages(workspace: &Workspace) -> Vec<NavPage> {

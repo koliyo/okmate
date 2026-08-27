@@ -41,22 +41,22 @@
       </div>
     {% endif %}
   </section>
-  <h2 id="all-concepts-queue">All Bundle Concepts ({{ review_rows.len() }} Records)</h2>
+  <h2 id="all-concepts-queue">All Bundle Concepts ({% if review_window.enabled %}{{ review_window.total }}{% else %}{{ review_rows.len() }}{% endif %} Records)</h2>
   <div class="okmate-filter-bar">
-    <button type="button" class="okmate-filter-btn is-active" data-filter="all">All ({{ review_rows.len() }})</button>
-    <button type="button" class="okmate-filter-btn" data-filter="action">Needs Action ({{ action_rows.len() }})</button>
+    <button type="button" class="okmate-filter-btn{% if review_window.filter.is_empty() || review_window.filter == "all" %} is-active{% endif %}" data-filter="all" data-on:click="@get('/review/?filter=all')">All ({% if review_window.enabled %}{{ review_window.total }}{% else %}{{ review_rows.len() }}{% endif %})</button>
+    <button type="button" class="okmate-filter-btn{% if review_window.filter == "action" %} is-active{% endif %}" data-filter="action" data-on:click="@get('/review/?filter=action')">Needs Action ({{ action_rows.len() }})</button>
     {% for card in stats %}
       {% if card.label == "Draft" %}
-        <button type="button" class="okmate-filter-btn" data-filter="draft">Draft ({{ card.value }})</button>
+        <button type="button" class="okmate-filter-btn{% if review_window.filter == "draft" %} is-active{% endif %}" data-filter="draft" data-on:click="@get('/review/?filter=draft')">Draft ({{ card.value }})</button>
       {% endif %}
       {% if card.label == "Stable" %}
-        <button type="button" class="okmate-filter-btn" data-filter="stable">Stable ({{ card.value }})</button>
+        <button type="button" class="okmate-filter-btn{% if review_window.filter == "stable" %} is-active{% endif %}" data-filter="stable" data-on:click="@get('/review/?filter=stable')">Stable ({{ card.value }})</button>
       {% endif %}
     {% endfor %}
-    <input type="search" id="okmate-search-input" class="okmate-search-input" placeholder="Filter by concept, path, tag, or action..." aria-label="Search review queue">
+    <input type="search" id="okmate-search-input" class="okmate-search-input" placeholder="Filter by concept, path, tag, or action..." aria-label="Search review queue" value="{{ review_window.query }}" data-on:input__debounce.300ms="@get('/review/?filter={{ review_window.filter }}&q=' + evt.target.value)">
   </div>
   <div class="okmate-table-container">
-    <table class="okmate-review-table" id="okmate-review-table">
+    <table class="okmate-review-table" id="okmate-review-table" data-filter="{{ review_window.filter }}" data-query="{{ review_window.query }}" data-offset="{{ review_window.offset }}" data-total="{{ review_window.total }}">
       <thead>
         <tr>
           <th>Concept</th>
@@ -67,7 +67,11 @@
           <th>Required Action</th>
         </tr>
       </thead>
-      <tbody>
+      <tbody id="okmate-review-window">
+        {% if review_window.enabled && review_window.before > 0 %}
+          <tr class="okmate-window-spacer" aria-hidden="true"><td colspan="6" style="height: {{ review_window.before * 48 }}px"></td></tr>
+          <tr class="okmate-window-sentinel" data-okmate-sentinel="before" data-start="{{ review_window.prev_start }}"><td colspan="6"></td></tr>
+        {% endif %}
         {% for row in review_rows %}
           <tr class="okmate-row" data-status="{{ row.status }}" data-action="{% if row.is_action_required %}true{% else %}false{% endif %}" data-search="{{ row.search }}">
             <td>
@@ -94,6 +98,10 @@
             </td>
           </tr>
         {% endfor %}
+        {% if review_window.enabled && review_window.after > 0 %}
+          <tr class="okmate-window-sentinel" data-okmate-sentinel="after" data-start="{{ review_window.next_start }}"><td colspan="6"></td></tr>
+          <tr class="okmate-window-spacer" aria-hidden="true"><td colspan="6" style="height: {{ review_window.after * 48 }}px"></td></tr>
+        {% endif %}
       </tbody>
     </table>
   </div>

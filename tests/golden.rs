@@ -70,6 +70,8 @@ fn sample() -> Document {
         message: String::new(),
         config_path: "~/.okmate/config.toml".into(),
         settings_roots: Vec::new(),
+        review_window: okmate::views::ListWindow::default(),
+        log_window: okmate::views::ListWindow::default(),
     }
 }
 

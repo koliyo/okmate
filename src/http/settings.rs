@@ -140,6 +140,8 @@ fn settings_document(
             message: String::new(),
             config_path: String::new(),
             settings_roots: Vec::new(),
+            review_window: crate::views::ListWindow::default(),
+            log_window: crate::views::ListWindow::default(),
         }
     };
     document.message = message.unwrap_or("").to_string();

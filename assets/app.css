@@ -726,3 +726,16 @@ body.is-col-resizing {
   .okmate-outline-menu summary::-webkit-details-marker { display: none; }
   .okmate-outline-menu .okmate-toc-items { margin-top: 0.65rem; }
 }
+
+.okmate-window-sentinel {
+  height: 1px;
+  padding: 0;
+  border: 0;
+  overflow: hidden;
+}
+
+.okmate-window-spacer,
+.okmate-window-spacer td {
+  padding: 0;
+  border: 0;
+}
