@@ -352,6 +352,7 @@ pub(crate) fn write_settings_host(output: &Path) -> Result<()> {
 }
 
 fn write_pages_json(workspace: &Workspace, output: &Path) -> Result<()> {
+    fs::create_dir_all(output).with_context(|| format!("failed to create {}", output.display()))?;
     fs::write(
         output.join("pages.json"),
         format!("{}\n", serde_json::to_string_pretty(&nav_pages(workspace))?),

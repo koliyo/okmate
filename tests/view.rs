@@ -113,6 +113,23 @@ async fn view_router_serves_home_and_concept() {
 }
 
 #[test]
+fn preview_shell_creates_missing_output_dir() {
+    let root = temp_dir("view-mkdir-src");
+    write_index(&root);
+    fs::write(
+        root.join("hello.md"),
+        valid_strict_concept("Hello", "", "Body.\n"),
+    )
+    .unwrap();
+    let workspace = okmate::workspace::Workspace::load_single(&root, Profile::Strict).unwrap();
+    let output = temp_dir("view-mkdir-parent").join("missing-out");
+    assert!(!output.exists());
+    okmate::site::build_workspace(&workspace, &output).unwrap();
+    assert!(output.join("pages.json").is_file());
+    assert!(output.join("__okmate").join("app.css").is_file());
+}
+
+#[test]
 fn view_binds_localhost_by_default() {
     let addr = okmate::http::bind_addr(false, 0);
     assert!(addr.ip().is_loopback());
