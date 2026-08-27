@@ -1,10 +1,10 @@
 ---
 type: Research Report
 title: Viewer click-path latency and large chrome pages
-description: Sidebar navigation is slow because every Datastar GET reloads every workspace bundle with Strict git provenance; review and log then ship the full table or log in one patch.
+description: Pre-change click stall was per-request workspace reload; post-change machine-local `okmate timings` baselines are recorded here (not an SLA).
 tags: [domain/okmate, concern/performance, concern/rendering, concern/architecture]
 status: draft
-generated: { by: process:cursor, at: 2026-08-27T11:50:00Z }
+generated: { by: process:cursor, at: 2026-08-27T12:20:00Z }
 stale_after: 2026-11-27
 authority: exploratory
 owners: [human:nils]
@@ -124,6 +124,11 @@ sources:
     title: Portable OKF engine load timings and ParseCache
     author: process:git
     last_modified: 2026-08-26
+  - id: timings-cmd
+    resource: ../../../src/timings.rs
+    title: okmate timings snapshot
+    author: process:git
+    last_modified: 2026-08-27
 ---
 
 # Viewer click-path latency and large chrome pages
@@ -291,6 +296,25 @@ bug.[^cargo][^load-status]
 - Bounded concept-path `okf::load` (skipped engine Phase 5). Nav, review,
   and goto need the catalog in memory; they should not **re-parse** it.
 
+## Post-implementation baseline (this machine)
+
+`okmate timings knowledge --format json --scenario all` after Phases 1–5
+(single in-repo `knowledge/` root; not the three-root workspace from the
+earlier stall). Machine-local, not a portability contract. Phase 6 was
+skipped: debug click render is already sub-millisecond.[^timings-cmd][^plan]
+
+| Span | Debug | Release |
+| --- | --- | --- |
+| Cold parse (`roots[0].timings.parse`) | 172ms (36 misses) | 55ms (36 misses) |
+| Cached workspace / watch | 13ms / 13ms (36 hits, 0 misses) | 5.3ms / 5.4ms |
+| Live site write | 1.6ms, 9 files, 88 KiB (`__okmate/datastar.js`) | 1.1ms, same |
+| Click `/architecture/system-overview/` | `reload_ms` 0, render 0.20ms, 6601 bytes | render 0.10ms |
+| `/review/` fragment | 0.32ms, 42 KiB, 22 rows | 0.05ms |
+| `/log/` fragment | 0.05ms, 5 KiB, 15 entries | 0.01ms |
+
+Provenance is off on this preview path (`provenance` 0ms). `check
+--profile strict` is unchanged.
+
 ## Implications for the plan
 
 1. **Ship `okmate timings` first.** Same spans as this record (`load`,
@@ -315,6 +339,7 @@ document returns in tens of milliseconds; `/review/` and `/log/` first
 paint a viewport without shipping every row; first `cargo run -- view`
 open is load-once, not load-per-click.[^plan]
 
+[^timings-cmd]: `okmate timings --format json --scenario all` on this worktree's `knowledge/` after Phases 1–5; debug and release binaries from the same revision.
 [^plan]: Paired implementation plan; this record is evidence, not a phase log.
 [^pages]: `render_main_fragment` calls `state.workspace.reload(state.profile)` on every Datastar GET.
 [^http]: `AppState` is `Clone` and holds `Workspace` by value; the router layers Datastar GET in front of `ServeDir`.
