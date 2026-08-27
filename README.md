@@ -145,7 +145,9 @@ GitHub release tag from `origin/main`, run
 `uv run okmate-ops promote tag vX.Y.Z` (or `--from BRANCH`).
 The `dev` tag is not version-bumped.
 `uv run okmate-ops promote tag dev` force-moves the rolling `dev` prerelease
-tag. `dev` is not `SUFeedURL`. A later `git pull` then reports
+tag. That push triggers **Release**, which publishes a GitHub prerelease
+(same signed `OKMate.zip`, not `releases/latest` / Sparkle). `dev` is not
+`SUFeedURL`. A later `git pull` then reports
 `! [rejected] dev -> dev (would clobber existing tag)` unless this repo
 force-updates that tag on fetch:
 
@@ -153,7 +155,6 @@ force-updates that tag on fetch:
 git config --local --add remote.origin.fetch '+refs/tags/dev:refs/tags/dev'
 ```
 
-Do not force-fetch all tags; `v*` releases stay immutable. Until `dev` exists
-on the remote, a bare `git fetch origin` fails looking up that tag;
+Do not force-fetch all tags; `v*` releases stay immutable.
 `okmate-ops promote tag` fetches only the target branch. To replace local
 `dev` once without changing config, run `git fetch origin tag dev --force`.

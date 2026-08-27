@@ -15,7 +15,8 @@ Operators still create
 immutable `v*` tags only with `okmate-ops promote tag vX.Y.Z`, which writes
 the crate and Homebrew cask versions, pushes that commit, then tags. The
 cask installs the same `OKMate.zip` Sparkle serves. The movable `dev` tag
-is not an update channel.
+also runs this workflow and attaches a GitHub **prerelease**; it is not
+`releases/latest` and not Sparkle’s feed.
 
 ## Secrets
 

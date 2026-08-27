@@ -5,7 +5,9 @@ fn release_workflow_filters_v_star_tags() {
         "/.github/workflows/release.yml"
     ));
     assert!(workflow.contains("- \"v*\"") || workflow.contains("- 'v*'"));
-    assert!(workflow.contains("github.ref_name != 'dev'"));
+    assert!(workflow.contains("- \"dev\"") || workflow.contains("- 'dev'"));
+    assert!(!workflow.contains("github.ref_name != 'dev'"));
+    assert!(workflow.contains("--prerelease"));
     assert!(workflow.contains("macos-latest"));
     assert!(workflow.contains("SPARKLE_EDDSA_PRIVATE_KEY"));
     assert!(workflow.contains("APPLE_CERTIFICATE_P12"));

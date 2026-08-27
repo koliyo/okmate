@@ -1,13 +1,15 @@
 name: Release
 
 on:
+  workflow_dispatch:
   push:
     tags:
       - "v*"
+      - "dev"
 
 concurrency:
   group: release-${{ github.ref }}
-  cancel-in-progress: false
+  cancel-in-progress: true
 
 permissions:
   contents: write
@@ -15,7 +17,6 @@ permissions:
 jobs:
   macos:
     name: macOS appcast
-    if: github.ref_name != 'dev'
     runs-on: macos-latest
     environment: release
     steps:
@@ -53,10 +54,15 @@ jobs:
         run: |
           set -euo pipefail
           tag=${GITHUB_REF_NAME}
+          extra=()
+          if [[ "$tag" == "dev" ]]; then
+            extra+=(--prerelease)
+          fi
           if gh release view "$tag" >/dev/null 2>&1; then
             gh release delete "$tag" --yes
           fi
           gh release create "$tag" dist/inbox/OKMate.zip dist/inbox/appcast.xml \
             --verify-tag \
             --title "$tag" \
-            --notes "OKMate $tag"
+            --notes "OKMate $tag" \
+            "${extra[@]}"
