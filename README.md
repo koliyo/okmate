@@ -94,7 +94,16 @@ the [`koliyo/homebrew-okmate`](https://github.com/koliyo/homebrew-okmate)
 tap:
 
 ```sh
+brew install --cask koliyo/okmate/okmate
+```
+
+Homebrew 6 requires an explicit trust step for third-party taps. The
+fully qualified cask name taps `koliyo/okmate` and trusts only that
+cask. To trust the whole tap instead:
+
+```sh
 brew tap koliyo/okmate
+brew trust koliyo/okmate
 brew install --cask okmate
 ```
 
