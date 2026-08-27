@@ -217,7 +217,7 @@
         return;
       }
       var href = link.getAttribute("href") || "";
-      if (!href || href.charAt(0) === "#") {
+      if (!href || href.charAt(0) === "#" || href.indexOf("/__okmate/") === 0) {
         return;
       }
       pendingRoute = href;

@@ -1,4 +1,10 @@
 <nav class="nav-list" aria-label="Knowledge">
+  {% if show_nav_mode %}
+    <div class="okmate-nav-mode" role="group" aria-label="Sidebar layout">
+      <a href="/__okmate/nav-mode?mode=separated"{% if nav_mode == "separated" %} class="is-current" aria-current="true"{% endif %}>Separated</a>
+      <a href="/__okmate/nav-mode?mode=merged"{% if nav_mode == "merged" %} class="is-current" aria-current="true"{% endif %}>Merged</a>
+    </div>
+  {% endif %}
   <details class="okmate-nav-menu">
     <summary>Knowledge</summary>
     <div class="nav-items">

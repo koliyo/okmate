@@ -2,9 +2,13 @@ use std::net::{IpAddr, Ipv4Addr, SocketAddr};
 use std::path::{Path, PathBuf};
 
 use axum::Router;
+use axum::extract::{Query, State};
+use axum::http::HeaderMap;
 use axum::middleware;
-use axum::routing::post;
+use axum::response::Redirect;
+use axum::routing::{get, post};
 use okf::Profile;
+use serde::Deserialize;
 use tower_http::services::ServeDir;
 
 mod pages;
@@ -19,6 +23,7 @@ pub struct AppState {
     pub workspace: crate::workspace::Workspace,
     pub profile: Profile,
     pub config_path: PathBuf,
+    pub session_path: PathBuf,
 }
 
 impl AppState {
@@ -31,6 +36,7 @@ impl AppState {
             workspace,
             profile,
             config_path,
+            session_path: crate::preview::session_path(),
         }
     }
 }
@@ -47,6 +53,7 @@ pub fn bind_addr(public: bool, port: u16) -> SocketAddr {
 pub fn router(state: AppState) -> Router {
     let output = state.output.clone();
     Router::new()
+        .route("/__okmate/nav-mode", get(set_nav_mode))
         .route("/__okmate/settings", post(settings::post))
         .nest_service("/__okmate", ServeDir::new(output.join("__okmate")))
         .fallback_service(ServeDir::new(output).append_index_html_on_directories(true))
@@ -55,6 +62,46 @@ pub fn router(state: AppState) -> Router {
             pages::datastar_get,
         ))
         .with_state(state)
+}
+
+#[derive(Deserialize)]
+struct NavModeQuery {
+    mode: String,
+}
+
+async fn set_nav_mode(
+    State(state): State<AppState>,
+    Query(query): Query<NavModeQuery>,
+    headers: HeaderMap,
+) -> Redirect {
+    if let Some(mode) = crate::preview::NavMode::parse(&query.mode) {
+        crate::preview::persist_nav_mode_to(&state.session_path, mode);
+        let _ = crate::site::build_workspace_nav(&state.workspace, &state.output, mode);
+    }
+    redirect_back(&headers)
+}
+
+fn redirect_back(headers: &HeaderMap) -> Redirect {
+    let target = headers
+        .get(axum::http::header::REFERER)
+        .and_then(|value| value.to_str().ok())
+        .and_then(referer_path)
+        .unwrap_or_else(|| "/".to_string());
+    Redirect::to(&target)
+}
+
+fn referer_path(referer: &str) -> Option<String> {
+    let uri = referer.parse::<axum::http::Uri>().ok()?;
+    let path = uri.path();
+    if !path.starts_with('/') || path.starts_with("/__okmate") {
+        return None;
+    }
+    let mut target = path.to_string();
+    if let Some(query) = uri.query() {
+        target.push('?');
+        target.push_str(query);
+    }
+    Some(target)
 }
 
 pub fn output_path(output: Option<&Path>, root: &Path) -> PathBuf {

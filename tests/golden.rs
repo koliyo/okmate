@@ -61,6 +61,8 @@ fn sample() -> Document {
         recents: Vec::new(),
         log_days: Vec::new(),
         show_root: false,
+        nav_mode: "separated".into(),
+        show_nav_mode: false,
         crumbs: Vec::new(),
         diagnostics: Vec::new(),
         meta: ConceptMeta::default(),

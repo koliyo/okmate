@@ -142,6 +142,33 @@ body.is-col-resizing {
   font-size: 0.78em;
   font-weight: 500;
 }
+.okmate-nav-mode {
+  display: flex;
+  gap: 0.35rem;
+  margin: 0 0 0.75rem;
+}
+.okmate-nav-mode a {
+  flex: 1;
+  display: block;
+  text-align: center;
+  padding: 0.32rem 0.45rem;
+  border: 1px solid var(--rd-border);
+  border-radius: 0.45rem;
+  color: var(--rd-muted);
+  font-size: 0.78rem;
+  font-weight: 650;
+  text-decoration: none;
+}
+.okmate-nav-mode a:hover {
+  background: var(--rd-bg-subtle);
+  color: var(--rd-fg);
+  text-decoration: none;
+}
+.okmate-nav-mode a.is-current {
+  background: color-mix(in srgb, var(--rd-primary) 16%, transparent);
+  color: var(--rd-primary);
+  border-color: color-mix(in srgb, var(--rd-primary) 35%, var(--rd-border));
+}
 .nav-section > .nav-fold > .nav-items {
   margin-left: 0.55rem;
   padding-left: 0.45rem;

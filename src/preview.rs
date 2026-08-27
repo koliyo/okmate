@@ -13,12 +13,39 @@ use crate::http::{bind_addr, output_path, router};
 use crate::site;
 use crate::workspace::Workspace;
 
+#[derive(Clone, Copy, Debug, Default, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "lowercase")]
+pub enum NavMode {
+    #[default]
+    Separated,
+    Merged,
+}
+
+impl NavMode {
+    pub fn as_str(self) -> &'static str {
+        match self {
+            Self::Separated => "separated",
+            Self::Merged => "merged",
+        }
+    }
+
+    pub fn parse(value: &str) -> Option<Self> {
+        match value {
+            "separated" => Some(Self::Separated),
+            "merged" => Some(Self::Merged),
+            _ => None,
+        }
+    }
+}
+
 #[derive(Clone, Debug, Default, PartialEq, Eq, Serialize, Deserialize)]
 pub struct Session {
     #[serde(default)]
     pub bundle: Option<PathBuf>,
     #[serde(default)]
     pub workspace: bool,
+    #[serde(default)]
+    pub nav_mode: NavMode,
 }
 
 pub struct ViewOptions {
@@ -119,13 +146,14 @@ async fn prepare(options: ViewOptions) -> Result<PreparedView> {
         return prepare_settings_host(options).await;
     };
     persist_workspace(&target.workspace);
+    let nav_mode = load_session().nav_mode;
     let root = target
         .workspace
         .primary_path()
         .map(Path::to_path_buf)
         .unwrap_or_else(|| PathBuf::from("workspace"));
     let output = output_path(options.output.as_deref(), &root);
-    site::build_workspace(&target.workspace, &output)?;
+    site::build_workspace_nav(&target.workspace, &output, nav_mode)?;
 
     let addr = bind_addr(options.public, options.port);
     let listener = tokio::net::TcpListener::bind(addr)
@@ -171,6 +199,7 @@ async fn prepare(options: ViewOptions) -> Result<PreparedView> {
             workspace: target.workspace,
             profile: options.profile,
             config_path: crate::config::config_path(),
+            session_path: session_path(),
         },
         home_url,
         initial_url,
@@ -198,6 +227,7 @@ async fn prepare_settings_host(options: ViewOptions) -> Result<PreparedView> {
             workspace: Workspace::empty(),
             profile: options.profile,
             config_path: crate::config::config_path(),
+            session_path: session_path(),
         },
         home_url,
         initial_url,
@@ -251,6 +281,12 @@ pub fn persist_workspace_to(path: &Path, workspace: &Workspace) {
     let mut session = load_session_from(path);
     session.workspace = workspace.is_multi();
     session.bundle = workspace.primary_path().map(Path::to_path_buf);
+    write_session(path, &session);
+}
+
+pub fn persist_nav_mode_to(path: &Path, nav_mode: NavMode) {
+    let mut session = load_session_from(path);
+    session.nav_mode = nav_mode;
     write_session(path, &session);
 }
 
@@ -319,7 +355,8 @@ async fn watch_rebuild(workspace: Workspace, output: PathBuf, profile: Profile) 
         }
         match workspace.reload(profile) {
             Ok(reloaded) => {
-                if let Err(error) = site::build_workspace(&reloaded, &output) {
+                let nav_mode = load_session().nav_mode;
+                if let Err(error) = site::build_workspace_nav(&reloaded, &output, nav_mode) {
                     eprintln!("okmate: rebuild failed: {error:#}");
                 }
             }

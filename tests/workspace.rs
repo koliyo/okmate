@@ -68,6 +68,14 @@ fn app(root: std::path::PathBuf, output: std::path::PathBuf, workspace: Workspac
         workspace,
         profile: Profile::Strict,
         config_path: std::env::temp_dir().join("okmate-ws-unused.toml"),
+        session_path: std::env::temp_dir().join(format!(
+            "okmate-ws-session-{}-{}.json",
+            std::process::id(),
+            std::time::SystemTime::now()
+                .duration_since(std::time::UNIX_EPOCH)
+                .unwrap()
+                .as_nanos()
+        )),
     })
 }
 
@@ -157,6 +165,92 @@ fn workspace_nav_wraps_each_root_as_a_top_level_section() {
     );
     assert!(html.contains("href=\"/@a/plans/shared/\""), "{html}");
     assert!(html.contains("href=\"/@b/plans/shared/\""), "{html}");
+}
+
+#[test]
+fn workspace_merged_nav_unions_plans_with_distinct_leaves() {
+    let (_a, _b, workspace, output) = two_bundles();
+    okmate::site::build_workspace_nav(&workspace, &output, okmate::preview::NavMode::Merged)
+        .unwrap();
+    let html = fs::read_to_string(output.join("index.html")).unwrap();
+    assert!(html.contains("data-okmate-nav-section=\"plans\""), "{html}");
+    assert!(
+        !html.contains("data-okmate-nav-section=\"a/plans\""),
+        "{html}"
+    );
+    assert!(
+        !html.contains("data-okmate-nav-section=\"b/plans\""),
+        "{html}"
+    );
+    assert!(html.contains("href=\"/@a/plans/shared/\""), "{html}");
+    assert!(html.contains("href=\"/@b/plans/shared/\""), "{html}");
+    let plans = html
+        .split("data-okmate-nav-section=\"plans\"")
+        .nth(1)
+        .expect("plans section");
+    let plans = plans.split("<details").next().unwrap_or(plans);
+    assert!(plans.contains("href=\"/@a/plans/shared/\""), "{plans}");
+    assert!(plans.contains("href=\"/@b/plans/shared/\""), "{plans}");
+    assert!(html.contains("/__okmate/nav-mode?mode=merged"), "{html}");
+}
+
+#[tokio::test]
+async fn nav_mode_toggle_switches_trees() {
+    let (a, _b, workspace, output) = two_bundles();
+    let session = temp_dir("ws-nav-session").join("session.json");
+    let app = okmate::http::router(okmate::http::AppState {
+        output: output.clone(),
+        root: a,
+        workspace,
+        profile: Profile::Strict,
+        config_path: std::env::temp_dir().join("okmate-ws-unused.toml"),
+        session_path: session.clone(),
+    });
+    let separated = fs::read_to_string(output.join("index.html")).unwrap();
+    assert!(
+        separated.contains("data-okmate-nav-section=\"a/plans\""),
+        "{separated}"
+    );
+
+    let merged_response = app
+        .clone()
+        .oneshot(
+            Request::get("/__okmate/nav-mode?mode=merged")
+                .body(Body::empty())
+                .unwrap(),
+        )
+        .await
+        .unwrap();
+    assert!(
+        merged_response.status().is_redirection(),
+        "{}",
+        merged_response.status()
+    );
+    let merged = fs::read_to_string(output.join("index.html")).unwrap();
+    assert!(
+        merged.contains("data-okmate-nav-section=\"plans\""),
+        "{merged}"
+    );
+    assert!(
+        !merged.contains("data-okmate-nav-section=\"a/plans\""),
+        "{merged}"
+    );
+    let stored = fs::read_to_string(&session).unwrap();
+    assert!(stored.contains("merged"), "{stored}");
+
+    let _ = app
+        .oneshot(
+            Request::get("/__okmate/nav-mode?mode=separated")
+                .body(Body::empty())
+                .unwrap(),
+        )
+        .await
+        .unwrap();
+    let back = fs::read_to_string(output.join("index.html")).unwrap();
+    assert!(
+        back.contains("data-okmate-nav-section=\"a/plans\""),
+        "{back}"
+    );
 }
 
 #[tokio::test]
