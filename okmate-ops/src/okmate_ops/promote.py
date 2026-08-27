@@ -78,7 +78,14 @@ def promote_tag(tag: str, from_ref: str = "main") -> int:
         parse_release_version(tag)
     elif len(tag) < 2:
         raise SystemExit("promote tag requires a v* name or the movable dev tag")
-    run(["git", "fetch", "origin"])
+    run(
+        [
+            "git",
+            "fetch",
+            "origin",
+            f"refs/heads/{from_ref}:refs/remotes/origin/{from_ref}",
+        ]
+    )
     remote_ref = f"origin/{from_ref}"
     verify = git_capture(["git", "rev-parse", "--verify", remote_ref])
     if verify.returncode != 0:

@@ -63,7 +63,7 @@ def test_promote_tag_pushes_version_then_tags(monkeypatch, tmp_path) -> None:
     assert promote_tag("v1.2.3") == 0
     assert waited == ["1.2.3:main:abc"]
     assert calls == [
-        ["git", "fetch", "origin"],
+        ["git", "fetch", "origin", "refs/heads/main:refs/remotes/origin/main"],
         ["git", "tag", "-a", "v1.2.3", "-m", "v1.2.3", "1.2.3:main:abc"],
         ["git", "push", "origin", "v1.2.3"],
     ]
@@ -88,7 +88,7 @@ def test_promote_tag_force_moves_dev(monkeypatch, tmp_path) -> None:
 
     assert promote_tag("dev") == 0
     assert calls == [
-        ["git", "fetch", "origin"],
+        ["git", "fetch", "origin", "refs/heads/main:refs/remotes/origin/main"],
         ["git", "tag", "-a", "-f", "dev", "-m", "dev", "abc"],
         ["git", "push", "--force", "origin", "dev"],
     ]
@@ -119,7 +119,7 @@ def test_promote_tag_does_not_push_when_ci_fails(monkeypatch, tmp_path) -> None:
         assert "newsha" in str(exc)
     else:
         raise AssertionError("expected SystemExit")
-    assert calls == [["git", "fetch", "origin"]]
+    assert calls == [["git", "fetch", "origin", "refs/heads/main:refs/remotes/origin/main"]]
 
 
 def test_wait_for_promote_ci_waits_default_checks(monkeypatch) -> None:

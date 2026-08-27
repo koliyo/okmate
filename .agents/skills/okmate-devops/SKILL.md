@@ -34,7 +34,9 @@ git config --local --add remote.origin.fetch '+refs/tags/dev:refs/tags/dev'
 ```
 
 Do not force-fetch all tags; `v*` releases stay immutable. One-shot:
-`git fetch origin tag dev --force`.
+`git fetch origin tag dev --force`. Until `dev` exists, a bare
+`git fetch origin` fails on that refspec; `promote tag` fetches the
+target branch only.
 
 ## Inspect and monitor CI runs
 

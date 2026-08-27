@@ -44,8 +44,10 @@ git config --local --add remote.origin.fetch '+refs/tags/dev:refs/tags/dev'
 ```
 
 Do not force-fetch all tags; `v*` releases stay immutable. One-shot without
-config: `git fetch origin tag dev --force`. Do not treat a rejected `dev` fetch
-as a repository error.
+config: `git fetch origin tag dev --force`. Until `dev` exists on the remote,
+a bare `git fetch origin` fails with `couldn't find remote ref refs/tags/dev`;
+`okmate-ops promote tag` fetches only the target branch. Do not treat a
+rejected `dev` fetch as a repository error.
 
 ## Use specialized workflows when available
 

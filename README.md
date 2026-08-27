@@ -148,5 +148,7 @@ force-updates that tag on fetch:
 git config --local --add remote.origin.fetch '+refs/tags/dev:refs/tags/dev'
 ```
 
-Do not force-fetch all tags; `v*` releases stay immutable. To replace local
+Do not force-fetch all tags; `v*` releases stay immutable. Until `dev` exists
+on the remote, a bare `git fetch origin` fails looking up that tag;
+`okmate-ops promote tag` fetches only the target branch. To replace local
 `dev` once without changing config, run `git fetch origin tag dev --force`.
