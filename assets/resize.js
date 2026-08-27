@@ -38,9 +38,13 @@
     var outline = storedWidth("outline");
     if (nav) {
       root.style.setProperty("--okmate-nav-width", nav);
+    } else {
+      root.style.removeProperty("--okmate-nav-width");
     }
     if (outline) {
       root.style.setProperty("--okmate-outline-width", outline);
+    } else {
+      root.style.removeProperty("--okmate-outline-width");
     }
   }
 

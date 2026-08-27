@@ -1,0 +1,40 @@
+<footer id="okmate-toolbar" class="okmate-toolbar" role="toolbar" aria-label="Layout">
+  <div class="okmate-toolbar-group" role="group" aria-label="Panes">
+    <button type="button" id="okmate-nav-toggle" class="okmate-toolbar-icon" aria-pressed="true" aria-label="Show navigation" title="Navigation">
+      <svg viewBox="0 0 24 24" aria-hidden="true">
+        <rect x="3" y="3" width="18" height="18" rx="2"></rect>
+        <path d="M9 3v18"></path>
+      </svg>
+    </button>
+    <button type="button" id="okmate-toc-toggle" class="okmate-toolbar-icon" aria-pressed="true" aria-label="Show outline" title="Outline">
+      <svg viewBox="0 0 24 24" aria-hidden="true">
+        <rect x="3" y="3" width="18" height="18" rx="2"></rect>
+        <path d="M15 3v18"></path>
+      </svg>
+    </button>
+  </div>
+  <details class="okmate-nav-mode" id="okmate-nav-mode">
+    <summary aria-label="Bundle navigation">{% if nav_mode == "merged" %}Merged{% else %}Separated{% endif %}</summary>
+    <div class="okmate-nav-mode-menu" role="listbox" aria-label="Bundle navigation">
+      <a href="/__okmate/nav-mode?mode=separated" role="option"{% if nav_mode == "separated" %} aria-selected="true" class="is-current"{% endif %}>Separated</a>
+      <a href="/__okmate/nav-mode?mode=merged" role="option"{% if nav_mode == "merged" %} aria-selected="true" class="is-current"{% endif %}>Merged</a>
+    </div>
+  </details>
+  <div class="okmate-toolbar-group okmate-toolbar-reading" role="group" aria-label="Reading">
+    <label class="okmate-reading-width">Measure
+      <span class="okmate-reading-width-row">
+        <input id="okmate-main-width" type="range" min="45" max="90" step="1" value="66">
+        <output id="okmate-main-width-value" for="okmate-main-width">66ch</output>
+      </span>
+    </label>
+    <label class="okmate-reading-wrap">
+      <input id="okmate-main-wrap" type="checkbox" checked>
+      Wrap
+    </label>
+  </div>
+  <div class="okmate-toolbar-group" role="group" aria-label="Render size">
+    <button type="button" id="okmate-font-smaller" aria-label="Smaller text">A−</button>
+    <button type="button" id="okmate-font-value" aria-label="Reset size">100%</button>
+    <button type="button" id="okmate-font-larger" aria-label="Larger text">A+</button>
+  </div>
+</footer>

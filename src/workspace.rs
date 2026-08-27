@@ -100,25 +100,25 @@ impl Workspace {
         cache_parent: &Path,
         session_bundle: Option<&Path>,
     ) -> Result<ViewTarget> {
+        let configured = Self::from_config_roots(config_path, options, cache_parent)?;
         if let Some(path) = path {
             let target = okf::resolve_preview_path(path)?;
-            let workspace = Self::load_single_with(&target.root, options, Some(cache_parent))?;
+            let workspace = match configured {
+                Some(workspace) => {
+                    workspace.ensure_root(&target.root, options, Some(cache_parent))?
+                }
+                None => Self::load_single_with(&target.root, options, Some(cache_parent))?,
+            };
             return Ok(ViewTarget {
+                open_path: workspace.open_path_for(&target),
                 workspace,
-                open_path: target.open_path,
             });
         }
-        let config = crate::config::load_or_default(config_path);
-        if !config.roots.is_empty() {
-            let resolved = crate::roots::resolve_all(&config, cache_parent, SyncMode::Auto);
-            let enabled: Vec<ResolvedRoot> =
-                resolved.into_iter().filter(ResolvedRoot::enabled).collect();
-            if enabled.len() >= 2 {
-                return Ok(ViewTarget {
-                    workspace: Self::from_resolved_with(enabled, options, Some(cache_parent))?,
-                    open_path: "/".into(),
-                });
-            }
+        if let Some(workspace) = configured {
+            return Ok(ViewTarget {
+                workspace,
+                open_path: "/".into(),
+            });
         }
         if let Some(bundle) = session_bundle.filter(|path| path.is_dir()) {
             return Ok(ViewTarget {
@@ -134,6 +134,59 @@ impl Workspace {
             });
         }
         bail!("pass a knowledge bundle path, or open one first so ~/.okmate/state remembers it");
+    }
+
+    fn from_config_roots(
+        config_path: &Path,
+        options: LoadOptions,
+        cache_parent: &Path,
+    ) -> Result<Option<Self>> {
+        let config = crate::config::load_or_default(config_path);
+        if config.roots.is_empty() {
+            return Ok(None);
+        }
+        let resolved = crate::roots::resolve_all(&config, cache_parent, SyncMode::Auto);
+        let enabled: Vec<ResolvedRoot> = resolved.into_iter().filter(ResolvedRoot::enabled).collect();
+        if enabled.len() < 2 {
+            return Ok(None);
+        }
+        Ok(Some(Self::from_resolved_with(
+            enabled,
+            options,
+            Some(cache_parent),
+        )?))
+    }
+
+    fn ensure_root(
+        self,
+        root: &Path,
+        options: LoadOptions,
+        cache_parent: Option<&Path>,
+    ) -> Result<Self> {
+        if self.member_for_root(root).is_some() {
+            return Ok(self);
+        }
+        let extra = Self::load_single_with(root, options, cache_parent)?;
+        let mut members = self.members;
+        members.extend(extra.members);
+        Ok(Self::from_members(members))
+    }
+
+    fn member_for_root(&self, root: &Path) -> Option<&WorkspaceMember> {
+        self.members
+            .iter()
+            .find(|member| same_dir(&member.path, root))
+    }
+
+    fn open_path_for(&self, target: &okf::PreviewTarget) -> String {
+        if target.open_path == "/" {
+            return "/".into();
+        }
+        let concept = target.open_path.trim_matches('/');
+        match self.member_for_root(&target.root) {
+            Some(member) => self.document_href(&member.id, concept),
+            None => target.open_path.clone(),
+        }
     }
 
     pub fn reload(&self, profile: Profile) -> Result<Self> {
@@ -282,6 +335,13 @@ fn load_bundle(
         Ok(loaded.bundle)
     } else {
         Ok(okf::load_timed(path, options)?.bundle)
+    }
+}
+
+fn same_dir(left: &Path, right: &Path) -> bool {
+    match (left.canonicalize(), right.canonicalize()) {
+        (Ok(left), Ok(right)) => left == right,
+        _ => left == right,
     }
 }
 
@@ -440,7 +500,7 @@ mod tests {
     }
 
     #[test]
-    fn for_view_explicit_path_stays_single_even_with_two_config_roots() {
+    fn for_view_explicit_path_loads_all_config_roots() {
         let (a, b, _workspace) = two_bundles();
         let cfg_dir = temp("cfg");
         let config = cfg_dir.join("config.toml");
@@ -453,6 +513,21 @@ mod tests {
             ),
         )
         .unwrap();
+        let concept = a.join("plans").join("shared.md");
+        let loaded = Workspace::for_view(
+            Some(&concept),
+            crate::preview::view_load_options(Profile::Strict, false),
+            &config,
+            &cfg_dir.join("cache"),
+            None,
+        )
+        .unwrap();
+        assert!(loaded.workspace.is_multi());
+        assert_eq!(loaded.workspace.len(), 2);
+        assert!(loaded.workspace.get("a").is_some());
+        assert!(loaded.workspace.get("b").is_some());
+        assert_eq!(loaded.open_path, "/@a/plans/shared/");
+
         let loaded = Workspace::for_view(
             Some(&a),
             crate::preview::view_load_options(Profile::Strict, false),
@@ -461,11 +536,8 @@ mod tests {
             None,
         )
         .unwrap();
-        assert!(!loaded.workspace.is_multi());
-        assert_eq!(
-            loaded.workspace.primary().unwrap().path,
-            a.canonicalize().unwrap()
-        );
+        assert!(loaded.workspace.is_multi());
+        assert_eq!(loaded.open_path, "/");
 
         let loaded = Workspace::for_view(
             None,
@@ -477,8 +549,6 @@ mod tests {
         .unwrap();
         assert!(loaded.workspace.is_multi());
         assert_eq!(loaded.workspace.len(), 2);
-        assert!(loaded.workspace.get("a").is_some());
-        assert!(loaded.workspace.get("b").is_some());
         assert_eq!(loaded.open_path, "/");
     }
 

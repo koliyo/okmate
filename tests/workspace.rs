@@ -192,6 +192,7 @@ fn workspace_merged_nav_unions_plans_with_distinct_leaves() {
     let plans = plans.split("<details").next().unwrap_or(plans);
     assert!(plans.contains("href=\"/@a/plans/shared/\""), "{plans}");
     assert!(plans.contains("href=\"/@b/plans/shared/\""), "{plans}");
+    assert!(html.contains("id=\"okmate-nav-mode\""), "{html}");
     assert!(html.contains("/__okmate/nav-mode?mode=merged"), "{html}");
 }
 

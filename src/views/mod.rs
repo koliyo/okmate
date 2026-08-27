@@ -389,6 +389,8 @@ mod tests {
         assert!(html.contains("id=\"okmate-nav\""), "{html}");
         assert!(html.contains("id=\"okmate-main\""), "{html}");
         assert!(html.contains("id=\"okmate-toc\""), "{html}");
+        assert!(html.contains("id=\"okmate-toolbar\""), "{html}");
+        assert!(html.contains("id=\"okmate-font-larger\""), "{html}");
         assert!(html.contains("<h1>Hello</h1>"));
         assert!(html.contains("/__okmate/app.css"));
         assert!(html.contains("data-on:click__prevent"), "{html}");
@@ -404,8 +406,7 @@ mod tests {
         let html = sample_document(Vec::new()).render_settings().unwrap();
         assert!(html.contains("id=\"okmate-settings\""));
         assert!(html.contains("id=\"okmate-nav\""));
-        assert!(html.contains("id=\"okmate-main-width\""));
-        assert!(html.contains("id=\"okmate-main-wrap\""));
+        assert!(html.contains("id=\"okmate-toolbar\""));
         assert!(html.contains("No roots yet"));
         assert!(html.contains("Choose folder"));
         assert!(html.contains("pick-folder"));

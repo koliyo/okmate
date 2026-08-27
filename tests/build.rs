@@ -50,6 +50,9 @@ fn build_writes_engine_catalog_html_landmarks_and_pages_json() {
     let home = fs::read_to_string(output.join("index.html")).unwrap();
     assert!(home.contains("id=\"okmate-nav\""), "{home}");
     assert!(home.contains("id=\"okmate-main\""), "{home}");
+    assert!(home.contains("id=\"okmate-toolbar\""), "{home}");
+    assert!(home.contains("id=\"okmate-main-width\""), "{home}");
+    assert!(home.contains("id=\"okmate-font-larger\""), "{home}");
     assert!(home.contains("id=\"okmate-recents\""), "{home}");
     assert!(home.contains("okmate-recents-list"), "{home}");
     assert!(home.contains("id=\"okmate-log\""), "{home}");
@@ -97,8 +100,9 @@ fn build_writes_engine_catalog_html_landmarks_and_pages_json() {
 
     let settings = fs::read_to_string(output.join("settings").join("index.html")).unwrap();
     assert!(settings.contains("id=\"okmate-settings\""));
-    assert!(settings.contains("id=\"okmate-main-width\""));
-    assert!(settings.contains("id=\"okmate-main-wrap\""));
+    assert!(settings.contains("id=\"okmate-toolbar\""));
+    assert!(settings.contains("Knowledge roots"));
+    assert!(!settings.contains("Maximum line length"));
 
     assert!(output.join("__okmate").join("app.css").is_file());
     let css = fs::read_to_string(output.join("__okmate").join("app.css")).unwrap();

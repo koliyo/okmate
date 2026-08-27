@@ -11,6 +11,8 @@
   --rd-green: #98c379;
   --rd-orange: #d19a66;
   --rd-red: #e06c75;
+  --okmate-toolbar-height: 2.65rem;
+  --okmate-chrome-bottom: calc(var(--okmate-toolbar-height) + env(safe-area-inset-bottom, 0px));
 }
 
 html, body {
@@ -35,8 +37,22 @@ code, pre { font-family: var(--rd-font-mono); }
   height: calc(100dvh - var(--okmate-chrome-top, 0px) - var(--okmate-chrome-bottom, 0px));
   overflow: hidden;
 }
-.okmate-shell:not(:has(#okmate-toc .okmate-toc-link)) {
+.okmate-shell:not(:has(#okmate-toc .okmate-toc-link)),
+html[data-okmate-toc="off"] .okmate-shell {
   grid-template-columns: var(--okmate-nav-width, 16.5rem) minmax(0, 1fr);
+}
+html[data-okmate-nav="off"] .okmate-shell {
+  grid-template-columns: minmax(0, 1fr) var(--okmate-outline-width, 13.5rem);
+}
+html[data-okmate-nav="off"] .okmate-shell:not(:has(#okmate-toc .okmate-toc-link)),
+html[data-okmate-nav="off"][data-okmate-toc="off"] .okmate-shell {
+  grid-template-columns: minmax(0, 1fr);
+}
+html[data-okmate-nav="off"] .okmate-chrome {
+  display: none;
+}
+html[data-okmate-toc="off"] #okmate-toc {
+  display: none;
 }
 
 .okmate-col-resizer {
@@ -157,32 +173,154 @@ body.is-col-resizing {
   line-height: 1;
   vertical-align: 0.08em;
 }
-.okmate-nav-mode {
+.okmate-toolbar {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 12;
+  box-sizing: border-box;
   display: flex;
-  gap: 0.35rem;
-  margin: 0 0 0.75rem;
+  align-items: center;
+  gap: 0.85rem;
+  min-height: var(--okmate-toolbar-height);
+  padding: 0.28rem 0.75rem calc(0.28rem + env(safe-area-inset-bottom, 0px));
+  border-top: 1px solid var(--rd-border);
+  background: var(--rd-bg-subtle);
+  overflow: visible;
+  user-select: none;
 }
-.okmate-nav-mode a {
-  flex: 1;
-  display: block;
-  text-align: center;
-  padding: 0.32rem 0.45rem;
+.okmate-toolbar-group {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  flex: 0 0 auto;
+}
+.okmate-toolbar button {
+  font: inherit;
+  font-size: 0.78rem;
+  font-weight: 650;
+  padding: 0.28rem 0.5rem;
   border: 1px solid var(--rd-border);
-  border-radius: 0.45rem;
+  border-radius: 0.4rem;
+  background: var(--rd-bg);
+  color: var(--rd-muted);
+  cursor: pointer;
+}
+.okmate-toolbar button:hover {
+  color: var(--rd-fg);
+  background: var(--rd-bg);
+}
+.okmate-toolbar button[aria-pressed="true"] {
+  background: color-mix(in srgb, var(--rd-primary) 16%, transparent);
+  color: var(--rd-primary);
+  border-color: color-mix(in srgb, var(--rd-primary) 35%, var(--rd-border));
+}
+.okmate-toolbar-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.85rem;
+  height: 1.85rem;
+  padding: 0;
+}
+.okmate-toolbar-icon svg {
+  display: block;
+  width: 1.05rem;
+  height: 1.05rem;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.75;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+.okmate-toolbar-reading .okmate-reading-width {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
   color: var(--rd-muted);
   font-size: 0.78rem;
   font-weight: 650;
-  text-decoration: none;
 }
-.okmate-nav-mode a:hover {
+.okmate-toolbar-reading .okmate-reading-width-row {
+  min-width: 8.5rem;
+}
+.okmate-toolbar-reading .okmate-reading-width-row output {
+  min-width: 3.2rem;
+  font-size: 0.78rem;
+}
+.okmate-toolbar-reading .okmate-reading-wrap {
+  color: var(--rd-muted);
+  font-size: 0.78rem;
+  font-weight: 650;
+}
+
+.okmate-nav-mode {
+  position: relative;
+  flex: 0 0 auto;
+  margin: 0;
+  font-family: var(--rd-font-sans);
+}
+.okmate-nav-mode > summary {
+  list-style: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-family: inherit;
+  font-size: 0.78rem;
+  font-weight: 650;
+  line-height: 1.2;
+  padding: 0.28rem 0.5rem;
+  border: 1px solid var(--rd-border);
+  border-radius: 0.4rem;
+  background: var(--rd-bg);
+  color: var(--rd-muted);
+  cursor: pointer;
+}
+.okmate-nav-mode > summary::-webkit-details-marker { display: none; }
+.okmate-nav-mode > summary::after {
+  content: "";
+  width: 0.32rem;
+  height: 0.32rem;
+  border-right: 1.5px solid currentColor;
+  border-bottom: 1.5px solid currentColor;
+  transform: translateY(-0.08rem) rotate(45deg);
+}
+.okmate-nav-mode[open] > summary,
+.okmate-nav-mode > summary:hover {
+  color: var(--rd-fg);
+}
+.okmate-nav-mode-menu {
+  position: absolute;
+  left: 0;
+  bottom: calc(100% + 0.35rem);
+  z-index: 13;
+  display: grid;
+  min-width: 100%;
+  padding: 0.25rem;
+  border: 1px solid var(--rd-border);
+  border-radius: 0.45rem;
+  background: var(--rd-bg);
+  box-shadow: 0 0.35rem 0.9rem rgb(0 0 0 / 28%);
+}
+.okmate-nav-mode-menu a {
+  padding: 0.32rem 0.55rem;
+  border-radius: 0.35rem;
+  color: var(--rd-muted);
+  font-family: inherit;
+  font-size: 0.78rem;
+  font-weight: 650;
+  text-decoration: none;
+  white-space: nowrap;
+}
+.okmate-nav-mode-menu a:hover {
   background: var(--rd-bg-subtle);
   color: var(--rd-fg);
   text-decoration: none;
 }
-.okmate-nav-mode a.is-current {
+.okmate-nav-mode-menu a.is-current {
   background: color-mix(in srgb, var(--rd-primary) 16%, transparent);
   color: var(--rd-primary);
-  border-color: color-mix(in srgb, var(--rd-primary) 35%, var(--rd-border));
 }
 .okmate-nav-blurb {
   display: none;
@@ -727,7 +865,12 @@ html[data-okmate-wrap="off"] #okmate-main pre {
 }
 
 @media (max-width: 48rem) {
-  html, body { height: auto; overflow: auto; }
+  html, body {
+    height: auto;
+    overflow: auto;
+    padding-bottom: var(--okmate-chrome-bottom);
+  }
+  #okmate-toc-toggle { display: none; }
   .okmate-shell {
     display: block;
     height: auto;
