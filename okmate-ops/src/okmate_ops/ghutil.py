@@ -1,9 +1,24 @@
 from __future__ import annotations
 
 import subprocess
+import sys
 import time
+from typing import IO, Callable
 
 DEFAULT_CHECKS = ("Test",)
+BAR_WIDTH = 24
+DEFAULT_BAR_WINDOW_S = 600.0
+
+
+def format_elapsed(seconds: float) -> str:
+    total = max(0, int(seconds))
+    return f"{total // 60:02d}:{total % 60:02d}"
+
+
+def render_bar(elapsed: float, window: float, width: int = BAR_WIDTH) -> str:
+    frac = 0.0 if window <= 0 else min(1.0, elapsed / window)
+    filled = int(frac * width)
+    return f"[{'#' * filled}{'-' * (width - filled)}]"
 
 
 def parse_check_line(result: str) -> tuple[str, str] | None:
@@ -19,14 +34,24 @@ def wait_for_check(
     repo: str,
     sha: str,
     check: str,
-    gh: callable,
-    sleep: callable,
+    gh: Callable[..., str],
+    sleep: Callable[[float], None],
     deadline_s: float | None = None,
+    out: IO[str] | None = None,
 ) -> None:
     started = time.monotonic()
-    print(f"Waiting for: {check}", flush=True)
+    stream = out or sys.stdout
+    window = deadline_s if deadline_s is not None else DEFAULT_BAR_WINDOW_S
+
+    def tick(label: str) -> None:
+        elapsed = time.monotonic() - started
+        line = f"{check} {render_bar(elapsed, window)} {format_elapsed(elapsed)} {label}"
+        stream.write(f"\r{line}\033[K")
+        stream.flush()
+
     while True:
         if deadline_s is not None and time.monotonic() - started > deadline_s:
+            stream.write("\n")
             raise SystemExit(f"timed out waiting for {check}")
         raw = gh(
             [
@@ -38,16 +63,19 @@ def wait_for_check(
         )
         parsed = parse_check_line(raw)
         if parsed is None:
-            print("  Check not found yet, waiting...", flush=True)
+            tick("waiting")
         else:
             status, conclusion = parsed
-            print(f"  Status: {status}, Conclusion: {conclusion}", flush=True)
             if status == "completed":
                 if conclusion == "success":
-                    print(f"  {check} passed", flush=True)
+                    tick("passed")
+                    stream.write("\n")
                     return
+                tick(f"failed ({conclusion})")
+                stream.write("\n")
                 raise SystemExit(f"{check} failed ({conclusion})")
-        sleep(30)
+            tick(f"{status} {conclusion}")
+        sleep(10)
 
 
 def gh_run(args: list[str], check: bool = True) -> subprocess.CompletedProcess:
