@@ -171,7 +171,7 @@ impl Workspace {
     pub fn chrome_route(route: &str) -> bool {
         matches!(
             normalize_route(route).as_str(),
-            "/" | "/review/" | "/settings/"
+            "/" | "/review/" | "/log/" | "/settings/"
         )
     }
 
@@ -225,7 +225,7 @@ impl Workspace {
         };
         let (path, fragment) = split_fragment(path);
         let id = path.trim_matches('/');
-        if id.is_empty() || id == "review" || id == "settings" {
+        if id.is_empty() || id == "review" || id == "log" || id == "settings" {
             return href.to_string();
         }
         with_fragment(&self.document_href(owner_id, id), fragment)

@@ -188,6 +188,33 @@ pub fn merged_log(workspace: &Workspace) -> Vec<LogDay> {
         .collect()
 }
 
+pub const DASHBOARD_LOG_LIMIT: usize = 5;
+
+pub fn take_log_entries(days: &[LogDay], limit: usize) -> Vec<LogDay> {
+    let mut remaining = limit;
+    let mut out = Vec::new();
+    for day in days {
+        if remaining == 0 {
+            break;
+        }
+        let take = day.entries.len().min(remaining);
+        out.push(LogDay {
+            date: day.date.clone(),
+            entries: day.entries[..take].to_vec(),
+        });
+        remaining -= take;
+    }
+    out
+}
+
+pub fn review_needs_attention(workspace: &Workspace) -> bool {
+    workspace.members().iter().any(|member| {
+        member.bundle.concepts.iter().any(|concept| {
+            okf::classify_concept_action(concept, &member.bundle.diagnostics).is_action_required
+        })
+    })
+}
+
 pub fn parse_log_markdown(body: &str) -> Vec<(String, Vec<String>)> {
     let mut days = Vec::new();
     let mut current: Option<(String, Vec<String>)> = None;
@@ -374,7 +401,7 @@ fn is_collection_id(bundle: &Bundle, id: &str) -> bool {
 
 #[cfg(test)]
 mod tests {
-    use super::parse_log_markdown;
+    use super::{LogDay, LogEntry, parse_log_markdown, take_log_entries};
 
     #[test]
     fn parse_log_markdown_collects_dated_bullets() {
@@ -386,5 +413,38 @@ mod tests {
         assert_eq!(days[0].1, vec!["First day."]);
         assert_eq!(days[1].0, "2026-08-21");
         assert_eq!(days[1].1, vec!["Newer.", "Also newer."]);
+    }
+
+    #[test]
+    fn take_log_entries_keeps_newest_days_within_limit() {
+        let days = vec![
+            LogDay {
+                date: "2026-08-21".into(),
+                entries: vec![
+                    LogEntry {
+                        text: "Newest".into(),
+                        root: String::new(),
+                    },
+                    LogEntry {
+                        text: "Also new".into(),
+                        root: String::new(),
+                    },
+                ],
+            },
+            LogDay {
+                date: "2026-08-20".into(),
+                entries: vec![LogEntry {
+                    text: "Older".into(),
+                    root: String::new(),
+                }],
+            },
+        ];
+        let limited = take_log_entries(&days, 2);
+        assert_eq!(limited.len(), 1);
+        assert_eq!(limited[0].date, "2026-08-21");
+        assert_eq!(limited[0].entries.len(), 2);
+        let split = take_log_entries(&days, 3);
+        assert_eq!(split.len(), 2);
+        assert_eq!(split[1].entries[0].text, "Older");
     }
 }

@@ -5,6 +5,9 @@
     {% include "fragments/settings.html" %}
   {% else if page_kind == "home" %}
     {% include "fragments/home.html" %}
+  {% else if page_kind == "log" %}
+    {% include "fragments/chrome.html" %}
+    {% include "fragments/log.html" %}
   {% else %}
     {% include "fragments/article.html" %}
   {% endif %}

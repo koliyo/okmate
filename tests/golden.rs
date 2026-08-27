@@ -38,6 +38,7 @@ fn sample() -> Document {
             section_key: String::new(),
             root: String::new(),
             summary: String::new(),
+            attention: false,
         }],
         toc: vec![TocEntry {
             id: "section".into(),

@@ -4,8 +4,9 @@ use okf::Bundle;
 mod governance;
 
 pub use governance::{
-    ConceptMeta, DiagnosticRow, LogDay, LogEntry, ProvenanceItem, RecentDoc, StatCard,
-    concept_meta, diagnostic_rows, governance_stats, merged_log, recent_leaf_documents,
+    ConceptMeta, DASHBOARD_LOG_LIMIT, DiagnosticRow, LogDay, LogEntry, ProvenanceItem, RecentDoc,
+    StatCard, concept_meta, diagnostic_rows, governance_stats, merged_log, recent_leaf_documents,
+    review_needs_attention, take_log_entries,
 };
 
 #[derive(Clone, Debug, Default)]
@@ -18,6 +19,7 @@ pub struct NavNode {
     pub section_key: String,
     pub root: String,
     pub summary: String,
+    pub attention: bool,
 }
 
 #[derive(Clone, Debug)]
@@ -127,6 +129,7 @@ macro_rules! document_template {
 
 document_template!(PageTemplate, "page.html");
 document_template!(HomeTemplate, "home.html");
+document_template!(LogTemplate, "log.html");
 document_template!(ReviewTemplate, "review.html");
 document_template!(SettingsTemplate, "settings.html");
 document_template!(SettingsFragmentTemplate, "fragments/settings.html");
@@ -165,6 +168,10 @@ impl Document {
 
     pub fn render_home(self) -> askama::Result<String> {
         HomeTemplate::from(self).render()
+    }
+
+    pub fn render_log(self) -> askama::Result<String> {
+        LogTemplate::from(self).render()
     }
 
     pub fn render_review(self) -> askama::Result<String> {
@@ -321,6 +328,7 @@ mod tests {
                     section_key: String::new(),
                     root: String::new(),
                     summary: String::new(),
+                    attention: false,
                 },
                 NavNode {
                     href: "/review/".into(),
@@ -331,6 +339,7 @@ mod tests {
                     section_key: String::new(),
                     root: String::new(),
                     summary: String::new(),
+                    attention: false,
                 },
             ],
             toc,
@@ -576,9 +585,14 @@ mod tests {
             .find("okmate-badge")
             .expect("collection badge");
         assert!(title < badge);
-        assert!(html.contains("Open review queue"));
+        assert!(!html.contains("Open review queue"));
         assert!(html.contains("id=\"okmate-log\""));
         assert!(!html.contains("Knowledge Collections"));
+        let stats_at = html.find("okmate-stat-list").expect("stats");
+        let recents_at = html.find("id=\"okmate-recents\"").expect("recents");
+        let log_at = html.find("id=\"okmate-log\"").expect("log");
+        assert!(stats_at < recents_at, "{html}");
+        assert!(recents_at < log_at, "{html}");
         assert!(html.contains("Total"));
         assert!(!html.contains("okmate-toc-link"), "{html}");
         assert!(!html.contains("okmate-outline-menu"), "{html}");

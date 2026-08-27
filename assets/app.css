@@ -142,6 +142,21 @@ body.is-col-resizing {
   font-size: 0.78em;
   font-weight: 500;
 }
+.okmate-nav-attention {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 0.95em;
+  height: 0.95em;
+  margin-left: 0.35rem;
+  border-radius: 999px;
+  background: var(--rd-orange);
+  color: #1b1d23;
+  font-size: 0.68em;
+  font-weight: 800;
+  line-height: 1;
+  vertical-align: 0.08em;
+}
 .okmate-nav-mode {
   display: flex;
   gap: 0.35rem;
@@ -471,22 +486,11 @@ body.is-col-resizing {
   gap: 0.4rem;
 }
 .okmate-log-empty { color: var(--rd-muted); }
-.okmate-cta-row { display: flex; gap: 1.25rem; margin: 1.5rem 0 2rem; }
-.okmate-cta-btn {
-  display: inline-flex;
-  padding: 0.55rem 1.15rem;
-  background: var(--rd-primary);
-  color: #fff !important;
-  border-radius: 0.45rem;
-  font-weight: 700;
-  font-size: 0.86rem;
-  text-decoration: none !important;
-}
 .okmate-stat-list {
   display: grid;
   grid-template-columns: repeat(6, minmax(0, 1fr));
   gap: 0.4rem;
-  margin: 1rem 0 1.4rem;
+  margin: 0 0 1.75rem;
   padding: 0;
   list-style: none;
 }

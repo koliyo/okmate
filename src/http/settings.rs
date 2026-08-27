@@ -119,6 +119,7 @@ fn settings_document(
                 section_key: String::new(),
                 root: String::new(),
                 summary: String::new(),
+                attention: false,
             }],
             toc: Vec::new(),
             article_html: String::new(),

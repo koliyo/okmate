@@ -8,8 +8,9 @@ use serde::Serialize;
 
 use crate::preview::NavMode;
 use crate::views::{
-    Crumb, Document, NavNode, action_rows, compact_type_label, concept_meta, diagnostic_rows,
-    governance_stats, merged_log, recent_leaf_documents, review_rows, toc_from_headings,
+    Crumb, DASHBOARD_LOG_LIMIT, Document, NavNode, action_rows, compact_type_label, concept_meta,
+    diagnostic_rows, governance_stats, merged_log, recent_leaf_documents, review_needs_attention,
+    review_rows, take_log_entries, toc_from_headings,
 };
 use crate::workspace::{Workspace, WorkspaceMember, id_from_path, normalize_route};
 
@@ -58,7 +59,12 @@ fn write_site(workspace: &Workspace, output: &Path, nav_mode: NavMode) -> Result
 }
 
 pub fn write_html_pages(workspace: &Workspace, output: &Path, nav_mode: NavMode) -> Result<()> {
-    let mut routes = vec!["/".to_string(), "/review/".into(), "/settings/".into()];
+    let mut routes = vec![
+        "/".to_string(),
+        "/review/".into(),
+        "/log/".into(),
+        "/settings/".into(),
+    ];
     for member in workspace.members() {
         for concept in &member.bundle.concepts {
             routes.push(workspace.document_href(&member.id, &concept.id));
@@ -108,6 +114,11 @@ pub fn page_for_route_nav(
             .with_kind("review")
             .with_review(workspace),
         ),
+        "/log/" => Some(
+            document(workspace, "/log/", "Log", Vec::new(), nav_mode)
+                .with_kind("log")
+                .with_log(workspace),
+        ),
         "/settings/" => Some(settings_document(workspace, nav_mode)),
         other => {
             let (member, id) = workspace.parse_document_route(other)?;
@@ -150,6 +161,7 @@ pub fn page_for_route_nav(
 fn render_document(document: Document) -> Result<String> {
     match document.page_kind.as_str() {
         "home" => document.render_home(),
+        "log" => document.render_log(),
         "review" => document.render_review(),
         "settings" => document.render_settings(),
         _ => document.render_page(),
@@ -298,6 +310,12 @@ impl Document {
     fn with_home(mut self, workspace: &Workspace) -> Self {
         self.recents = recent_leaf_documents(workspace, 10);
         self.stats = governance_stats(workspace);
+        self.log_days = take_log_entries(&merged_log(workspace), DASHBOARD_LOG_LIMIT);
+        self.show_root = workspace.is_multi();
+        self
+    }
+
+    fn with_log(mut self, workspace: &Workspace) -> Self {
         self.log_days = merged_log(workspace);
         self.show_root = workspace.is_multi();
         self
@@ -364,6 +382,14 @@ fn nav_pages(workspace: &Workspace) -> Vec<NavPage> {
             title: "Review queue".into(),
             route: "/review/".into(),
             path: "review".into(),
+            description: String::new(),
+            collection: String::new(),
+            root: String::new(),
+        },
+        NavPage {
+            title: "Log".into(),
+            route: "/log/".into(),
+            path: "log".into(),
             description: String::new(),
             collection: String::new(),
             root: String::new(),
@@ -446,9 +472,12 @@ fn collection_title(index: &okf::Index) -> String {
 
 fn nav_tree(workspace: &Workspace, current: &str, nav_mode: NavMode) -> Vec<NavNode> {
     let current = normalize_route(current);
+    let mut review = leaf("/review/", "Review queue", &current);
+    review.attention = review_needs_attention(workspace);
     let mut items = vec![
         leaf("/", "Dashboard", &current),
-        leaf("/review/", "Review queue", &current),
+        review,
+        leaf("/log/", "Log", &current),
         leaf("/settings/", "Settings", &current),
     ];
     if workspace.is_multi() {
@@ -467,6 +496,7 @@ fn nav_tree(workspace: &Workspace, current: &str, nav_mode: NavMode) -> Vec<NavN
                         section_key: member.id.clone(),
                         root: member.id.clone(),
                         summary: String::new(),
+                        attention: false,
                     });
                 }
             }
@@ -487,6 +517,7 @@ fn leaf(href: &str, title: &str, current: &str) -> NavNode {
         section_key: String::new(),
         root: String::new(),
         summary: String::new(),
+        attention: false,
     }
 }
 
@@ -523,6 +554,7 @@ fn nav_forest(
                 section_key: namespaced_key(section_prefix, path),
                 root: String::new(),
                 summary: first_prose_paragraph(&index.article_html),
+                attention: false,
             },
         );
     }
@@ -551,6 +583,7 @@ fn nav_forest(
                 section_key: String::new(),
                 root: String::new(),
                 summary: String::new(),
+                attention: false,
             });
         }
     }
@@ -690,6 +723,7 @@ fn nav_forest_merged(workspace: &Workspace, current: &str) -> Vec<NavNode> {
                 section_key: path.to_string(),
                 root: String::new(),
                 summary: String::new(),
+                attention: false,
             });
         }
     }
@@ -719,6 +753,7 @@ fn nav_forest_merged(workspace: &Workspace, current: &str) -> Vec<NavNode> {
                     section_key: String::new(),
                     root: member.id.clone(),
                     summary: String::new(),
+                    attention: false,
                 });
             }
         }

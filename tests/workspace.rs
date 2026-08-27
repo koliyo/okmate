@@ -380,6 +380,35 @@ async fn workspace_home_orders_recents_and_merges_log_days() {
 }
 
 #[test]
+fn dashboard_log_is_truncated_and_full_log_is_in_nav() {
+    let root = temp_dir("ws-log-limit");
+    write_index(&root);
+    fs::write(
+        root.join("log.md"),
+        "# Knowledge log\n\n## 2026-08-26\n\n- Six.\n- Five.\n\n## 2026-08-25\n\n- Four.\n- Three.\n- Two.\n\n## 2026-08-24\n\n- One.\n",
+    )
+    .unwrap();
+    let output = temp_dir("ws-log-limit-out");
+    okmate::site::build(&root, &output, Profile::Strict).unwrap();
+    let home = fs::read_to_string(output.join("index.html")).unwrap();
+    assert!(home.contains("Six."), "{home}");
+    assert!(home.contains("Two."), "{home}");
+    assert!(!home.contains("One."), "{home}");
+    assert!(home.contains("Recent log"), "{home}");
+    assert!(home.contains("href=\"/log/\""), "{home}");
+    assert!(!home.contains("Open review queue"), "{home}");
+    let log = fs::read_to_string(output.join("log").join("index.html")).unwrap();
+    assert!(log.contains("id=\"okmate-log\""), "{log}");
+    assert!(log.contains("One."), "{log}");
+    assert!(log.contains("Six."), "{log}");
+    let h2 = log
+        .split_once("id=\"bundle-log\"")
+        .map(|(_, rest)| rest)
+        .unwrap_or(&log);
+    assert!(h2.contains(">Log<"), "{log}");
+}
+
+#[test]
 fn collection_hover_uses_first_prose_paragraph_not_child_list() {
     let a = temp_dir("ws-blurb-a");
     let b = temp_dir("ws-blurb-b");

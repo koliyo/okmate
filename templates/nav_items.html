@@ -1,6 +1,6 @@
 {% for item in nav %}
   {% if item.section_key.is_empty() %}
-    <a class="nav-link{% if item.current %} is-current{% endif %}" href="{{ item.href }}" data-on:click__prevent="@get('{{ item.href }}')"{% if item.current %} aria-current="page"{% endif %}>{{ item.title }}{% if !item.root.is_empty() %} <span class="okmate-nav-root">{{ item.root }}</span>{% endif %}</a>
+    <a class="nav-link{% if item.current %} is-current{% endif %}" href="{{ item.href }}" data-on:click__prevent="@get('{{ item.href }}')"{% if item.current %} aria-current="page"{% endif %}>{{ item.title }}{% if item.attention %}<span class="okmate-nav-attention" role="img" aria-label="Needs attention">!</span>{% endif %}{% if !item.root.is_empty() %} <span class="okmate-nav-root">{{ item.root }}</span>{% endif %}</a>
   {% else %}
     <details class="nav-section" data-okmate-nav-section="{{ item.section_key }}"{% if item.current %} data-okmate-nav-current{% endif %}{% if item.open %} open{% endif %}>
       <summary{% if !item.summary.is_empty() %} aria-description="{{ item.summary }}"{% endif %}>
@@ -13,7 +13,7 @@
         <div class="nav-items">
           {% for child in item.children %}
             {% if child.section_key.is_empty() %}
-              <a class="nav-link{% if child.current %} is-current{% endif %}" href="{{ child.href }}" data-on:click__prevent="@get('{{ child.href }}')"{% if child.current %} aria-current="page"{% endif %}>{{ child.title }}{% if !child.root.is_empty() %} <span class="okmate-nav-root">{{ child.root }}</span>{% endif %}</a>
+              <a class="nav-link{% if child.current %} is-current{% endif %}" href="{{ child.href }}" data-on:click__prevent="@get('{{ child.href }}')"{% if child.current %} aria-current="page"{% endif %}>{{ child.title }}{% if child.attention %}<span class="okmate-nav-attention" role="img" aria-label="Needs attention">!</span>{% endif %}{% if !child.root.is_empty() %} <span class="okmate-nav-root">{{ child.root }}</span>{% endif %}</a>
             {% else %}
               <details class="nav-section" data-okmate-nav-section="{{ child.section_key }}"{% if child.current %} data-okmate-nav-current{% endif %}{% if child.open %} open{% endif %}>
                 <summary{% if !child.summary.is_empty() %} aria-description="{{ child.summary }}"{% endif %}>
@@ -26,7 +26,7 @@
                   <div class="nav-items">
                     {% for grandchild in child.children %}
                       {% if grandchild.section_key.is_empty() %}
-                        <a class="nav-link{% if grandchild.current %} is-current{% endif %}" href="{{ grandchild.href }}" data-on:click__prevent="@get('{{ grandchild.href }}')"{% if grandchild.current %} aria-current="page"{% endif %}>{{ grandchild.title }}{% if !grandchild.root.is_empty() %} <span class="okmate-nav-root">{{ grandchild.root }}</span>{% endif %}</a>
+                        <a class="nav-link{% if grandchild.current %} is-current{% endif %}" href="{{ grandchild.href }}" data-on:click__prevent="@get('{{ grandchild.href }}')"{% if grandchild.current %} aria-current="page"{% endif %}>{{ grandchild.title }}{% if grandchild.attention %}<span class="okmate-nav-attention" role="img" aria-label="Needs attention">!</span>{% endif %}{% if !grandchild.root.is_empty() %} <span class="okmate-nav-root">{{ grandchild.root }}</span>{% endif %}</a>
                       {% else %}
                         <details class="nav-section" data-okmate-nav-section="{{ grandchild.section_key }}"{% if grandchild.current %} data-okmate-nav-current{% endif %}{% if grandchild.open %} open{% endif %}>
                           <summary{% if !grandchild.summary.is_empty() %} aria-description="{{ grandchild.summary }}"{% endif %}>
@@ -39,7 +39,7 @@
                             <div class="nav-items">
                               {% for great in grandchild.children %}
                                 {% if great.section_key.is_empty() %}
-                                  <a class="nav-link{% if great.current %} is-current{% endif %}" href="{{ great.href }}" data-on:click__prevent="@get('{{ great.href }}')"{% if great.current %} aria-current="page"{% endif %}>{{ great.title }}{% if !great.root.is_empty() %} <span class="okmate-nav-root">{{ great.root }}</span>{% endif %}</a>
+                                  <a class="nav-link{% if great.current %} is-current{% endif %}" href="{{ great.href }}" data-on:click__prevent="@get('{{ great.href }}')"{% if great.current %} aria-current="page"{% endif %}>{{ great.title }}{% if great.attention %}<span class="okmate-nav-attention" role="img" aria-label="Needs attention">!</span>{% endif %}{% if !great.root.is_empty() %} <span class="okmate-nav-root">{{ great.root }}</span>{% endif %}</a>
                                 {% else %}
                                   <details class="nav-section" data-okmate-nav-section="{{ great.section_key }}"{% if great.current %} data-okmate-nav-current{% endif %}{% if great.open %} open{% endif %}>
                                     <summary{% if !great.summary.is_empty() %} aria-description="{{ great.summary }}"{% endif %}>
@@ -51,7 +51,7 @@
                                     <div class="nav-fold">
                                       <div class="nav-items">
                                         {% for leaf in great.children %}
-                                          <a class="nav-link{% if leaf.current %} is-current{% endif %}" href="{{ leaf.href }}" data-on:click__prevent="@get('{{ leaf.href }}')"{% if leaf.current %} aria-current="page"{% endif %}>{{ leaf.title }}{% if !leaf.root.is_empty() %} <span class="okmate-nav-root">{{ leaf.root }}</span>{% endif %}</a>
+                                          <a class="nav-link{% if leaf.current %} is-current{% endif %}" href="{{ leaf.href }}" data-on:click__prevent="@get('{{ leaf.href }}')"{% if leaf.current %} aria-current="page"{% endif %}>{{ leaf.title }}{% if leaf.attention %}<span class="okmate-nav-attention" role="img" aria-label="Needs attention">!</span>{% endif %}{% if !leaf.root.is_empty() %} <span class="okmate-nav-root">{{ leaf.root }}</span>{% endif %}</a>
                                         {% endfor %}
                                       </div>
                                     </div>
