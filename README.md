@@ -131,6 +131,8 @@ Do not treat this README as an architecture decision.
    from Cargo (every `v*` must increase it).
 2. Wait for the **Release** workflow on that tag (signing secrets must be
    present; the job fails closed instead of attaching an unsigned archive).
+   How to mint those values is at the bottom of
+   [`packaging/macos/README.md`](packaging/macos/README.md).
 3. Confirm
    `https://github.com/koliyo/okmate/releases/latest/download/appcast.xml`
    serves the new item.

@@ -72,6 +72,13 @@ def app_bundle_dir(root: Path) -> Path:
     return root / "dist" / f"{APP_NAME}.app"
 
 
+def resolve_app_bundle(root: Path, app: Path) -> Path:
+    resolved = app.expanduser()
+    if not resolved.is_absolute():
+        resolved = root / resolved
+    return resolved.resolve()
+
+
 def h35_desktop_root(root: Path) -> Path:
     env = os.environ.get("H35_DESKTOP")
     if env:
@@ -113,7 +120,7 @@ def package_sign(argv: list[str]) -> int:
         raise SystemExit(PACKAGE_SIGN_USAGE)
     require_darwin("Signing")
     root = repo_root()
-    app = Path(argv[0]) if argv else app_bundle_dir(root)
+    app = resolve_app_bundle(root, Path(argv[0]) if argv else app_bundle_dir(root))
     run(h35_ops_argv(root, ["sign", str(app)]), cwd=root, env=package_env(root))
     return 0
 
