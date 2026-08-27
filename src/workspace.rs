@@ -1,7 +1,7 @@
 use std::path::{Path, PathBuf};
 
 use anyhow::{Context, Result, bail};
-use okf::{Bundle, Profile};
+use okf::{Bundle, LoadOptions, ParseCache, Profile};
 
 use crate::roots::{ResolvedRoot, SyncMode};
 
@@ -39,18 +39,35 @@ impl Workspace {
     }
 
     pub fn load_single(path: &Path, profile: Profile) -> Result<Self> {
+        Self::load_single_with(path, LoadOptions::new(profile), None)
+    }
+
+    pub fn load_single_with(
+        path: &Path,
+        options: LoadOptions,
+        cache_parent: Option<&Path>,
+    ) -> Result<Self> {
         let path = path.to_path_buf();
-        let bundle = okf::load(&path, profile)?;
-        Ok(Self::from_loaded(id_from_path(&path), path, bundle))
+        let id = id_from_path(&path);
+        let bundle = load_bundle(&id, &path, options, cache_parent)?;
+        Ok(Self::from_loaded(id, path, bundle))
     }
 
     pub fn from_resolved(roots: Vec<ResolvedRoot>, profile: Profile) -> Result<Self> {
+        Self::from_resolved_with(roots, LoadOptions::new(profile), None)
+    }
+
+    pub fn from_resolved_with(
+        roots: Vec<ResolvedRoot>,
+        options: LoadOptions,
+        cache_parent: Option<&Path>,
+    ) -> Result<Self> {
         let members = roots
             .into_iter()
             .filter(ResolvedRoot::enabled)
             .filter_map(|root| root.path.map(|path| (root.id, path)))
             .collect();
-        Self::load_members(members, profile)
+        Self::load_members_with(members, options, cache_parent)
     }
 
     pub fn from_members(mut members: Vec<WorkspaceMember>) -> Self {
@@ -59,9 +76,17 @@ impl Workspace {
     }
 
     pub fn load_members(specs: Vec<(String, PathBuf)>, profile: Profile) -> Result<Self> {
+        Self::load_members_with(specs, LoadOptions::new(profile), None)
+    }
+
+    pub fn load_members_with(
+        specs: Vec<(String, PathBuf)>,
+        options: LoadOptions,
+        cache_parent: Option<&Path>,
+    ) -> Result<Self> {
         let mut members = Vec::with_capacity(specs.len());
         for (id, path) in specs {
-            let bundle = okf::load(&path, profile)
+            let bundle = load_bundle(&id, &path, options, cache_parent)
                 .with_context(|| format!("failed to load knowledge root `{id}`"))?;
             members.push(WorkspaceMember { id, path, bundle });
         }
@@ -70,14 +95,14 @@ impl Workspace {
 
     pub fn for_view(
         path: Option<&Path>,
-        profile: Profile,
+        options: LoadOptions,
         config_path: &Path,
         cache_parent: &Path,
         session_bundle: Option<&Path>,
     ) -> Result<ViewTarget> {
         if let Some(path) = path {
             let target = okf::resolve_preview_path(path)?;
-            let workspace = Self::load_single(&target.root, profile)?;
+            let workspace = Self::load_single_with(&target.root, options, Some(cache_parent))?;
             return Ok(ViewTarget {
                 workspace,
                 open_path: target.open_path,
@@ -90,21 +115,21 @@ impl Workspace {
                 resolved.into_iter().filter(ResolvedRoot::enabled).collect();
             if enabled.len() >= 2 {
                 return Ok(ViewTarget {
-                    workspace: Self::from_resolved(enabled, profile)?,
+                    workspace: Self::from_resolved_with(enabled, options, Some(cache_parent))?,
                     open_path: "/".into(),
                 });
             }
         }
         if let Some(bundle) = session_bundle.filter(|path| path.is_dir()) {
             return Ok(ViewTarget {
-                workspace: Self::load_single(bundle, profile)?,
+                workspace: Self::load_single_with(bundle, options, Some(cache_parent))?,
                 open_path: "/".into(),
             });
         }
         let default = PathBuf::from("knowledge");
         if default.is_dir() {
             return Ok(ViewTarget {
-                workspace: Self::load_single(&default, profile)?,
+                workspace: Self::load_single_with(&default, options, Some(cache_parent))?,
                 open_path: "/".into(),
             });
         }
@@ -112,12 +137,16 @@ impl Workspace {
     }
 
     pub fn reload(&self, profile: Profile) -> Result<Self> {
+        self.reload_with(LoadOptions::new(profile), None)
+    }
+
+    pub fn reload_with(&self, options: LoadOptions, cache_parent: Option<&Path>) -> Result<Self> {
         let specs = self
             .members
             .iter()
             .map(|member| (member.id.clone(), member.path.clone()))
             .collect();
-        Self::load_members(specs, profile)
+        Self::load_members_with(specs, options, cache_parent)
     }
 
     pub fn is_empty(&self) -> bool {
@@ -229,6 +258,30 @@ impl Workspace {
             return href.to_string();
         }
         with_fragment(&self.document_href(owner_id, id), fragment)
+    }
+}
+
+pub fn parse_cache_dir(cache_parent: &Path, root_id: &str) -> PathBuf {
+    cache_parent
+        .join("parse")
+        .join(format!("v{}", okf::PARSE_CACHE_VERSION))
+        .join(root_id)
+}
+
+fn load_bundle(
+    id: &str,
+    path: &Path,
+    options: LoadOptions,
+    cache_parent: Option<&Path>,
+) -> Result<Bundle> {
+    if let Some(parent) = cache_parent {
+        let dir = parse_cache_dir(parent, id);
+        let mut cache = ParseCache::load_dir(&dir, options.profile);
+        let loaded = okf::load_with_cache(path, options, Some(&mut cache))?;
+        cache.save_dir(&dir)?;
+        Ok(loaded.bundle)
+    } else {
+        Ok(okf::load_timed(path, options)?.bundle)
     }
 }
 
@@ -402,7 +455,7 @@ mod tests {
         .unwrap();
         let loaded = Workspace::for_view(
             Some(&a),
-            Profile::Strict,
+            crate::preview::view_load_options(Profile::Strict, false),
             &config,
             &cfg_dir.join("cache"),
             None,
@@ -414,13 +467,41 @@ mod tests {
             a.canonicalize().unwrap()
         );
 
-        let loaded =
-            Workspace::for_view(None, Profile::Strict, &config, &cfg_dir.join("cache"), None)
-                .unwrap();
+        let loaded = Workspace::for_view(
+            None,
+            crate::preview::view_load_options(Profile::Strict, false),
+            &config,
+            &cfg_dir.join("cache"),
+            None,
+        )
+        .unwrap();
         assert!(loaded.workspace.is_multi());
         assert_eq!(loaded.workspace.len(), 2);
         assert!(loaded.workspace.get("a").is_some());
         assert!(loaded.workspace.get("b").is_some());
         assert_eq!(loaded.open_path, "/");
+    }
+
+    #[test]
+    fn default_view_load_options_are_strict_without_provenance() {
+        let options = crate::preview::view_load_options(Profile::Strict, false);
+        assert_eq!(options.profile, Profile::Strict);
+        assert!(!options.provenance);
+        assert!(crate::preview::view_load_options(Profile::Strict, true).provenance);
+        assert!(okf::LoadOptions::new(Profile::Strict).provenance);
+    }
+
+    #[test]
+    fn second_cached_preview_load_has_no_parse_misses() {
+        let root = temp("cache-hit");
+        write_bundle(&root, "Cached", false);
+        let options = crate::preview::view_load_options(Profile::Strict, false);
+        let cache_parent = temp("cache-store");
+        Workspace::load_single_with(&root, options, Some(&cache_parent)).unwrap();
+        let dir = parse_cache_dir(&cache_parent, &id_from_path(&root));
+        let mut cache = ParseCache::load_dir(&dir, options.profile);
+        let second = okf::load_with_cache(&root, options, Some(&mut cache)).unwrap();
+        assert_eq!(second.timings.parse_cache_misses, 0);
+        assert!(second.timings.parse_cache_hits > 0);
     }
 }

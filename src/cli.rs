@@ -59,7 +59,7 @@ enum Commands {
         scenario: TimingsScenarioArg,
         #[arg(long, value_enum, default_value_t = ProfileArg::Strict)]
         profile: ProfileArg,
-        /// Override preview provenance (default matches `LoadOptions` for `--profile`).
+        /// Override preview provenance (default off, matching `view`).
         #[arg(long, overrides_with = "no_provenance")]
         provenance: bool,
         #[arg(long = "no-provenance", overrides_with = "provenance")]
@@ -82,6 +82,9 @@ enum Commands {
         output: Option<PathBuf>,
         #[arg(long, value_enum, default_value_t = ProfileArg::Strict)]
         profile: ProfileArg,
+        /// Run git provenance checks during preview (off by default).
+        #[arg(long)]
+        provenance: bool,
         /// Skip the preview window; print the URL and keep serving.
         #[arg(long)]
         no_window: bool,
@@ -329,6 +332,7 @@ pub fn run() -> Result<()> {
             path,
             output,
             profile,
+            provenance,
             no_window,
             public,
             port,
@@ -336,6 +340,7 @@ pub fn run() -> Result<()> {
             path,
             output,
             profile: profile.into(),
+            provenance,
             public,
             port: port.resolve()?,
             no_window,

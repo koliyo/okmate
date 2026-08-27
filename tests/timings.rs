@@ -43,6 +43,11 @@ fn timings_json_has_contract_keys() {
     assert!(value["workspace"].is_object(), "{value}");
     assert!(value["pages"].is_array(), "{value}");
     assert!(value["roots"][0]["timings"]["parse"].is_number(), "{value}");
+    assert!(
+        value["watch"]["parse_cache_misses"].as_u64() == Some(0)
+            || value["watch"]["parse_cache_hits"].as_u64().unwrap_or(0) > 0,
+        "{value}"
+    );
 }
 
 #[test]

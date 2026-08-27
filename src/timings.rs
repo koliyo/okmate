@@ -3,11 +3,12 @@ use std::path::{Path, PathBuf};
 use std::time::{Duration, Instant};
 
 use anyhow::{Context, Result};
-use okf::{LoadOptions, LoadTimings, Profile};
+use okf::{LoadOptions, LoadTimings, ParseCache, Profile};
 use serde::Serialize;
 
+use crate::preview::view_load_options;
 use crate::site;
-use crate::workspace::Workspace;
+use crate::workspace::{Workspace, id_from_path, parse_cache_dir};
 
 pub const TIMINGS_VERSION: u32 = 1;
 
@@ -78,6 +79,8 @@ pub struct WorkspaceTiming {
     pub load_members_ms: f64,
     pub member_count: usize,
     pub concept_total: usize,
+    pub parse_cache_hits: u32,
+    pub parse_cache_misses: u32,
 }
 
 #[derive(Clone, Debug, Serialize)]
@@ -120,13 +123,15 @@ pub fn run(options: TimingsOptions) -> Result<()> {
 pub fn measure(options: &TimingsOptions) -> Result<TimingsSnapshot> {
     let load_options = load_options(options);
     let specs = resolve_specs(options.path.as_deref())?;
+    let cache_parent = tempfile_dir("timings-parse")?;
     let mut roots = Vec::with_capacity(specs.len());
     for (id, path) in &specs {
-        roots.push(measure_root(id, path, load_options)?);
+        roots.push(measure_root(id, path, load_options, &cache_parent)?);
     }
 
     let started = Instant::now();
-    let workspace = Workspace::load_members(specs.clone(), options.profile)?;
+    let (workspace, workspace_cache) =
+        load_members_timed(&specs, load_options, Some(&cache_parent))?;
     let workspace_timing = WorkspaceTiming {
         load_members_ms: millis(started.elapsed()),
         member_count: workspace.len(),
@@ -135,6 +140,8 @@ pub fn measure(options: &TimingsOptions) -> Result<TimingsSnapshot> {
             .iter()
             .map(|member| member.bundle.concepts.len())
             .sum(),
+        parse_cache_hits: workspace_cache.0,
+        parse_cache_misses: workspace_cache.1,
     };
 
     let include = options.scenario;
@@ -173,7 +180,7 @@ pub fn measure(options: &TimingsOptions) -> Result<TimingsSnapshot> {
 
     let watch = if matches!(include, TimingsScenario::Watch | TimingsScenario::All) {
         let started = Instant::now();
-        let reloaded = Workspace::load_members(specs, options.profile)?;
+        let (reloaded, cache) = load_members_timed(&specs, load_options, Some(&cache_parent))?;
         Some(WorkspaceTiming {
             load_members_ms: millis(started.elapsed()),
             member_count: reloaded.len(),
@@ -182,6 +189,8 @@ pub fn measure(options: &TimingsOptions) -> Result<TimingsSnapshot> {
                 .iter()
                 .map(|member| member.bundle.concepts.len())
                 .sum(),
+            parse_cache_hits: cache.0,
+            parse_cache_misses: cache.1,
         })
     } else {
         None
@@ -201,17 +210,17 @@ pub fn measure(options: &TimingsOptions) -> Result<TimingsSnapshot> {
 }
 
 fn load_options(options: &TimingsOptions) -> LoadOptions {
-    let mut load = LoadOptions::new(options.profile);
-    if let Some(provenance) = options.provenance {
-        load = load.with_provenance(provenance);
-    }
-    load
+    view_load_options(options.profile, options.provenance.unwrap_or(false))
 }
 
 fn resolve_specs(path: Option<&Path>) -> Result<Vec<(String, PathBuf)>> {
+    if let Some(path) = path {
+        let target = okf::resolve_preview_path(path)?;
+        return Ok(vec![(id_from_path(&target.root), target.root)]);
+    }
     let target = Workspace::for_view(
-        path,
-        Profile::Base,
+        None,
+        view_load_options(Profile::Base, false),
         &crate::config::config_path(),
         &crate::config::cache_dir(),
         crate::preview::load_session().bundle.as_deref(),
@@ -224,9 +233,17 @@ fn resolve_specs(path: Option<&Path>) -> Result<Vec<(String, PathBuf)>> {
         .collect())
 }
 
-fn measure_root(id: &str, path: &Path, options: LoadOptions) -> Result<RootTiming> {
-    let loaded = okf::load_timed(path, options)
+fn measure_root(
+    id: &str,
+    path: &Path,
+    options: LoadOptions,
+    cache_parent: &Path,
+) -> Result<RootTiming> {
+    let dir = parse_cache_dir(cache_parent, id);
+    let mut cache = ParseCache::load_dir(&dir, options.profile);
+    let loaded = okf::load_with_cache(path, options, Some(&mut cache))
         .with_context(|| format!("failed to time knowledge root `{id}`"))?;
+    cache.save_dir(&dir)?;
     Ok(RootTiming {
         id: id.to_string(),
         path: path.display().to_string(),
@@ -235,6 +252,39 @@ fn measure_root(id: &str, path: &Path, options: LoadOptions) -> Result<RootTimin
         diagnostic_count: loaded.bundle.diagnostics.len(),
         timings: SpanTimings::from(&loaded.timings),
     })
+}
+
+fn load_members_timed(
+    specs: &[(String, PathBuf)],
+    options: LoadOptions,
+    cache_parent: Option<&Path>,
+) -> Result<(Workspace, (u32, u32))> {
+    let mut hits = 0;
+    let mut misses = 0;
+    let mut members = Vec::with_capacity(specs.len());
+    for (id, path) in specs {
+        if let Some(parent) = cache_parent {
+            let dir = parse_cache_dir(parent, id);
+            let mut cache = ParseCache::load_dir(&dir, options.profile);
+            let loaded = okf::load_with_cache(path, options, Some(&mut cache))?;
+            cache.save_dir(&dir)?;
+            hits += loaded.timings.parse_cache_hits;
+            misses += loaded.timings.parse_cache_misses;
+            members.push(crate::workspace::WorkspaceMember {
+                id: id.clone(),
+                path: path.clone(),
+                bundle: loaded.bundle,
+            });
+        } else {
+            let loaded = okf::load_timed(path, options)?;
+            members.push(crate::workspace::WorkspaceMember {
+                id: id.clone(),
+                path: path.clone(),
+                bundle: loaded.bundle,
+            });
+        }
+    }
+    Ok((Workspace::from_members(members), (hits, misses)))
 }
 
 fn measure_site(workspace: &Workspace) -> Result<SiteTiming> {

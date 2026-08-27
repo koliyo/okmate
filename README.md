@@ -34,7 +34,7 @@ Settings live under `~/.okmate/` (`OKMATE_CONFIG`, `OKMATE_CACHE`,
 | `okmate benchmark <toml> [root]` | Retrieval benchmark |
 | `okmate timings [path]` | Local load/site/click spans (`--format terminal\|json`, `--scenario`) |
 | `okmate build [root] -o <dir>` | Engine artifacts plus Askama HTML |
-| `okmate view [path]` | Live preview; omit `--no-window` to open tao/wry |
+| `okmate view [path]` | Live preview; omit `--no-window` to open tao/wry; `--provenance` turns git checks on |
 | `okmate roots` | Print resolved root paths (`--format json\|paths`, `--sync` / `--no-sync`) |
 | `okmate sync [id]` | Fetch configured git roots |
 
@@ -64,6 +64,11 @@ done
 `--format json` emits `{ id, kind, path, revision, incoming, enabled, error }`
 and never includes tokens or resolved secrets. If the config is missing or
 `roots` is empty, `./knowledge` is printed when that directory exists.
+
+`view` defaults to the Strict schema with git provenance off (the same split
+as `check --profile strict`, which still runs OKF4006/4007/4008). Pass
+`--provenance` to turn preview git checks back on. Parse reuse lives under
+`OKMATE_CACHE` (`parse/v{n}/<root-id>`).
 
 `view` serves the live HTML tree on localhost (pass `--public` to bind every
 interface). With a window, `--port` defaults to `auto` (a free local port).
