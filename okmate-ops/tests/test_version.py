@@ -7,7 +7,9 @@ from okmate_ops.version import (
     apply_cask_version,
     apply_release_version,
     cask_tracks_self_update,
+    crate_versions,
     first_package_version,
+    next_release_version,
     parse_release_version,
     release_files_match,
     replace_cask_version,
@@ -29,6 +31,42 @@ def test_parse_release_version() -> None:
         parse_release_version("vnext")
     except SystemExit as exc:
         assert "vX.Y.Z" in str(exc)
+    else:
+        raise AssertionError("expected SystemExit")
+
+
+def test_next_release_version() -> None:
+    assert next_release_version("0.1.2", "patch") == "0.1.3"
+    assert next_release_version("0.1.2", "minor") == "0.2.0"
+    assert next_release_version("0.1.2", "major") == "1.0.0"
+    try:
+        next_release_version("1.2", "patch")
+    except SystemExit as exc:
+        assert "X.Y.Z" in str(exc)
+    else:
+        raise AssertionError("expected SystemExit")
+    try:
+        next_release_version("1.2.3-rc.1", "patch")
+    except SystemExit as exc:
+        assert "X.Y.Z" in str(exc)
+    else:
+        raise AssertionError("expected SystemExit")
+
+
+def test_crate_versions_require_agreement() -> None:
+    cargo = 'version = "0.1.2"\n'
+    lock = '[[package]]\nname = "okf"\nversion = "0.1.2"\n\n[[package]]\nname = "okmate"\nversion = "0.1.2"\n'
+    assert crate_versions(cargo, cargo, lock) == "0.1.2"
+    try:
+        crate_versions('version = "0.1.2"\n', 'version = "0.2.0"\n', lock)
+    except SystemExit as exc:
+        assert "differ" in str(exc)
+    else:
+        raise AssertionError("expected SystemExit")
+    try:
+        crate_versions(cargo, cargo, '[[package]]\nname = "okmate"\nversion = "0.1.1"\n')
+    except SystemExit as exc:
+        assert "Cargo.lock" in str(exc)
     else:
         raise AssertionError("expected SystemExit")
 

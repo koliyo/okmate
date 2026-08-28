@@ -13,7 +13,7 @@ commands:
   install       cli
   package       desktop, sign, appcast
   pr-checkout   list open PRs, or checkout one here as pr/<branch>
-  release       vX.Y.Z or dev after Test
+  release       patch, minor, major, v*, or dev
 """
 
 

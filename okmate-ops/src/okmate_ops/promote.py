@@ -10,16 +10,24 @@ from pathlib import Path
 from okmate_ops.ghutil import DEFAULT_CHECKS, gh_run, wait_for_check
 from okmate_ops.paths import repo_root
 from okmate_ops.version import (
+    BUMP_LEVELS,
+    CARGO_LOCK,
+    CARGO_TOML,
     CASK,
     DEFAULT_HOMEBREW_TAP,
+    OKF_CARGO_TOML,
     apply_cask_version,
     apply_release_version,
+    crate_versions,
+    next_release_version,
     parse_release_version,
     release_files_match,
     tap_files_match,
 )
 
-RELEASE_USAGE = "usage: okmate-ops release <tag> [--from BRANCH] [--force]"
+RELEASE_USAGE = (
+    "usage: okmate-ops release <patch|minor|major|vX.Y.Z|dev> [--from BRANCH] [--force]"
+)
 PROMOTE_USAGE = "usage: okmate-ops promote tag"
 PROMOTE_TAG_USAGE = "usage: okmate-ops promote tag <tag> [--from BRANCH] [--force]"
 PROMOTE_DEPRECATED = "okmate-ops promote tag is deprecated; use okmate-ops release\n"
@@ -102,12 +110,33 @@ def push_tap_version(version: str) -> None:
         run(["git", "push", "origin", "HEAD"], cwd=dest)
 
 
-def promote_tag(tag: str, from_ref: str = "main", *, force: bool = False) -> int:
-    movable = tag == "dev"
-    if not movable:
-        parse_release_version(tag)
-    elif len(tag) < 2:
-        raise SystemExit("promote tag requires a v* name or the movable dev tag")
+def git_show(sha: str, path: Path) -> str:
+    shown = git_capture(["git", "show", f"{sha}:{path.as_posix()}"])
+    if shown.returncode != 0:
+        raise SystemExit(f"release could not read {path} at {sha}")
+    return shown.stdout
+
+
+def crate_versions_at_sha(sha: str) -> str:
+    return crate_versions(
+        git_show(sha, CARGO_TOML),
+        git_show(sha, OKF_CARGO_TOML),
+        git_show(sha, CARGO_LOCK),
+    )
+
+
+def resolve_release_tag(spec: str, sha: str) -> str:
+    if spec == "dev":
+        return spec
+    if spec in BUMP_LEVELS:
+        return f"v{next_release_version(crate_versions_at_sha(sha), spec)}"
+    parse_release_version(spec)
+    return spec
+
+
+def promote_tag(spec: str, from_ref: str = "main", *, force: bool = False) -> int:
+    if spec not in ("dev", *BUMP_LEVELS):
+        parse_release_version(spec)
     run(
         [
             "git",
@@ -119,8 +148,11 @@ def promote_tag(tag: str, from_ref: str = "main", *, force: bool = False) -> int
     remote_ref = f"origin/{from_ref}"
     verify = git_capture(["git", "rev-parse", "--verify", remote_ref])
     if verify.returncode != 0:
-        raise SystemExit(f"promote tag requires {remote_ref}")
+        raise SystemExit(f"release requires {remote_ref}")
     sha = verify.stdout.strip()
+    tag = resolve_release_tag(spec, sha)
+    print(f"okmate-ops release {tag}", flush=True)
+    movable = tag == "dev"
     if not movable:
         sha = push_version_update(parse_release_version(tag), from_ref, sha)
     wait_for_promote_ci(sha)

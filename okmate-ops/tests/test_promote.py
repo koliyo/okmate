@@ -53,7 +53,13 @@ def test_release_command_routes(monkeypatch) -> None:
     assert release_command(["v1.2.3"]) == 0
     assert release_command(["v1.2.3", "--from", "release"]) == 0
     assert release_command(["v1.2.3", "--force"]) == 0
-    assert called == ["v1.2.3:main:False", "v1.2.3:release:False", "v1.2.3:main:True"]
+    assert release_command(["patch"]) == 0
+    assert called == [
+        "v1.2.3:main:False",
+        "v1.2.3:release:False",
+        "v1.2.3:main:True",
+        "patch:main:False",
+    ]
 
 
 def test_promote_command_routes(monkeypatch, capsys) -> None:
@@ -283,5 +289,76 @@ def test_promote_tag_requires_v_prefix_or_dev() -> None:
         promote_tag("1.2.3")
     except SystemExit as exc:
         assert "dev" in str(exc)
+    else:
+        raise AssertionError("expected SystemExit")
+
+
+def _show_result(text: str):
+    return type("Result", (), {"returncode": 0, "stdout": text})()
+
+
+def test_promote_tag_patch_resolves_from_sha(monkeypatch, tmp_path, capsys) -> None:
+    calls: list[list[str]] = []
+    waited: list[str] = []
+    cargo = 'version = "0.1.2"\n'
+    lock = (
+        '[[package]]\nname = "okf"\nversion = "0.1.2"\n\n'
+        '[[package]]\nname = "okmate"\nversion = "0.1.2"\n'
+    )
+
+    def capture(argv, cwd=None):
+        if argv[:2] == ["git", "rev-parse"]:
+            return type("Result", (), {"returncode": 0, "stdout": "abc\n"})()
+        path = argv[2].split(":", 1)[1]
+        if path == "Cargo.lock":
+            return _show_result(lock)
+        return _show_result(cargo)
+
+    monkeypatch.setattr("okmate_ops.promote.repo_root", lambda: tmp_path)
+    monkeypatch.setattr("okmate_ops.promote.git_capture", capture)
+    monkeypatch.setattr(
+        "okmate_ops.promote.run",
+        lambda argv, cwd=None: calls.append(list(argv)),
+    )
+    monkeypatch.setattr(
+        "okmate_ops.promote.push_version_update",
+        lambda version, from_ref, remote_sha: f"{version}:{from_ref}:{remote_sha}",
+    )
+    monkeypatch.setattr("okmate_ops.promote.wait_for_promote_ci", waited.append)
+    taps: list[str] = []
+    monkeypatch.setattr("okmate_ops.promote.push_tap_version", taps.append)
+
+    assert promote_tag("patch") == 0
+    assert waited == ["0.1.3:main:abc"]
+    assert taps == ["0.1.3"]
+    assert calls == [
+        ["git", "fetch", "origin", "refs/heads/main:refs/remotes/origin/main"],
+        ["git", "tag", "-a", "v0.1.3", "-m", "v0.1.3", "0.1.3:main:abc"],
+        ["git", "push", "origin", "v0.1.3"],
+    ]
+    assert "okmate-ops release v0.1.3" in capsys.readouterr().out
+
+
+def test_promote_tag_mismatched_crates_exit(monkeypatch, tmp_path) -> None:
+    def capture(argv, cwd=None):
+        if argv[:2] == ["git", "rev-parse"]:
+            return type("Result", (), {"returncode": 0, "stdout": "abc\n"})()
+        path = argv[2].split(":", 1)[1]
+        if path == "okf/Cargo.toml":
+            return _show_result('version = "0.2.0"\n')
+        if path == "Cargo.lock":
+            return _show_result(
+                '[[package]]\nname = "okf"\nversion = "0.2.0"\n\n'
+                '[[package]]\nname = "okmate"\nversion = "0.1.2"\n'
+            )
+        return _show_result('version = "0.1.2"\n')
+
+    monkeypatch.setattr("okmate_ops.promote.repo_root", lambda: tmp_path)
+    monkeypatch.setattr("okmate_ops.promote.git_capture", capture)
+    monkeypatch.setattr("okmate_ops.promote.run", lambda argv, cwd=None: None)
+    try:
+        promote_tag("minor")
+    except SystemExit as exc:
+        assert "differ" in str(exc)
     else:
         raise AssertionError("expected SystemExit")
