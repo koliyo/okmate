@@ -145,6 +145,8 @@ fn build_writes_engine_catalog_html_landmarks_and_pages_json() {
     assert!(home.contains("/__okmate/nav.js"), "{home}");
     let nav = fs::read_to_string(output.join("__okmate").join("nav.js")).unwrap();
     assert!(nav.contains("location:"), "{nav}");
+    assert!(nav.contains("open_path"), "{nav}");
+    assert!(nav.contains("persistLocation"), "{nav}");
     assert!(nav.contains("history.pushState"), "{nav}");
     assert!(nav.contains("data-on:click__prevent"), "{nav}");
     let pages: serde_json::Value =

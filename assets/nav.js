@@ -165,11 +165,41 @@
     }
   }
 
+  function persistLocation() {
+    var main = document.getElementById("okmate-main");
+    var hash = (window.location.hash || "").replace(/^#/, "");
+    if (window.__okmateReading && typeof window.__okmateReading.persist === "function") {
+      window.__okmateReading.persist({
+        open_path: window.location.pathname,
+        open_hash: hash || null,
+        main_scroll: main ? Math.max(0, Math.round(main.scrollTop)) : 0,
+      });
+    }
+  }
+
+  function restoreMainLocation() {
+    var main = document.getElementById("okmate-main");
+    if (!main) {
+      return;
+    }
+    var hash = window.location.hash;
+    if (hash && hash !== "#") {
+      resetMainScroll();
+      return;
+    }
+    var raw = document.documentElement.getAttribute("data-okmate-main-scroll") || "";
+    var top = parseInt(raw, 10);
+    if (!isNaN(top) && top > 0) {
+      main.scrollTop = top;
+    }
+  }
+
   function reportLocation() {
     var href = window.location.href;
     if (window.ipc && window.ipc.postMessage) {
       window.ipc.postMessage("location:" + href);
     }
+    persistLocation();
   }
 
   function afterDocumentPatch() {
@@ -279,7 +309,18 @@
   window.addEventListener("pagehide", function () {
     rememberAllSections();
     rememberScroll();
+    persistLocation();
   });
+  window.addEventListener(
+    "scroll",
+    function (event) {
+      var main = document.getElementById("okmate-main");
+      if (main && event.target === main) {
+        persistLocation();
+      }
+    },
+    true
+  );
 
   function placeBlurb(blurb) {
     var summary = blurb.closest("summary");
@@ -327,6 +368,7 @@
     syncNav(window.location.pathname);
     restoreSections();
     restoreScroll();
+    restoreMainLocation();
     syncTitle();
     reportLocation();
   }
@@ -336,5 +378,9 @@
   } else {
     enhance();
   }
-  window.__okmateNav = { enhance: enhance, sync: syncNav };
+  window.__okmateNav = {
+    enhance: enhance,
+    sync: syncNav,
+    persistLocation: persistLocation,
+  };
 })();

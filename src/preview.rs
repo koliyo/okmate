@@ -77,6 +77,12 @@ pub struct Session {
     pub nav_width: Option<String>,
     #[serde(default)]
     pub outline_width: Option<String>,
+    #[serde(default)]
+    pub open_path: Option<String>,
+    #[serde(default)]
+    pub open_hash: Option<String>,
+    #[serde(default)]
+    pub main_scroll: Option<u32>,
 }
 
 impl Default for Session {
@@ -92,6 +98,9 @@ impl Default for Session {
             toc_visible: true,
             nav_width: None,
             outline_width: None,
+            open_path: None,
+            open_hash: None,
+            main_scroll: None,
         }
     }
 }
@@ -124,6 +133,15 @@ impl Session {
             self.outline_width =
                 sanitize_track(obj.get("outline_width").and_then(serde_json::Value::as_str));
         }
+        if obj.contains_key("open_path") {
+            self.open_path = sanitize_open_path(obj.get("open_path").and_then(as_opt_str));
+        }
+        if obj.contains_key("open_hash") {
+            self.open_hash = sanitize_open_hash(obj.get("open_hash").and_then(as_opt_str));
+        }
+        if obj.contains_key("main_scroll") {
+            self.main_scroll = obj.get("main_scroll").and_then(as_u32).map(clamp_scroll);
+        }
     }
 
     pub fn sanitize(&mut self) {
@@ -133,6 +151,19 @@ impl Session {
         }
         self.nav_width = sanitize_track(self.nav_width.as_deref());
         self.outline_width = sanitize_track(self.outline_width.as_deref());
+        self.open_path = sanitize_open_path(self.open_path.as_deref());
+        self.open_hash = sanitize_open_hash(self.open_hash.as_deref());
+        if let Some(scroll) = self.main_scroll {
+            self.main_scroll = Some(clamp_scroll(scroll));
+        }
+    }
+
+    pub fn location_href(&self) -> Option<String> {
+        let path = self.open_path.as_deref()?;
+        Some(match self.open_hash.as_deref() {
+            Some(hash) if !hash.is_empty() => format!("{path}#{hash}"),
+            _ => path.to_string(),
+        })
     }
 
     pub fn html_style(&self) -> String {
@@ -162,6 +193,94 @@ fn as_u16(value: &serde_json::Value) -> Option<u16> {
         .as_u64()
         .and_then(|n| u16::try_from(n).ok())
         .or_else(|| value.as_i64().and_then(|n| u16::try_from(n).ok()))
+}
+
+fn as_u32(value: &serde_json::Value) -> Option<u32> {
+    value
+        .as_u64()
+        .and_then(|n| u32::try_from(n).ok())
+        .or_else(|| value.as_i64().and_then(|n| u32::try_from(n).ok()))
+}
+
+fn as_opt_str(value: &serde_json::Value) -> Option<&str> {
+    value.as_str()
+}
+
+const MAX_SCROLL: u32 = 10_000_000;
+
+fn clamp_scroll(value: u32) -> u32 {
+    value.min(MAX_SCROLL)
+}
+
+fn sanitize_open_path(value: Option<&str>) -> Option<String> {
+    let raw = value?.trim();
+    if raw.is_empty() {
+        return None;
+    }
+    let path = raw.split(['?', '#']).next().unwrap_or(raw);
+    if path.contains("..") || path.contains('\\') || path.starts_with("/__okmate") {
+        return None;
+    }
+    if !path.starts_with('/') {
+        return None;
+    }
+    if !path.bytes().all(|byte| {
+        byte.is_ascii_alphanumeric() || matches!(byte, b'/' | b'-' | b'_' | b'.' | b'@')
+    }) {
+        return None;
+    }
+    Some(crate::workspace::normalize_route(path))
+}
+
+fn sanitize_open_hash(value: Option<&str>) -> Option<String> {
+    let raw = value?.trim().trim_start_matches('#');
+    if raw.is_empty() || raw.len() > 200 {
+        return None;
+    }
+    if !raw
+        .bytes()
+        .all(|byte| byte.is_ascii_alphanumeric() || matches!(byte, b'-' | b'_' | b'.'))
+    {
+        return None;
+    }
+    Some(raw.to_string())
+}
+
+pub fn persist_open_path_to(path: &Path, route: &str) {
+    let Some(open_path) = sanitize_open_path(Some(route)) else {
+        return;
+    };
+    let mut session = load_session_from(path);
+    if session.open_path.as_deref() == Some(open_path.as_str()) {
+        return;
+    }
+    session.open_path = Some(open_path);
+    session.open_hash = None;
+    session.main_scroll = None;
+    write_session(path, &session);
+}
+
+pub fn restored_view_location(
+    workspace: &Workspace,
+    session: &Session,
+    explicit: bool,
+    fallback: &str,
+) -> (String, Option<String>, Option<u32>) {
+    let fallback = sanitize_open_path(Some(fallback)).unwrap_or_else(|| "/".into());
+    if explicit {
+        return (fallback, None, None);
+    }
+    let Some(saved) = session.open_path.as_deref() else {
+        return (fallback, None, None);
+    };
+    if crate::site::page_for_route_nav(workspace, saved, session.nav_mode).is_none() {
+        return (fallback, None, None);
+    }
+    (
+        saved.to_string(),
+        session.open_hash.clone(),
+        session.main_scroll,
+    )
 }
 
 fn clamp_font(value: u16) -> u16 {
@@ -308,7 +427,15 @@ async fn prepare(options: ViewOptions) -> Result<PreparedView> {
         return prepare_settings_host(options).await;
     };
     persist_workspace(&target.workspace);
-    let nav_mode = load_session().nav_mode;
+    let session = load_session();
+    let nav_mode = session.nav_mode;
+    let (open_path, open_hash, _) = restored_view_location(
+        &target.workspace,
+        &session,
+        options.path.is_some(),
+        &target.open_path,
+    );
+    persist_open_path_to(&session_path(), &open_path);
     let root = target
         .workspace
         .primary_path()
@@ -329,10 +456,7 @@ async fn prepare(options: ViewOptions) -> Result<PreparedView> {
     } else {
         root.display().to_string()
     };
-    eprintln!(
-        "okmate: serving {label} at http://{}{}",
-        bound, target.open_path
-    );
+    eprintln!("okmate: serving {label} at http://{}{}", bound, open_path);
 
     let workspace = crate::http::share_workspace(target.workspace);
     let watch_workspace = workspace.clone();
@@ -346,15 +470,17 @@ async fn prepare(options: ViewOptions) -> Result<PreparedView> {
     });
 
     let home_url = home_url(bound);
-    let initial_url = format!(
-        "{}{}",
-        home_url.trim_end_matches('/'),
-        if target.open_path.starts_with('/') {
-            target.open_path.clone()
-        } else {
-            format!("/{}", target.open_path)
+    let path = if open_path.starts_with('/') {
+        open_path
+    } else {
+        format!("/{open_path}")
+    };
+    let initial_url = match open_hash.as_deref() {
+        Some(hash) if !hash.is_empty() => {
+            format!("{}{path}#{hash}", home_url.trim_end_matches('/'))
         }
-    );
+        _ => format!("{}{path}", home_url.trim_end_matches('/')),
+    };
     Ok(PreparedView {
         listener,
         state: crate::http::AppState {
@@ -646,6 +772,90 @@ mod tests {
         let session = load_session_from(&path);
         assert_eq!(session.main_width, None);
         assert_eq!(session.font_size, 110);
+        persist_prefs_to(
+            &path,
+            &serde_json::json!({
+                "open_path": "/plans/cli-entry-points/#details",
+                "open_hash": "details",
+                "main_scroll": 240
+            }),
+        );
+        let session = load_session_from(&path);
+        assert_eq!(
+            session.open_path.as_deref(),
+            Some("/plans/cli-entry-points/")
+        );
+        assert_eq!(session.open_hash.as_deref(), Some("details"));
+        assert_eq!(session.main_scroll, Some(240));
+        assert_eq!(
+            session.location_href().as_deref(),
+            Some("/plans/cli-entry-points/#details")
+        );
+        persist_prefs_to(
+            &path,
+            &serde_json::json!({
+                "open_path": "/__okmate/evil",
+                "open_hash": "bad hash",
+                "main_scroll": 99_000_000
+            }),
+        );
+        let session = load_session_from(&path);
+        assert_eq!(session.open_path, None);
+        assert_eq!(session.open_hash, None);
+        assert_eq!(session.main_scroll, Some(MAX_SCROLL));
+        let _ = fs::remove_dir_all(dir);
+    }
+
+    #[test]
+    fn restored_location_keeps_valid_route_and_drops_unknown() {
+        let workspace = Workspace::empty();
+        let mut session = Session::default();
+        session.open_path = Some("/review/".into());
+        session.open_hash = Some("queue".into());
+        session.main_scroll = Some(40);
+        let (path, hash, scroll) = restored_view_location(&workspace, &session, false, "/");
+        assert_eq!(path, "/review/");
+        assert_eq!(hash.as_deref(), Some("queue"));
+        assert_eq!(scroll, Some(40));
+
+        session.open_path = Some("/missing/doc/".into());
+        let (path, hash, scroll) = restored_view_location(&workspace, &session, false, "/");
+        assert_eq!(path, "/");
+        assert!(hash.is_none());
+        assert!(scroll.is_none());
+
+        session.open_path = Some("/review/".into());
+        let (path, hash, scroll) = restored_view_location(&workspace, &session, true, "/log/");
+        assert_eq!(path, "/log/");
+        assert!(hash.is_none() && scroll.is_none());
+    }
+
+    #[test]
+    fn persist_open_path_clears_stale_location() {
+        let dir = std::env::temp_dir().join(format!(
+            "okmate-state-{}-{}",
+            std::process::id(),
+            "open-path"
+        ));
+        let _ = fs::remove_dir_all(&dir);
+        fs::create_dir_all(&dir).unwrap();
+        let path = dir.join("session.json");
+        persist_prefs_to(
+            &path,
+            &serde_json::json!({
+                "open_path": "/hello/",
+                "open_hash": "body",
+                "main_scroll": 12
+            }),
+        );
+        persist_open_path_to(&path, "/review/");
+        let session = load_session_from(&path);
+        assert_eq!(session.open_path.as_deref(), Some("/review/"));
+        assert!(session.open_hash.is_none());
+        assert!(session.main_scroll.is_none());
+        persist_open_path_to(&path, "/review/");
+        let again = load_session_from(&path);
+        assert_eq!(again.open_path.as_deref(), Some("/review/"));
         let _ = fs::remove_dir_all(dir);
     }
 

@@ -92,6 +92,10 @@ pub fn live_document(
     let session = crate::preview::load_session_from(&state.session_path);
     let mut document = site::page_for_route_nav(&workspace, path, session.nav_mode)?;
     crate::site::apply_reading_prefs(&mut document, &session);
+    if session.open_path.as_deref() == Some(crate::workspace::normalize_route(path).as_str()) {
+        document.main_scroll = session.main_scroll.unwrap_or(0);
+    }
+    crate::preview::persist_open_path_to(&state.session_path, path);
     if document.page_kind == "settings" {
         let config = crate::config::load_or_default(&state.config_path);
         document.config_path = state.config_path.display().to_string();

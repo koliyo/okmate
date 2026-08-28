@@ -118,6 +118,31 @@ async fn live_html_seeds_reading_prefs() {
 }
 
 #[tokio::test]
+async fn live_html_seeds_open_document_scroll() {
+    let (root, output, workspace) = fixture();
+    let session = temp_dir("prefs-location-session").join("session.json");
+    okmate::preview::persist_prefs_to(
+        &session,
+        &serde_json::json!({
+            "open_path": "/",
+            "open_hash": "home",
+            "main_scroll": 180
+        }),
+    );
+    let app = okmate::http::router(state(root, output, workspace, session.clone()));
+    let html = body_text(
+        app.oneshot(Request::get("/").body(Body::empty()).unwrap())
+            .await
+            .unwrap(),
+    )
+    .await;
+    assert!(html.contains("data-okmate-main-scroll=\"180\""), "{html}");
+    let stored = okmate::preview::load_session_from(&session);
+    assert_eq!(stored.open_path.as_deref(), Some("/"));
+    assert_eq!(stored.open_hash.as_deref(), Some("home"));
+}
+
+#[tokio::test]
 async fn prefs_post_merges_and_clamps() {
     let (root, output, workspace) = fixture();
     let session = temp_dir("prefs-post-session").join("session.json");

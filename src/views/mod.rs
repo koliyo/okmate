@@ -107,6 +107,7 @@ macro_rules! document_template {
             pub reading_toc: bool,
             pub reading_font: u16,
             pub reading_width: u16,
+            pub main_scroll: u32,
         }
 
         impl From<Document> for $name {
@@ -142,6 +143,7 @@ macro_rules! document_template {
                     reading_toc: document.reading_toc,
                     reading_font: document.reading_font,
                     reading_width: document.reading_width,
+                    main_scroll: document.main_scroll,
                 }
             }
         }
@@ -188,6 +190,7 @@ pub struct Document {
     pub reading_toc: bool,
     pub reading_font: u16,
     pub reading_width: u16,
+    pub main_scroll: u32,
 }
 
 impl Document {
@@ -398,6 +401,7 @@ mod tests {
             reading_toc: true,
             reading_font: 100,
             reading_width: 66,
+            main_scroll: 0,
         }
     }
 
@@ -440,6 +444,14 @@ mod tests {
         assert!(html.contains("data-okmate-wrap=\"off\""), "{html}");
         assert!(html.contains("value=\"70\""), "{html}");
         assert!(html.contains(">110%</button>"), "{html}");
+    }
+
+    #[test]
+    fn page_template_seeds_main_scroll() {
+        let mut document = sample_document(Vec::new());
+        document.main_scroll = 180;
+        let html = document.render_page().unwrap();
+        assert!(html.contains("data-okmate-main-scroll=\"180\""), "{html}");
     }
 
     #[test]

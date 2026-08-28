@@ -95,6 +95,9 @@
       if (history.replaceState) {
         history.replaceState(null, "", href);
       }
+      if (window.__okmateNav && typeof window.__okmateNav.persistLocation === "function") {
+        window.__okmateNav.persistLocation();
+      }
       syncSpy();
     }
     if (Math.abs(dist) < 2) {

@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en"{% if html_style != "" %} style="{{ html_style }}"{% endif %}{% if !reading_wrap %} data-okmate-wrap="off"{% endif %}{% if !reading_nav %} data-okmate-nav="off"{% endif %}{% if !reading_toc %} data-okmate-toc="off"{% endif %}>
+<html lang="en"{% if html_style != "" %} style="{{ html_style }}"{% endif %}{% if !reading_wrap %} data-okmate-wrap="off"{% endif %}{% if !reading_nav %} data-okmate-nav="off"{% endif %}{% if !reading_toc %} data-okmate-toc="off"{% endif %}{% if main_scroll > 0 %} data-okmate-main-scroll="{{ main_scroll }}"{% endif %}>
   <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
