@@ -196,6 +196,9 @@
     if (window.__okmateReading && typeof window.__okmateReading.enhance === "function") {
       window.__okmateReading.enhance();
     }
+    if (window.__okmateTables && typeof window.__okmateTables.enhance === "function") {
+      window.__okmateTables.enhance();
+    }
   }
 
   function observeMain() {

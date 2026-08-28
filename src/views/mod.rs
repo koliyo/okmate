@@ -421,6 +421,7 @@ mod tests {
         assert!(html.contains("/__okmate/goto.js"), "{html}");
         assert!(html.contains("/__okmate/nav.js"), "{html}");
         assert!(html.contains("/__okmate/resize.js"), "{html}");
+        assert!(html.contains("/__okmate/tables.js"), "{html}");
         assert!(html.contains("/__okmate/reading.js"), "{html}");
         assert!(html.contains("/__okmate/toc.js"), "{html}");
         assert!(!html.contains("font-size: 110%"), "{html}");

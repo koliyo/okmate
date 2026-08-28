@@ -23,6 +23,7 @@ const READING_JS: &str = include_str!("../assets/reading.js");
 const TOC_JS: &str = include_str!("../assets/toc.js");
 const REVIEW_JS: &str = include_str!("../assets/review.js");
 const LOG_JS: &str = include_str!("../assets/log.js");
+const TABLES_JS: &str = include_str!("../assets/tables.js");
 
 #[derive(Serialize)]
 struct NavPage {
@@ -299,7 +300,7 @@ impl Document {
     }
 
     fn with_article(mut self, html: &str) -> Self {
-        self.article_html = html.to_string();
+        self.article_html = wrap_article_tables(html);
         self
     }
 
@@ -393,7 +394,8 @@ fn write_assets(output: &Path) -> Result<()> {
     fs::write(dir.join("reading.js"), READING_JS).context("failed to write reading.js")?;
     fs::write(dir.join("toc.js"), TOC_JS).context("failed to write toc.js")?;
     fs::write(dir.join("review.js"), REVIEW_JS).context("failed to write review.js")?;
-    fs::write(dir.join("log.js"), LOG_JS).context("failed to write log.js")
+    fs::write(dir.join("log.js"), LOG_JS).context("failed to write log.js")?;
+    fs::write(dir.join("tables.js"), TABLES_JS).context("failed to write tables.js")
 }
 
 fn nav_pages(workspace: &Workspace) -> Vec<NavPage> {
@@ -943,6 +945,34 @@ fn merged_collection_summary(workspace: &Workspace, path: &str, owners: &[String
     }
 }
 
+fn wrap_article_tables(html: &str) -> String {
+    const OPEN: &str = "<table";
+    const CLOSE: &str = "</table>";
+    const WRAP_OPEN: &str = r#"<div class="okmate-md-table">"#;
+    const WRAP_CLOSE: &str = "</div>";
+    let mut out = String::with_capacity(html.len() + 64);
+    let mut rest = html;
+    while let Some(start) = rest.find(OPEN) {
+        let before = &rest[..start];
+        out.push_str(before);
+        let Some(end_rel) = rest[start..].find(CLOSE) else {
+            out.push_str(&rest[start..]);
+            return out;
+        };
+        let end = start + end_rel + CLOSE.len();
+        if before.trim_end().ends_with(WRAP_OPEN) {
+            out.push_str(&rest[start..end]);
+        } else {
+            out.push_str(WRAP_OPEN);
+            out.push_str(&rest[start..end]);
+            out.push_str(WRAP_CLOSE);
+        }
+        rest = &rest[end..];
+    }
+    out.push_str(rest);
+    out
+}
+
 fn first_prose_paragraph(article_html: &str) -> String {
     let mut rest = article_html;
     loop {
@@ -988,4 +1018,20 @@ fn plaintext(html: &str) -> String {
         }
     }
     out.split_whitespace().collect::<Vec<_>>().join(" ")
+}
+
+#[cfg(test)]
+mod tests {
+    use super::wrap_article_tables;
+
+    #[test]
+    fn wrap_article_tables_wraps_each_table_once() {
+        let html = "<p>Lead</p>\n<table><tr><td>A</td></tr></table>\n<p>Mid</p>\n<table><thead><tr><th>H</th></tr></thead></table>";
+        let wrapped = wrap_article_tables(html);
+        assert_eq!(
+            wrapped,
+            "<p>Lead</p>\n<div class=\"okmate-md-table\"><table><tr><td>A</td></tr></table></div>\n<p>Mid</p>\n<div class=\"okmate-md-table\"><table><thead><tr><th>H</th></tr></thead></table></div>"
+        );
+        assert_eq!(wrap_article_tables(&wrapped), wrapped);
+    }
 }
