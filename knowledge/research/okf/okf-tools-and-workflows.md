@@ -4,8 +4,8 @@ title: State-of-the-art OKF tools and workflows
 description: Emerging OKF tools converge on portable Markdown, agent-native deterministic interfaces, separate conformance and curation, evidence review, rebuildable retrieval, and authenticated machine access.
 tags: [domain/okf, domain/rocs-okf, concern/agents, concern/review, concern/retrieval, concern/security]
 status: draft
-generated: { by: process:codex, at: 2026-08-17T13:24:13Z }
-stale_after: 2026-11-15
+generated: { by: process:codex, at: 2026-08-28T15:30:00Z }
+stale_after: 2026-11-28
 authority: exploratory
 owners: [human:nils]
 sources:
@@ -50,7 +50,10 @@ sources:
 
 OKF is an emerging ecosystem rather than a settled product category. The
 detailed comparison, product implications, risks, acceptance scenarios, and
-source list live in the accompanying Rocdown report.[^report]
+source list live in the accompanying Rocdown report.[^report] An August 2026
+re-survey of GitHub CLIs, MCP servers, and editor tools, and a feature-gap
+analysis against OKMate, is [OKMate feature gaps versus the OKF tool
+ecosystem](../okmate/okf-tool-gaps.md).
 
 ## Portable format and bounded production
 

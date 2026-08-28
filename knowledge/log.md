@@ -7,6 +7,8 @@ the same change.
 
 ## 2026-08-28
 
+- Drafted research on review-queue authoring operations (direct verify/promote versus CLI/API agent dispatch, result presentation tiers). Exploratory; do not log complete until hosted CI succeeds.
+- Drafted research comparing OKMate to the broader OKF tool field (W4G1/okf, okq, okft, Workbench, OKF4net, okf-schema, IWE, and others): MCP, lint/SARIF, init/index, and ranked search as gaps; review shell, strict evidence, multi-root git, and benchmarks as strengths. Exploratory; do not log complete until hosted CI succeeds.
 - Drafted paired research and plan for the OKMate product website (Rocdown static site, git/OKF/multi-bundle positioning, first-class `/agents/` and `/llms.txt`). Exploratory; do not log complete until hosted CI succeeds.
 - Expanded agent-dev landscape research into agent knowledge management (Karpathy LLM wiki, DeepWiki, Basic Memory, Letta MemFS, llms.txt, Glean/Unblocked/Rovo, PKM MCP). Exploratory; do not log complete until hosted CI succeeds.
 - Drafted research comparing OKMate to Linear, Zed Delta, Beads, AGENTS.md, and agent-memory tools, and assessing adoption for agent-driven development. Exploratory; do not log complete until hosted CI succeeds.
