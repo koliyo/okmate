@@ -18,19 +18,5 @@
       "WebFetch(*.rust-lang.org)"
     ],
     "deny": []
-  },
-  "webFetchDomainAllowlist": [
-    "github.com",
-    "*.github.com",
-    "api.github.com",
-    "raw.githubusercontent.com",
-    "*.githubusercontent.com",
-    "*.github.io",
-    "data-star.dev",
-    "*.data-star.dev",
-    "docs.rs",
-    "crates.io",
-    "rust-lang.org",
-    "*.rust-lang.org"
-  ]
+  }
 }
