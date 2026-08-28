@@ -89,11 +89,9 @@ pub fn live_document(
     if workspace.is_empty() {
         return None;
     }
-    let mut document = site::page_for_route_nav(
-        &workspace,
-        path,
-        crate::preview::load_session_from(&state.session_path).nav_mode,
-    )?;
+    let session = crate::preview::load_session_from(&state.session_path);
+    let mut document = site::page_for_route_nav(&workspace, path, session.nav_mode)?;
+    crate::site::apply_reading_prefs(&mut document, &session);
     if document.page_kind == "settings" {
         let config = crate::config::load_or_default(&state.config_path);
         document.config_path = state.config_path.display().to_string();

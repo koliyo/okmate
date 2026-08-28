@@ -203,7 +203,22 @@ fn document(
         settings_roots: Vec::new(),
         review_window: crate::views::ListWindow::default(),
         log_window: crate::views::ListWindow::default(),
+        html_style: String::new(),
+        reading_wrap: true,
+        reading_nav: true,
+        reading_toc: true,
+        reading_font: 100,
+        reading_width: 66,
     }
+}
+
+pub fn apply_reading_prefs(document: &mut Document, session: &crate::preview::Session) {
+    document.html_style = session.html_style();
+    document.reading_wrap = session.wrap;
+    document.reading_nav = session.nav_visible;
+    document.reading_toc = session.toc_visible;
+    document.reading_font = session.font_size;
+    document.reading_width = session.reading_width();
 }
 
 fn breadcrumbs(workspace: &Workspace, route: &str, title: &str) -> Vec<Crumb> {
@@ -347,7 +362,13 @@ pub(crate) fn write_settings_host(output: &Path) -> Result<()> {
     write_assets(output)?;
     let config_path = crate::config::config_path();
     let config = crate::config::load_or_default(&config_path);
-    let html = crate::http::render_page(None, &config, None, &config_path);
+    let html = crate::http::render_page(
+        None,
+        &config,
+        None,
+        &config_path,
+        &crate::preview::load_session(),
+    );
     write_route(output, "/settings/", html.clone())?;
     write_route(output, "/", html)
 }

@@ -2,60 +2,24 @@
   if (window.__okmateResize) {
     return;
   }
-  var NAV_KEY = "okmate-nav-width";
-  var OUTLINE_KEY = "okmate-outline-width";
   var NAV_HOST = "#okmate-nav";
   var OUTLINE_HOST = "#okmate-toc";
   var SHELL = ".okmate-shell";
   var dragging = null;
-
-  function readStore(key) {
-    try {
-      return window.localStorage.getItem(key) || "";
-    } catch (err) {
-      return "";
-    }
-  }
-
-  function writeStore(key, value) {
-    try {
-      window.localStorage.setItem(key, value);
-    } catch (err) {}
-  }
 
   function remPx() {
     var size = parseFloat(window.getComputedStyle(document.documentElement).fontSize);
     return size > 0 ? size : 16;
   }
 
-  function storedWidth(kind) {
-    return readStore(kind === "nav" ? NAV_KEY : OUTLINE_KEY);
-  }
-
-  function applyVars() {
-    var root = document.documentElement;
-    var nav = storedWidth("nav");
-    var outline = storedWidth("outline");
-    if (nav) {
-      root.style.setProperty("--okmate-nav-width", nav);
-    } else {
-      root.style.removeProperty("--okmate-nav-width");
-    }
-    if (outline) {
-      root.style.setProperty("--okmate-outline-width", outline);
-    } else {
-      root.style.removeProperty("--okmate-outline-width");
-    }
-  }
-
   function persistWidths() {
-    var nav = document.documentElement.style.getPropertyValue("--okmate-nav-width") || "";
-    var outline = document.documentElement.style.getPropertyValue("--okmate-outline-width") || "";
-    if (nav) {
-      writeStore(NAV_KEY, nav);
-    }
-    if (outline) {
-      writeStore(OUTLINE_KEY, outline);
+    var nav = document.documentElement.style.getPropertyValue("--okmate-nav-width").trim();
+    var outline = document.documentElement.style.getPropertyValue("--okmate-outline-width").trim();
+    if (window.__okmateReading && typeof window.__okmateReading.persist === "function") {
+      window.__okmateReading.persist({
+        nav_width: nav || null,
+        outline_width: outline || null,
+      });
     }
   }
 
@@ -186,7 +150,6 @@
   }
 
   function enhance() {
-    applyVars();
     var nav = document.querySelector(NAV_HOST);
     var toc = document.querySelector(OUTLINE_HOST);
     if (nav) {
@@ -198,7 +161,6 @@
     placeAll();
   }
 
-  applyVars();
   window.__okmateResize = { enhance: enhance };
   window.addEventListener("resize", placeAll);
   if (document.readyState === "loading") {

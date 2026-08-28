@@ -39,7 +39,23 @@ impl NavMode {
     }
 }
 
-#[derive(Clone, Debug, Default, PartialEq, Eq, Serialize, Deserialize)]
+const DEFAULT_FONT: u16 = 100;
+const MIN_FONT: u16 = 80;
+const MAX_FONT: u16 = 160;
+const FONT_STEP: u16 = 10;
+const MIN_CH: u16 = 45;
+const MAX_CH: u16 = 90;
+const DEFAULT_CH: u16 = 66;
+
+fn default_true() -> bool {
+    true
+}
+
+fn default_font_size() -> u16 {
+    DEFAULT_FONT
+}
+
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 pub struct Session {
     #[serde(default)]
     pub bundle: Option<PathBuf>,
@@ -47,6 +63,144 @@ pub struct Session {
     pub workspace: bool,
     #[serde(default)]
     pub nav_mode: NavMode,
+    #[serde(default = "default_font_size")]
+    pub font_size: u16,
+    #[serde(default)]
+    pub main_width: Option<u16>,
+    #[serde(default = "default_true")]
+    pub wrap: bool,
+    #[serde(default = "default_true")]
+    pub nav_visible: bool,
+    #[serde(default = "default_true")]
+    pub toc_visible: bool,
+    #[serde(default)]
+    pub nav_width: Option<String>,
+    #[serde(default)]
+    pub outline_width: Option<String>,
+}
+
+impl Default for Session {
+    fn default() -> Self {
+        Self {
+            bundle: None,
+            workspace: false,
+            nav_mode: NavMode::default(),
+            font_size: DEFAULT_FONT,
+            main_width: None,
+            wrap: true,
+            nav_visible: true,
+            toc_visible: true,
+            nav_width: None,
+            outline_width: None,
+        }
+    }
+}
+
+impl Session {
+    pub fn merge_prefs(&mut self, value: &serde_json::Value) {
+        let Some(obj) = value.as_object() else {
+            return;
+        };
+        if let Some(size) = obj.get("font_size").and_then(as_u16) {
+            self.font_size = clamp_font(size);
+        }
+        if obj.contains_key("main_width") {
+            self.main_width = obj.get("main_width").and_then(as_u16).map(clamp_ch);
+        }
+        if let Some(wrap) = obj.get("wrap").and_then(serde_json::Value::as_bool) {
+            self.wrap = wrap;
+        }
+        if let Some(visible) = obj.get("nav_visible").and_then(serde_json::Value::as_bool) {
+            self.nav_visible = visible;
+        }
+        if let Some(visible) = obj.get("toc_visible").and_then(serde_json::Value::as_bool) {
+            self.toc_visible = visible;
+        }
+        if obj.contains_key("nav_width") {
+            self.nav_width =
+                sanitize_track(obj.get("nav_width").and_then(serde_json::Value::as_str));
+        }
+        if obj.contains_key("outline_width") {
+            self.outline_width =
+                sanitize_track(obj.get("outline_width").and_then(serde_json::Value::as_str));
+        }
+    }
+
+    pub fn sanitize(&mut self) {
+        self.font_size = clamp_font(self.font_size);
+        if let Some(width) = self.main_width {
+            self.main_width = Some(clamp_ch(width));
+        }
+        self.nav_width = sanitize_track(self.nav_width.as_deref());
+        self.outline_width = sanitize_track(self.outline_width.as_deref());
+    }
+
+    pub fn html_style(&self) -> String {
+        let mut parts = Vec::new();
+        if self.font_size != DEFAULT_FONT {
+            parts.push(format!("font-size: {}%", self.font_size));
+        }
+        if let Some(ch) = self.main_width {
+            parts.push(format!("--okmate-main-max-width: {ch}ch"));
+        }
+        if let Some(width) = &self.nav_width {
+            parts.push(format!("--okmate-nav-width: {width}"));
+        }
+        if let Some(width) = &self.outline_width {
+            parts.push(format!("--okmate-outline-width: {width}"));
+        }
+        parts.join("; ")
+    }
+
+    pub fn reading_width(&self) -> u16 {
+        self.main_width.unwrap_or(DEFAULT_CH)
+    }
+}
+
+fn as_u16(value: &serde_json::Value) -> Option<u16> {
+    value
+        .as_u64()
+        .and_then(|n| u16::try_from(n).ok())
+        .or_else(|| value.as_i64().and_then(|n| u16::try_from(n).ok()))
+}
+
+fn clamp_font(value: u16) -> u16 {
+    let clamped = value.clamp(MIN_FONT, MAX_FONT);
+    let stepped = ((clamped + FONT_STEP / 2) / FONT_STEP) * FONT_STEP;
+    stepped.clamp(MIN_FONT, MAX_FONT)
+}
+
+fn clamp_ch(value: u16) -> u16 {
+    value.clamp(MIN_CH, MAX_CH)
+}
+
+fn sanitize_track(value: Option<&str>) -> Option<String> {
+    let value = value?.trim();
+    if value.is_empty() {
+        return None;
+    }
+    let bytes = value.as_bytes();
+    let mut i = 0;
+    while i < bytes.len() && bytes[i].is_ascii_digit() {
+        i += 1;
+    }
+    if i == 0 {
+        return None;
+    }
+    if i < bytes.len() && bytes[i] == b'.' {
+        i += 1;
+        let frac = i;
+        while i < bytes.len() && bytes[i].is_ascii_digit() {
+            i += 1;
+        }
+        if i == frac {
+            return None;
+        }
+    }
+    match &value[i..] {
+        "px" | "rem" => Some(value.to_string()),
+        _ => None,
+    }
 }
 
 pub struct ViewOptions {
@@ -300,6 +454,12 @@ pub fn persist_nav_mode_to(path: &Path, nav_mode: NavMode) {
     write_session(path, &session);
 }
 
+pub fn persist_prefs_to(path: &Path, patch: &serde_json::Value) {
+    let mut session = load_session_from(path);
+    session.merge_prefs(patch);
+    write_session(path, &session);
+}
+
 fn write_session(path: &Path, session: &Session) {
     if let Some(parent) = path.parent() {
         let _ = fs::create_dir_all(parent);
@@ -320,7 +480,9 @@ pub fn load_session_from(path: &Path) -> Session {
     let Ok(content) = fs::read_to_string(path) else {
         return Session::default();
     };
-    serde_json::from_str(&content).unwrap_or_default()
+    let mut session: Session = serde_json::from_str(&content).unwrap_or_default();
+    session.sanitize();
+    session
 }
 
 fn home_dir() -> Option<PathBuf> {
@@ -416,6 +578,74 @@ mod tests {
         let session = load_session_from(&path);
         assert!(session.workspace);
         assert_eq!(session.bundle.as_deref(), Some(Path::new("/tmp/a")));
+        assert_eq!(session.font_size, DEFAULT_FONT);
+        assert!(session.wrap);
+        let _ = fs::remove_dir_all(dir);
+    }
+
+    #[test]
+    fn old_session_json_keeps_reading_defaults() {
+        let dir = std::env::temp_dir().join(format!(
+            "okmate-state-{}-{}",
+            std::process::id(),
+            "prefs-old"
+        ));
+        let _ = fs::remove_dir_all(&dir);
+        fs::create_dir_all(&dir).unwrap();
+        let path = dir.join("session.json");
+        fs::write(
+            &path,
+            r#"{"bundle":"/tmp/knowledge","workspace":false,"nav_mode":"merged"}"#,
+        )
+        .unwrap();
+        let session = load_session_from(&path);
+        assert_eq!(session.nav_mode, NavMode::Merged);
+        assert_eq!(session.font_size, DEFAULT_FONT);
+        assert_eq!(session.main_width, None);
+        assert!(session.wrap && session.nav_visible && session.toc_visible);
+        let _ = fs::remove_dir_all(dir);
+    }
+
+    #[test]
+    fn persist_prefs_clamps_and_rejects_css() {
+        let dir = std::env::temp_dir().join(format!(
+            "okmate-state-{}-{}",
+            std::process::id(),
+            "prefs-clamp"
+        ));
+        let _ = fs::remove_dir_all(&dir);
+        fs::create_dir_all(&dir).unwrap();
+        let path = dir.join("session.json");
+        persist_prefs_to(
+            &path,
+            &serde_json::json!({
+                "font_size": 113,
+                "main_width": 70,
+                "wrap": false,
+                "nav_visible": false,
+                "toc_visible": true,
+                "nav_width": "264px",
+                "outline_width": "url(evil)"
+            }),
+        );
+        let session = load_session_from(&path);
+        assert_eq!(session.font_size, 110);
+        assert_eq!(session.main_width, Some(70));
+        assert!(!session.wrap);
+        assert!(!session.nav_visible);
+        assert!(session.toc_visible);
+        assert_eq!(session.nav_width.as_deref(), Some("264px"));
+        assert_eq!(session.outline_width, None);
+        assert!(session.html_style().contains("font-size: 110%"));
+        assert!(
+            session
+                .html_style()
+                .contains("--okmate-main-max-width: 70ch")
+        );
+        persist_prefs_to(&path, &serde_json::json!({ "main_width": null }));
+        let session = load_session_from(&path);
+        assert_eq!(session.main_width, None);
+        assert_eq!(session.font_size, 110);
         let _ = fs::remove_dir_all(dir);
     }
 

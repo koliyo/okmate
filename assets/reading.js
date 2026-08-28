@@ -3,11 +3,11 @@
     return;
   }
 
-  var WIDTH_KEY = "okmate-main-width";
-  var WRAP_KEY = "okmate-main-wrap";
-  var NAV_KEY = "okmate-nav-visible";
-  var TOC_KEY = "okmate-toc-visible";
-  var FONT_KEY = "okmate-font-size";
+  var LEGACY_WIDTH_KEY = "okmate-main-width";
+  var LEGACY_WRAP_KEY = "okmate-main-wrap";
+  var LEGACY_NAV_KEY = "okmate-nav-visible";
+  var LEGACY_TOC_KEY = "okmate-toc-visible";
+  var LEGACY_FONT_KEY = "okmate-font-size";
   var MIN_CH = 45;
   var MAX_CH = 90;
   var DEFAULT_CH = 66;
@@ -15,6 +15,16 @@
   var MAX_FONT = 160;
   var FONT_STEP = 10;
   var DEFAULT_FONT = 100;
+  var persistTimer = null;
+  var state = {
+    font: DEFAULT_FONT,
+    width: null,
+    wrap: true,
+    nav: true,
+    toc: true,
+    navWidth: "",
+    outlineWidth: "",
+  };
 
   function readStore(key) {
     try {
@@ -24,13 +34,9 @@
     }
   }
 
-  function writeStore(key, value) {
+  function clearStore(key) {
     try {
-      if (value) {
-        window.localStorage.setItem(key, value);
-      } else {
-        window.localStorage.removeItem(key);
-      }
+      window.localStorage.removeItem(key);
     } catch (err) {}
   }
 
@@ -62,49 +68,67 @@
   }
 
   function currentFont() {
-    var raw = readStore(FONT_KEY);
-    return raw ? parseFont(raw) : DEFAULT_FONT;
+    return state.font;
   }
 
   function setFont(percent) {
-    var value = parseFont(String(percent));
-    if (value === DEFAULT_FONT) {
-      writeStore(FONT_KEY, "");
-      document.documentElement.style.removeProperty("font-size");
-    } else {
-      writeStore(FONT_KEY, String(value));
-      document.documentElement.style.fontSize = value + "%";
-    }
+    state.font = parseFont(String(percent));
   }
 
   function hasTocLinks() {
     return !!document.querySelector("#okmate-toc .okmate-toc-link");
   }
 
+  function persist(extra) {
+    var body = {
+      font_size: state.font,
+      main_width: state.width,
+      wrap: state.wrap,
+      nav_visible: state.nav,
+      toc_visible: state.toc,
+    };
+    if (extra) {
+      Object.keys(extra).forEach(function (key) {
+        body[key] = extra[key];
+      });
+    }
+    clearTimeout(persistTimer);
+    persistTimer = setTimeout(function () {
+      fetch("/__okmate/prefs", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify(body),
+      }).catch(function () {});
+    }, 200);
+  }
+
   function apply() {
     var root = document.documentElement;
-    var ch = parseCh(readStore(WIDTH_KEY));
-    if (ch == null) {
+    if (state.width == null) {
       root.style.removeProperty("--okmate-main-max-width");
     } else {
-      root.style.setProperty("--okmate-main-max-width", widthCss(ch));
+      root.style.setProperty("--okmate-main-max-width", widthCss(state.width));
     }
-    if (readStore(WRAP_KEY) === "off") {
+    if (!state.wrap) {
       root.setAttribute("data-okmate-wrap", "off");
     } else {
       root.removeAttribute("data-okmate-wrap");
     }
-    if (readStore(NAV_KEY) === "off") {
+    if (!state.nav) {
       root.setAttribute("data-okmate-nav", "off");
     } else {
       root.removeAttribute("data-okmate-nav");
     }
-    if (readStore(TOC_KEY) === "off") {
+    if (!state.toc) {
       root.setAttribute("data-okmate-toc", "off");
     } else {
       root.removeAttribute("data-okmate-toc");
     }
-    setFont(currentFont());
+    if (state.font === DEFAULT_FONT) {
+      root.style.removeProperty("font-size");
+    } else {
+      root.style.fontSize = state.font + "%";
+    }
     syncControls();
     if (window.__okmateResize && typeof window.__okmateResize.enhance === "function") {
       window.__okmateResize.enhance();
@@ -122,28 +146,27 @@
     var navToggle = document.getElementById("okmate-nav-toggle");
     var tocToggle = document.getElementById("okmate-toc-toggle");
     var fontValue = document.getElementById("okmate-font-value");
-    var ch = parseCh(readStore(WIDTH_KEY));
     if (slider) {
-      slider.value = String(ch == null ? DEFAULT_CH : ch);
-      slider.setAttribute("aria-valuetext", widthLabel(ch));
+      slider.value = String(state.width == null ? DEFAULT_CH : state.width);
+      slider.setAttribute("aria-valuetext", widthLabel(state.width));
     }
     if (output) {
-      output.textContent = widthLabel(ch);
+      output.textContent = widthLabel(state.width);
     }
     if (wrap) {
-      wrap.checked = readStore(WRAP_KEY) !== "off";
+      wrap.checked = state.wrap;
     }
     if (navToggle) {
-      navToggle.setAttribute("aria-pressed", readStore(NAV_KEY) === "off" ? "false" : "true");
+      navToggle.setAttribute("aria-pressed", state.nav ? "true" : "false");
     }
     if (tocToggle) {
       var tocOn = hasTocLinks();
       tocToggle.hidden = !tocOn;
       tocToggle.disabled = !tocOn;
-      tocToggle.setAttribute("aria-pressed", readStore(TOC_KEY) === "off" ? "false" : "true");
+      tocToggle.setAttribute("aria-pressed", state.toc ? "true" : "false");
     }
     if (fontValue) {
-      fontValue.textContent = currentFont() + "%";
+      fontValue.textContent = state.font + "%";
     }
   }
 
@@ -158,29 +181,33 @@
     if (slider && slider.dataset.bound !== "1") {
       slider.dataset.bound = "1";
       slider.addEventListener("input", function () {
-        writeStore(WIDTH_KEY, widthCss(parseInt(slider.value, 10)));
+        state.width = parseInt(slider.value, 10);
         apply();
+        persist();
       });
     }
     if (wrap && wrap.dataset.bound !== "1") {
       wrap.dataset.bound = "1";
       wrap.addEventListener("change", function () {
-        writeStore(WRAP_KEY, wrap.checked ? "" : "off");
+        state.wrap = wrap.checked;
         apply();
+        persist();
       });
     }
     if (navToggle && navToggle.dataset.bound !== "1") {
       navToggle.dataset.bound = "1";
       navToggle.addEventListener("click", function () {
-        writeStore(NAV_KEY, readStore(NAV_KEY) === "off" ? "" : "off");
+        state.nav = !state.nav;
         apply();
+        persist();
       });
     }
     if (tocToggle && tocToggle.dataset.bound !== "1") {
       tocToggle.dataset.bound = "1";
       tocToggle.addEventListener("click", function () {
-        writeStore(TOC_KEY, readStore(TOC_KEY) === "off" ? "" : "off");
+        state.toc = !state.toc;
         apply();
+        persist();
       });
     }
     if (fontSmaller && fontSmaller.dataset.bound !== "1") {
@@ -188,6 +215,7 @@
       fontSmaller.addEventListener("click", function () {
         setFont(currentFont() - FONT_STEP);
         apply();
+        persist();
       });
     }
     if (fontLarger && fontLarger.dataset.bound !== "1") {
@@ -195,6 +223,7 @@
       fontLarger.addEventListener("click", function () {
         setFont(currentFont() + FONT_STEP);
         apply();
+        persist();
       });
     }
     if (fontValue && fontValue.dataset.bound !== "1") {
@@ -202,6 +231,7 @@
       fontValue.addEventListener("click", function () {
         setFont(DEFAULT_FONT);
         apply();
+        persist();
       });
     }
   }
@@ -216,15 +246,86 @@
       event.preventDefault();
       setFont(currentFont() + FONT_STEP);
       apply();
+      persist();
     } else if (code === "Minus" || code === "NumpadSubtract" || key === "-" || key === "_") {
       event.preventDefault();
       setFont(currentFont() - FONT_STEP);
       apply();
+      persist();
     } else if (code === "Digit0" || code === "Numpad0" || key === "0") {
       event.preventDefault();
       setFont(DEFAULT_FONT);
       apply();
+      persist();
     }
+  }
+
+  function seedFromDom() {
+    var root = document.documentElement;
+    var fontRaw = root.style.fontSize;
+    if (fontRaw) {
+      state.font = parseFont(fontRaw);
+    }
+    state.width = parseCh(root.style.getPropertyValue("--okmate-main-max-width"));
+    state.wrap = root.getAttribute("data-okmate-wrap") !== "off";
+    state.nav = root.getAttribute("data-okmate-nav") !== "off";
+    state.toc = root.getAttribute("data-okmate-toc") !== "off";
+    state.navWidth = root.style.getPropertyValue("--okmate-nav-width").trim();
+    state.outlineWidth = root.style.getPropertyValue("--okmate-outline-width").trim();
+  }
+
+  function migrateLegacy() {
+    var seeded =
+      state.font !== DEFAULT_FONT ||
+      state.width != null ||
+      !state.wrap ||
+      !state.nav ||
+      !state.toc ||
+      state.navWidth ||
+      state.outlineWidth;
+    if (seeded) {
+      return;
+    }
+    var width = parseCh(readStore(LEGACY_WIDTH_KEY));
+    var fontRaw = readStore(LEGACY_FONT_KEY);
+    var wrapOff = readStore(LEGACY_WRAP_KEY) === "off";
+    var navOff = readStore(LEGACY_NAV_KEY) === "off";
+    var tocOff = readStore(LEGACY_TOC_KEY) === "off";
+    var navWidth = readStore("okmate-nav-width");
+    var outlineWidth = readStore("okmate-outline-width");
+    if (
+      width == null &&
+      !fontRaw &&
+      !wrapOff &&
+      !navOff &&
+      !tocOff &&
+      !navWidth &&
+      !outlineWidth
+    ) {
+      return;
+    }
+    if (width != null) {
+      state.width = width;
+    }
+    if (fontRaw) {
+      state.font = parseFont(fontRaw);
+    }
+    state.wrap = !wrapOff;
+    state.nav = !navOff;
+    state.toc = !tocOff;
+    persist({
+      nav_width: navWidth || null,
+      outline_width: outlineWidth || null,
+    });
+    [
+      LEGACY_WIDTH_KEY,
+      LEGACY_WRAP_KEY,
+      LEGACY_NAV_KEY,
+      LEGACY_TOC_KEY,
+      LEGACY_FONT_KEY,
+      "okmate-nav-width",
+      "okmate-outline-width",
+    ].forEach(clearStore);
   }
 
   function enhance() {
@@ -232,8 +333,10 @@
     bind();
   }
 
+  seedFromDom();
+  migrateLegacy();
   apply();
-  window.__okmateReading = { enhance: enhance };
+  window.__okmateReading = { enhance: enhance, persist: persist };
   window.addEventListener("keydown", onZoomKey);
   if (document.readyState === "loading") {
     document.addEventListener("DOMContentLoaded", enhance);
