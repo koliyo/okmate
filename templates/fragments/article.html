@@ -18,7 +18,7 @@
     {% if meta.show_verify || meta.show_promote %}
       <div class="okmate-author-forms">
         {% if meta.show_verify %}
-          <form method="post" action="/__okmate/review" data-on:submit="@post('/__okmate/review')">
+          <form method="post" action="/__okmate/review" data-on:submit__prevent="@post('/__okmate/review', {contentType: 'form'})">
             <input type="hidden" name="action" value="verify">
             <input type="hidden" name="concept" value="{{ meta.id }}">
             <input type="hidden" name="hash" value="{{ meta.file_hash }}">
@@ -28,7 +28,7 @@
           </form>
         {% endif %}
         {% if meta.show_promote %}
-          <form method="post" action="/__okmate/review" data-on:submit="@post('/__okmate/review')">
+          <form method="post" action="/__okmate/review" data-on:submit__prevent="@post('/__okmate/review', {contentType: 'form'})">
             <input type="hidden" name="action" value="promote">
             <input type="hidden" name="concept" value="{{ meta.id }}">
             <input type="hidden" name="hash" value="{{ meta.file_hash }}">

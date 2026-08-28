@@ -10,7 +10,7 @@
   {% endif %}
   <h2>Reviewer</h2>
   <p class="okmate-settings-help">Used on Verify. Must be <code>human:</code> plus a lowercase id like <code>human:nils</code>. Empty is allowed to save; Verify refuses until an actor is set.</p>
-  <form method="post" action="/__okmate/settings" class="okmate-settings-stack" data-on:submit="@post('/__okmate/settings')">
+  <form method="post" action="/__okmate/settings" class="okmate-settings-stack" data-on:submit__prevent="@post('/__okmate/settings', {contentType: 'form'})">
     <input type="hidden" name="action" value="actor">
     <label>Actor <input name="actor" value="{{ actor }}" placeholder="human:nils" autocomplete="username"></label>
     <button type="submit">Save actor</button>
@@ -39,17 +39,17 @@
           {% if root.has_token %}
             <p class="okmate-settings-help">A token is stored. It is never shown.</p>
           {% endif %}
-          <form method="post" action="/__okmate/settings" data-on:submit="@post('/__okmate/settings')">
+          <form method="post" action="/__okmate/settings" data-on:submit__prevent="@post('/__okmate/settings', {contentType: 'form'})">
             <input type="hidden" name="action" value="incoming">
             <input type="hidden" name="id" value="{{ root.id }}">
             <label>Incoming citations
-              <select name="incoming" data-on:change="@post('/__okmate/settings')">
+              <select name="incoming" data-on:change="@post('/__okmate/settings', {contentType: 'form'})">
                 <option value="allow"{% if root.incoming == "allow" %} selected{% endif %}>Anyone may cite this</option>
                 <option value="deny"{% if root.incoming == "deny" %} selected{% endif %}>Only listed roots may cite this</option>
               </select>
             </label>
           </form>
-          <form method="post" action="/__okmate/settings" data-on:submit="@post('/__okmate/settings')">
+          <form method="post" action="/__okmate/settings" data-on:submit__prevent="@post('/__okmate/settings', {contentType: 'form'})">
             <input type="hidden" name="action" value="remove">
             <input type="hidden" name="id" value="{{ root.id }}">
             <button type="submit">Remove</button>
@@ -61,7 +61,7 @@
 
   <h3>Add a folder on this computer</h3>
   <p class="okmate-settings-help">Pick the git project folder; OKMate infers the bundle (<code>index.md</code> with <code>okf_version</code> at the repo root or in a unique <code>knowledge</code> child). You can still pick the bundle directory itself. Choose folder is available in the desktop window.</p>
-  <form method="post" action="/__okmate/settings" class="okmate-settings-stack" data-on:submit="@post('/__okmate/settings')">
+  <form method="post" action="/__okmate/settings" class="okmate-settings-stack" data-on:submit__prevent="@post('/__okmate/settings', {contentType: 'form'})">
     <input type="hidden" name="action" value="add_directory">
     <label>Short id <input id="okmate-dir-id" name="id" placeholder="local"></label>
     <p class="okmate-settings-help">Stable name used in <code>okf:id/…</code> links.</p>
@@ -97,7 +97,7 @@
 
   <h3>Add a git repository</h3>
   <p class="okmate-settings-help">Prefer <code>token_env</code> over pasting a token.</p>
-  <form method="post" action="/__okmate/settings" class="okmate-settings-stack" data-on:submit="@post('/__okmate/settings')">
+  <form method="post" action="/__okmate/settings" class="okmate-settings-stack" data-on:submit__prevent="@post('/__okmate/settings', {contentType: 'form'})">
     <input type="hidden" name="action" value="add_git">
     <label>Short id <input name="id" placeholder="notes"></label>
     <label>Repository URL <input name="url" placeholder="https://github.com/org/notes.git"></label>

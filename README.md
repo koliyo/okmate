@@ -78,6 +78,16 @@ use. Settings POST is `/__okmate/settings` and loopback-only. In the
 desktop window, **Choose folder…** uses `rfd` via wry IPC (`pick-folder`), not
 an HTTP pick-folder route. Without a window, paste the folder path.
 
+Live review writes (also loopback-only, git working tree only) are **Verify**
+and **Promote** on `/__okmate/review`. Set a reviewer actor in Settings
+(`actor = "human:<id>"` in `~/.okmate/config.toml`). Verify appends a
+`human:` event and leaves `status` unchanged. Promote is a separate control
+that sets `draft` → `stable` only after a human event exists, and never for
+`authority: exploratory`. The working-tree file changes; you commit. Queue
+pills such as Fix Errors, Refresh Stale, or Uncommitted Changes are
+classification only — there is no button for them yet. Static `okmate build`
+HTML does not include these controls.
+
 Git cache is `OKMATE_CACHE` (default `~/.okmate/cache`).
 
 ## Development

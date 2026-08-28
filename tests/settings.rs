@@ -158,6 +158,10 @@ async fn settings_post_sets_actor() {
     assert_eq!(response.status(), StatusCode::OK);
     let body = body_text(response).await;
     assert!(body.contains("human:nils"), "{body}");
+    assert!(
+        body.contains("data-on:submit__prevent") && body.contains("contentType: 'form'"),
+        "Datastar must post the actor form: {body}"
+    );
     let saved = fs::read_to_string(config).unwrap();
     assert!(saved.contains("actor = \"human:nils\""), "{saved}");
 }

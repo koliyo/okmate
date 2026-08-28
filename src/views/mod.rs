@@ -576,6 +576,10 @@ mod tests {
         assert!(html.contains("No roots yet"));
         assert!(html.contains("Choose folder"));
         assert!(html.contains("pick-folder"));
+        assert!(
+            html.contains("data-on:submit__prevent") && html.contains("contentType: 'form'"),
+            "settings forms should use Datastar form posts: {html}"
+        );
     }
 
     #[test]
