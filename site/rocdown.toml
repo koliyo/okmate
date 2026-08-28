@@ -49,4 +49,8 @@ label = "Project"
 
 [[nav.groups]]
 label = "About"
-items = ["project/index"]
+items = [
+    "project/index",
+    "project/status",
+    "project/contributing",
+]

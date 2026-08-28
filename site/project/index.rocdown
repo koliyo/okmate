@@ -2,8 +2,21 @@
     layout: "docs",
     meta: {
         title: "Project",
-        description: "OKMate project boundary: experimental status, license, and how to contribute.",
+        description: "OKMate project boundary: experimental status, Apache-2.0 license, and how to work in the repository.",
     },
 }
 
 # Project
+
+OKMate is experimental open-source software. The repository is
+[github.com/koliyo/okmate](https://github.com/koliyo/okmate).
+
+:card-grid.begin
+    :link-card[page: "project/status", title: "Status", summary: "What the binary does today, and what it does not claim."]
+    :link-card[page: "project/contributing", title: "Contributing", summary: "AGENTS.md, skills, okmate check, and crate tests."]
+:card-grid.end
+
+## License
+
+Apache License 2.0. The full text is
+[LICENSE](https://github.com/koliyo/okmate/blob/main/LICENSE).
