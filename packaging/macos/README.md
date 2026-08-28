@@ -7,13 +7,15 @@ That assembles `dist/OKMate.app` with Sparkle 2.
 staple. Missing signing secrets fail closed; the release workflow will not
 attach an unsigned production archive.
 
-The tag-triggered `.github/workflows/release.yml` workflow signs, zips that
-bundle, and runs `okmate-ops package appcast`. The job uses the GitHub
-Actions environment `release`, so repository secrets scoped to that
-environment are the ones `package sign` and `package appcast` see.
+The `.github/workflows/release.yml` workflow signs, zips that
+bundle, and runs `okmate-ops package appcast` on a `v*` or `dev` tag
+push, or on `workflow_dispatch` of an existing tag (rebuild). The job
+uses the GitHub Actions environment `release`, so repository secrets
+scoped to that environment are the ones `package sign` and
+`package appcast` see.
 Operators still create
 immutable `v*` tags only with `okmate-ops release` (`patch`, `minor`,
-`major`, or `vX.Y.Z`), which writes
+`major`, or `vX.Y.Z`) or **Actions → Cut release**, which writes
 the crate and Homebrew cask versions, pushes that commit, then tags. The
 cask installs the same `OKMate.zip` Sparkle serves. The movable `dev` tag
 also runs this workflow and attaches a GitHub **prerelease**; it is not
@@ -30,6 +32,7 @@ also runs this workflow and attaches a GitHub **prerelease**; it is not
 | `APPLE_API_KEY_ID` | `okmate-ops package sign` | App Store Connect API key id for `notarytool`. |
 | `APPLE_API_ISSUER` | `okmate-ops package sign` | App Store Connect API issuer UUID. |
 | `APPLE_API_KEY` | `okmate-ops package sign` | App Store Connect API `.p8` contents. Written to a temp file only. |
+| `HOMEBREW_TAP_TOKEN` | `cut-release.yml` | PAT (or fine-grained token) with write access to `koliyo/homebrew-okmate`. Required for versioned **Cut release**; unused for `dev`. |
 
 `SUPublicEDKey` in `Info.plist` is the production Sparkle public key and must
 match `SPARKLE_EDDSA_PRIVATE_KEY`. Generate a pair with Sparkle

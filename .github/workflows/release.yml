@@ -2,17 +2,25 @@ name: Release
 
 on:
   workflow_dispatch:
+    inputs:
+      tag:
+        description: Existing git tag to rebuild (vX.Y.Z or dev)
+        required: true
+        type: string
   push:
     tags:
       - "v*"
       - "dev"
 
 concurrency:
-  group: release-${{ github.ref }}
+  group: release-${{ inputs.tag || github.ref_name }}
   cancel-in-progress: true
 
 permissions:
   contents: write
+
+env:
+  RELEASE_TAG: ${{ inputs.tag || github.ref_name }}
 
 jobs:
   macos:
@@ -21,6 +29,8 @@ jobs:
     environment: release
     steps:
       - uses: actions/checkout@v7
+        with:
+          ref: ${{ inputs.tag || github.ref }}
       - name: Checkout h35-desktop sibling
         run: git clone --depth 1 https://github.com/koliyo/h35-desktop.git "${GITHUB_WORKSPACE}/../h35-desktop"
       - uses: dtolnay/rust-toolchain@stable
@@ -42,7 +52,7 @@ jobs:
           SPARKLE_EDDSA_PRIVATE_KEY: ${{ secrets.SPARKLE_EDDSA_PRIVATE_KEY }}
         run: |
           set -euo pipefail
-          tag=${GITHUB_REF_NAME}
+          tag=$RELEASE_TAG
           mkdir -p dist/inbox
           ditto -c -k --keepParent dist/OKMate.app dist/inbox/OKMate.zip
           uv run --no-dev okmate-ops package appcast \
@@ -53,7 +63,7 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: |
           set -euo pipefail
-          tag=${GITHUB_REF_NAME}
+          tag=$RELEASE_TAG
           if gh release view "$tag" >/dev/null 2>&1; then
             gh release delete "$tag" --yes
           fi

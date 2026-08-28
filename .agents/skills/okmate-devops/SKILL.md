@@ -21,6 +21,14 @@ commands.
 3. When `okmate-ops` is present, replay the same jobs locally with
    `uv run okmate-ops ci`.
 4. `gh` talks to `https://api.github.com`. In a sandbox, run `gh` unsandboxed.
+5. Hosted release workflows:
+   - `.github/workflows/cut-release.yml` — `workflow_dispatch` only.
+     Runs `okmate-ops release` (same version commit → Test → tag → tap
+     path as localhost). Versioned cuts need `HOMEBREW_TAP_TOKEN` on
+     the `release` environment.
+   - `.github/workflows/release.yml` — tag push (`v*`, `dev`) or
+     `workflow_dispatch` with an existing tag (rebuild/notarize retry).
+     Do not treat a branch dispatch as a release.
 
 ## Rolling `dev` tag
 
@@ -51,6 +59,8 @@ gh run view RUN_ID --log-failed
 gh run watch RUN_ID
 gh pr checks
 gh run rerun RUN_ID --failed
+gh workflow run cut-release.yml -f spec=patch -f from=main
+gh workflow run release.yml -f tag=v0.1.3
 ```
 
 ## Reproduce locally

@@ -159,6 +159,15 @@ Do not treat this README as an architecture decision.
    `https://github.com/koliyo/okmate/releases/latest/download/appcast.xml`
    serves the new item.
 
+The same cut can run from **Actions → Cut release** (`workflow_dispatch`).
+That job calls `okmate-ops release` on Ubuntu, waits for hosted **Test**,
+then pushes the tag so **Release** still packages from the tag. Versioned
+cuts need repository secret `HOMEBREW_TAP_TOKEN` (write access to
+`koliyo/homebrew-okmate`) on the `release` environment. `dev` does not.
+Do not dispatch **Release** against a branch; that workflow only accepts
+an existing `v*` or `dev` tag (or a tag push). To retry signing, run
+**Release** and pass that tag.
+
 Replay local validation with `uv run --no-dev okmate-ops ci`. To publish a
 GitHub release tag from `origin/main`, run
 `uv run okmate-ops release patch` (or `minor`, `major`, `vX.Y.Z`, or

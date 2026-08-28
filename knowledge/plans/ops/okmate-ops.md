@@ -4,7 +4,7 @@ title: okmate-ops uv toolkit
 description: Slim Python 3.12 operator package for local CI replay, versioned release, movable dev, and PR checkout.
 tags: [domain/ops, domain/okmate, concern/ci, concern/tooling]
 status: draft
-generated: { by: process:cursor, at: 2026-08-28T10:40:00Z }
+generated: { by: process:cursor, at: 2026-08-28T10:45:00Z }
 stale_after: 2026-11-26
 authority: exploratory
 owners: [human:nils]
@@ -51,6 +51,9 @@ Give CI and localhost one `uv run --no-dev okmate-ops` surface so hosted
   then bump `Casks/okmate.rb` on `koliyo/homebrew-okmate`[^promote][^cask]
 - `release dev` — wait for hosted `Test` and force-move the rolling
   prerelease tag (no version rewrite)[^promote]
+- Hosted **Cut release** runs that same command via `workflow_dispatch`.
+  Hosted **Release** packages an existing tag only (tag push or dispatch
+  with `tag`).
 
 ## Out of bound
 
