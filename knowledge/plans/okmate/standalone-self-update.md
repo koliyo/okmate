@@ -145,10 +145,11 @@ launch and do not silently install.[^sparkle][^sparkle-custom]
 - `cargo test -p okmate --no-default-features` on Ubuntu remains the hosted
   `Test` gate. Sparkle and `.app` work stay behind `desktop` +
   `target_os = "macos"`.[^ci][^cargo]
-- `okmate-ops promote tag vX.Y.Z` stays the human gate that writes crate
-  versions, pushes that commit, waits for `Test`, and pushes an immutable
-  `v*` tag. Release packaging is a tag-triggered workflow, not a second
-  promote verb, unless a later phase adds a thin helper.[^promote][^ops-plan]
+- `okmate-ops release` (`patch`, `minor`, `major`, or `vX.Y.Z`) stays the
+  human gate that writes crate versions, pushes that commit, waits for
+  `Test`, and pushes an immutable `v*` tag. Release packaging is a
+  tag-triggered workflow, not a second release verb, unless a later
+  phase adds a thin helper.[^promote][^ops-plan]
 - `dev` remains a force-moved prerelease tag for operators, not
   `SUFeedURL`.[^readme][^promote]
 - Serve the feed and archives over HTTPS. Sign archives with Sparkle EdDSA
@@ -293,8 +294,8 @@ macOS runner: release-build, assemble `Okmate.app`, zip or dmg, run Sparkle
 the archive and `appcast.xml` to the GitHub Release for that tag. Enclosure
 URLs use
 `https://github.com/koliyo/okmate/releases/download/<tag>/`. Document
-secrets (`SPARKLE_EDDSA_PRIVATE_KEY`). `promote tag v*` remains the only
-way operators create that tag.[^sparkle-publish][^promote][^gh-latest]
+secrets (`SPARKLE_EDDSA_PRIVATE_KEY`). `okmate-ops release` remains the
+only way operators create that tag.[^sparkle-publish][^promote][^gh-latest]
 
 **Out of bound:** Notarization. Changing `DEFAULT_CHECKS` so promote waits
 on the release job. Generating appcast for `dev`.
@@ -335,7 +336,7 @@ lists the secrets and the staple verify commands.
 
 **Bound:** README: how a Mac user installs the first `.app` (drag to
 `/Applications`), how updates appear, that CLI-only installs do not
-self-update. Operator notes: `okmate-ops promote tag vX.Y.Z` writes crate
+self-update. Operator notes: `okmate-ops release` writes crate
 and Homebrew cask versions and pushes that commit before tagging; wait
 for the release workflow, confirm `releases/latest/download/appcast.xml`
 serves the new item. Point at this plan; do not rewrite

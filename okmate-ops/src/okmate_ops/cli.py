@@ -35,8 +35,6 @@ def main(argv: list[str] | None = None) -> None:
         raise SystemExit(local.package_command(rest))
     if command == "pr-checkout":
         raise SystemExit(pr_checkout.main(rest))
-    if command == "promote":
-        raise SystemExit(promote.promote_command(rest))
     if command == "release":
         raise SystemExit(promote.release_command(rest))
     sys.stderr.write(f"unknown command: {command}\n")

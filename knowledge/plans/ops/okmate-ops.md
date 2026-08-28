@@ -1,10 +1,10 @@
 ---
 type: Implementation Plan
 title: okmate-ops uv toolkit
-description: Slim Python 3.12 operator package for local CI replay, versioned promote tag, movable dev, and PR checkout.
+description: Slim Python 3.12 operator package for local CI replay, versioned release, movable dev, and PR checkout.
 tags: [domain/ops, domain/okmate, concern/ci, concern/tooling]
 status: draft
-generated: { by: process:cursor, at: 2026-08-27T06:05:00Z }
+generated: { by: process:cursor, at: 2026-08-28T10:40:00Z }
 stale_after: 2026-11-26
 authority: exploratory
 owners: [human:nils]
@@ -21,7 +21,7 @@ sources:
     last_modified: 2026-08-27
   - id: promote
     resource: ../../../okmate-ops/src/okmate_ops/promote.py
-    title: promote tag after version commit
+    title: release after version commit
     author: process:cursor
     last_modified: 2026-08-27
   - id: cask
@@ -44,11 +44,12 @@ Give CI and localhost one `uv run --no-dev okmate-ops` surface so hosted
   `cargo test -p okmate --no-default-features`, and `okmate check knowledge`
   when `knowledge/index.md` exists
 - `pr-checkout` — list open PRs or checkout `pr/<branch>`
-- `promote tag vX.Y.Z` — write `X.Y.Z` to Cargo crate versions and
+- `release patch|minor|major|vX.Y.Z` — resolve the next shared crate
+  version (or pin `vX.Y.Z`), write it to Cargo crate versions and
   `Cargo.lock`, push that commit to the target branch (default `main`),
   wait for hosted `Test` on the version commit, push the immutable tag,
   then bump `Casks/okmate.rb` on `koliyo/homebrew-okmate`[^promote][^cask]
-- `promote tag dev` — wait for hosted `Test` and force-move the rolling
+- `release dev` — wait for hosted `Test` and force-move the rolling
   prerelease tag (no version rewrite)[^promote]
 
 ## Out of bound

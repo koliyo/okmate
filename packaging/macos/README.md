@@ -12,7 +12,8 @@ bundle, and runs `okmate-ops package appcast`. The job uses the GitHub
 Actions environment `release`, so repository secrets scoped to that
 environment are the ones `package sign` and `package appcast` see.
 Operators still create
-immutable `v*` tags only with `okmate-ops promote tag vX.Y.Z`, which writes
+immutable `v*` tags only with `okmate-ops release` (`patch`, `minor`,
+`major`, or `vX.Y.Z`), which writes
 the crate and Homebrew cask versions, pushes that commit, then tags. The
 cask installs the same `OKMate.zip` Sparkle serves. The movable `dev` tag
 also runs this workflow and attaches a GitHub **prerelease**; it is not

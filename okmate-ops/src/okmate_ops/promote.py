@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import os
 import subprocess
-import sys
 import tempfile
 import time
 from pathlib import Path
@@ -30,11 +29,6 @@ RELEASE_USAGE = (
     "usage: okmate-ops release <patch|minor|major|vX.Y.Z|dev> "
     "[--from BRANCH] [--force] [--dry-run]"
 )
-PROMOTE_USAGE = "usage: okmate-ops promote tag"
-PROMOTE_TAG_USAGE = (
-    "usage: okmate-ops promote tag <tag> [--from BRANCH] [--force] [--dry-run]"
-)
-PROMOTE_DEPRECATED = "okmate-ops promote tag is deprecated; use okmate-ops release\n"
 
 
 def run(argv: list[str], *, cwd: Path | None = None) -> None:
@@ -83,14 +77,14 @@ def push_version_update(version: str, from_ref: str, remote_sha: str) -> str:
             run(["git", "add", *[str(path) for path in paths]], cwd=worktree)
             status = git_capture(["git", "status", "--porcelain"], cwd=worktree)
             if status.returncode != 0:
-                raise SystemExit("promote tag could not read worktree status")
+                raise SystemExit("release could not read worktree status")
             if not status.stdout.strip():
                 return remote_sha
             run(["git", "commit", "-m", f"chore(release): set version {version}"], cwd=worktree)
             run(["git", "push", "origin", f"HEAD:{from_ref}"], cwd=worktree)
             pushed = git_capture(["git", "rev-parse", "HEAD"], cwd=worktree)
             if pushed.returncode != 0:
-                raise SystemExit("promote tag could not read version commit")
+                raise SystemExit("release could not read version commit")
             return pushed.stdout.strip()
         finally:
             run(["git", "worktree", "remove", "--force", str(worktree)], cwd=root)
@@ -107,7 +101,7 @@ def push_tap_version(version: str) -> None:
         run(["git", "add", str(CASK)], cwd=dest)
         status = git_capture(["git", "status", "--porcelain"], cwd=dest)
         if status.returncode != 0:
-            raise SystemExit("promote tag could not read Homebrew tap status")
+            raise SystemExit("release could not read Homebrew tap status")
         if not status.stdout.strip():
             return
         run(["git", "commit", "-m", f"okmate {version}"], cwd=dest)
@@ -232,19 +226,3 @@ def release_command(argv: list[str]) -> int:
         raise SystemExit(RELEASE_USAGE)
     tag, from_ref, force, dry_run = parse_tag_argv(argv, RELEASE_USAGE)
     return promote_tag(tag, from_ref=from_ref, force=force, dry_run=dry_run)
-
-
-def promote_tag_command(argv: list[str]) -> int:
-    if not argv or argv[0] in ("-h", "--help"):
-        raise SystemExit(PROMOTE_TAG_USAGE)
-    tag, from_ref, force, dry_run = parse_tag_argv(argv, PROMOTE_TAG_USAGE)
-    return promote_tag(tag, from_ref=from_ref, force=force, dry_run=dry_run)
-
-
-def promote_command(argv: list[str]) -> int:
-    sys.stderr.write(PROMOTE_DEPRECATED)
-    if not argv or argv[0] in ("-h", "--help"):
-        raise SystemExit(PROMOTE_USAGE)
-    if argv[0] == "tag":
-        return promote_tag_command(argv[1:])
-    raise SystemExit(PROMOTE_USAGE)
