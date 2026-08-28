@@ -1,0 +1,9 @@
+@page {
+    layout: "docs",
+    meta: {
+        title: "Agents",
+        description: "Entrypoint for visiting agents: install OKMate, point at the knowledge skill, and use the CLI.",
+    },
+}
+
+# Agents

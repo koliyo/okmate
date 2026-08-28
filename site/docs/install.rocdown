@@ -1,0 +1,9 @@
+@page {
+    layout: "docs",
+    meta: {
+        title: "Install",
+        description: "Install OKMate from the repository README: Homebrew cask, cargo, and the macOS app zip.",
+    },
+}
+
+# Install

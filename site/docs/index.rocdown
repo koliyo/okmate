@@ -1,0 +1,9 @@
+@page {
+    layout: "docs",
+    meta: {
+        title: "Docs",
+        description: "Human manual for OKMate: install, first bundle, git ownership, multiple bundles, CLI, desktop, and OKF.",
+    },
+}
+
+# Docs

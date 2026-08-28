@@ -1,0 +1,9 @@
+@page {
+    layout: "docs",
+    meta: {
+        title: "Project",
+        description: "OKMate project boundary: experimental status, license, and how to contribute.",
+    },
+}
+
+# Project
