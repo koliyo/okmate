@@ -8,6 +8,13 @@
   {% if !message.is_empty() %}
     <p class="okmate-settings-msg">{{ message }}</p>
   {% endif %}
+  <h2>Reviewer</h2>
+  <p class="okmate-settings-help">Used on Verify. Must be <code>human:</code> plus a lowercase id like <code>human:nils</code>. Empty is allowed to save; Verify refuses until an actor is set.</p>
+  <form method="post" action="/__okmate/settings" class="okmate-settings-stack" data-on:submit="@post('/__okmate/settings')">
+    <input type="hidden" name="action" value="actor">
+    <label>Actor <input name="actor" value="{{ actor }}" placeholder="human:nils" autocomplete="username"></label>
+    <button type="submit">Save actor</button>
+  </form>
   <h3>Configured roots</h3>
   {% if settings_roots.is_empty() %}
     <div class="okmate-settings-empty">

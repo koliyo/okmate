@@ -201,6 +201,7 @@ fn document(
         meta: crate::views::ConceptMeta::default(),
         message: String::new(),
         config_path: String::new(),
+        actor: String::new(),
         settings_roots: Vec::new(),
         review_window: crate::views::ListWindow::default(),
         log_window: crate::views::ListWindow::default(),
@@ -293,6 +294,7 @@ fn settings_document(workspace: &Workspace, nav_mode: NavMode) -> Document {
     );
     document.config_path = crate::config::config_path().display().to_string();
     document.settings_roots = crate::http::settings_roots(&config);
+    document.actor = config.actor.unwrap_or_default();
     document.with_kind("settings")
 }
 

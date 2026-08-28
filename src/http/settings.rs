@@ -12,8 +12,8 @@ use futures_util::stream;
 use okf::Bundle;
 
 use crate::config::{
-    DirectoryRoot, GitRoot, Incoming, RootConfig, UserConfig, expand_tilde, save, valid_git_url,
-    valid_id,
+    DirectoryRoot, GitRoot, Incoming, RootConfig, UserConfig, expand_tilde, save, valid_actor,
+    valid_git_url, valid_id,
 };
 use crate::http::AppState;
 use crate::site;
@@ -155,6 +155,7 @@ fn settings_document(
             meta: crate::views::ConceptMeta::default(),
             message: String::new(),
             config_path: String::new(),
+            actor: String::new(),
             settings_roots: Vec::new(),
             review_window: crate::views::ListWindow::default(),
             log_window: crate::views::ListWindow::default(),
@@ -170,6 +171,7 @@ fn settings_document(
     };
     document.message = message.unwrap_or("").to_string();
     document.config_path = config_file.display().to_string();
+    document.actor = config.actor.clone().unwrap_or_default();
     document.settings_roots = settings_roots(config);
     crate::site::apply_reading_prefs(&mut document, session);
     document
@@ -249,6 +251,22 @@ fn apply_action(path: &Path, fields: &BTreeMap<String, String>) -> Result<String
                 .ok_or_else(|| anyhow::anyhow!("unknown root id `{id}`"))?;
             root.set_incoming(incoming);
             format!("updated incoming for `{id}`")
+        }
+        "actor" => {
+            let actor = fields
+                .get("actor")
+                .map(|value| value.trim().to_string())
+                .unwrap_or_default();
+            if actor.is_empty() {
+                config.actor = None;
+                "cleared reviewer actor".into()
+            } else {
+                if !valid_actor(&actor) {
+                    bail!("invalid actor `{actor}`; expected human:<id>");
+                }
+                config.actor = Some(actor.clone());
+                format!("saved reviewer `{actor}`")
+            }
         }
         other => bail!("unknown settings action `{other}`"),
     };
