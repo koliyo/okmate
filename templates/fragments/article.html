@@ -15,6 +15,30 @@
         </div>
       </div>
     {% endif %}
+    {% if meta.show_verify || meta.show_promote %}
+      <div class="okmate-author-forms">
+        {% if meta.show_verify %}
+          <form method="post" action="/__okmate/review" data-on:submit="@post('/__okmate/review')">
+            <input type="hidden" name="action" value="verify">
+            <input type="hidden" name="concept" value="{{ meta.id }}">
+            <input type="hidden" name="hash" value="{{ meta.file_hash }}">
+            {% if !meta.root.is_empty() %}<input type="hidden" name="root" value="{{ meta.root }}">{% endif %}
+            <input type="hidden" name="return" value="{{ meta.href }}">
+            <button type="submit"{% if !meta.author_enabled %} disabled title="{{ meta.author_title }}"{% endif %}>Verify</button>
+          </form>
+        {% endif %}
+        {% if meta.show_promote %}
+          <form method="post" action="/__okmate/review" data-on:submit="@post('/__okmate/review')">
+            <input type="hidden" name="action" value="promote">
+            <input type="hidden" name="concept" value="{{ meta.id }}">
+            <input type="hidden" name="hash" value="{{ meta.file_hash }}">
+            {% if !meta.root.is_empty() %}<input type="hidden" name="root" value="{{ meta.root }}">{% endif %}
+            <input type="hidden" name="return" value="{{ meta.href }}">
+            <button type="submit"{% if !meta.author_enabled %} disabled title="{{ meta.author_title }}"{% endif %}>Promote</button>
+          </form>
+        {% endif %}
+      </div>
+    {% endif %}
     {% if !meta.description.is_empty() %}
       <p class="okmate-lead">{{ meta.description }}</p>
     {% endif %}

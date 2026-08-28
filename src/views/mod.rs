@@ -70,6 +70,11 @@ pub struct ReviewRow {
     pub search: String,
     pub action_rank: u8,
     pub root: String,
+    pub file_hash: String,
+    pub show_verify: bool,
+    pub show_promote: bool,
+    pub author_enabled: bool,
+    pub author_title: String,
 }
 
 macro_rules! document_template {
@@ -308,6 +313,11 @@ fn review_row(bundle: &Bundle, concept: &okf::Concept) -> ReviewRow {
         search,
         action_rank: action_rank(action.kind),
         root: String::new(),
+        file_hash: String::new(),
+        show_verify: false,
+        show_promote: false,
+        author_enabled: false,
+        author_title: String::new(),
     }
 }
 
@@ -346,6 +356,99 @@ pub fn action_rows(rows: &[ReviewRow]) -> Vec<ReviewRow> {
             .then_with(|| left.id.cmp(&right.id))
     });
     rows
+}
+
+pub fn apply_live_authoring(
+    document: &mut Document,
+    workspace: &crate::workspace::Workspace,
+    config: &crate::config::UserConfig,
+    route: &str,
+) {
+    let actor_ok = config
+        .actor
+        .as_deref()
+        .is_some_and(crate::config::valid_actor);
+    if document.page_kind == "review" {
+        for row in document
+            .review_rows
+            .iter_mut()
+            .chain(document.action_rows.iter_mut())
+        {
+            let Some(member) = member_for_row(workspace, row) else {
+                continue;
+            };
+            let Some(concept) = member
+                .bundle
+                .concepts
+                .iter()
+                .find(|concept| concept.id == row.id)
+            else {
+                continue;
+            };
+            apply_row_chrome(row, member, concept, actor_ok);
+        }
+        return;
+    }
+    if document.page_kind != "page" {
+        return;
+    }
+    let Some((member, id)) = workspace.parse_document_route(route) else {
+        return;
+    };
+    let Some(concept) = member
+        .bundle
+        .concepts
+        .iter()
+        .find(|concept| concept.id == id)
+    else {
+        return;
+    };
+    let action = okf::classify_concept_action(concept, &member.bundle.diagnostics);
+    let (enabled, title) = crate::http::review::author_enabled(&member.path, actor_ok);
+    let hash = read_hash(&member.path.join(&concept.path));
+    document.meta.file_hash = hash;
+    document.meta.root = if workspace.is_multi() {
+        member.id.clone()
+    } else {
+        String::new()
+    };
+    document.meta.href = workspace.document_href(&member.id, &concept.id);
+    document.meta.id = concept.id.clone();
+    document.meta.show_verify = crate::http::review::verify_kinds(&action.kind);
+    document.meta.show_promote = crate::http::review::promote_kind(&action.kind);
+    document.meta.author_enabled = enabled;
+    document.meta.author_title = title;
+}
+
+fn member_for_row<'a>(
+    workspace: &'a crate::workspace::Workspace,
+    row: &ReviewRow,
+) -> Option<&'a crate::workspace::WorkspaceMember> {
+    if !row.root.is_empty() {
+        return workspace.get(&row.root);
+    }
+    workspace.primary()
+}
+
+fn apply_row_chrome(
+    row: &mut ReviewRow,
+    member: &crate::workspace::WorkspaceMember,
+    concept: &okf::Concept,
+    actor_ok: bool,
+) {
+    let action = okf::classify_concept_action(concept, &member.bundle.diagnostics);
+    let (enabled, title) = crate::http::review::author_enabled(&member.path, actor_ok);
+    row.file_hash = read_hash(&member.path.join(&concept.path));
+    row.show_verify = crate::http::review::verify_kinds(&action.kind);
+    row.show_promote = crate::http::review::promote_kind(&action.kind);
+    row.author_enabled = enabled;
+    row.author_title = title;
+}
+
+fn read_hash(path: &std::path::Path) -> String {
+    std::fs::read(path)
+        .map(|bytes| crate::author::file_hash(&bytes))
+        .unwrap_or_default()
 }
 
 #[cfg(test)]

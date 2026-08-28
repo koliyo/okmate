@@ -32,6 +32,30 @@
                   <div class="okmate-action-wrapper">
                     <span class="okmate-action-pill {{ row.pill_class }}">{{ row.action }}</span>
                     <div class="okmate-action-detail-text">{{ row.action_detail }}</div>
+                    {% if row.show_verify || row.show_promote %}
+                      <div class="okmate-author-forms">
+                        {% if row.show_verify %}
+                          <form method="post" action="/__okmate/review" data-on:submit="@post('/__okmate/review')">
+                            <input type="hidden" name="action" value="verify">
+                            <input type="hidden" name="concept" value="{{ row.id }}">
+                            <input type="hidden" name="hash" value="{{ row.file_hash }}">
+                            {% if !row.root.is_empty() %}<input type="hidden" name="root" value="{{ row.root }}">{% endif %}
+                            <input type="hidden" name="return" value="/review/">
+                            <button type="submit"{% if !row.author_enabled %} disabled title="{{ row.author_title }}"{% endif %}>Verify</button>
+                          </form>
+                        {% endif %}
+                        {% if row.show_promote %}
+                          <form method="post" action="/__okmate/review" data-on:submit="@post('/__okmate/review')">
+                            <input type="hidden" name="action" value="promote">
+                            <input type="hidden" name="concept" value="{{ row.id }}">
+                            <input type="hidden" name="hash" value="{{ row.file_hash }}">
+                            {% if !row.root.is_empty() %}<input type="hidden" name="root" value="{{ row.root }}">{% endif %}
+                            <input type="hidden" name="return" value="/review/">
+                            <button type="submit"{% if !row.author_enabled %} disabled title="{{ row.author_title }}"{% endif %}>Promote</button>
+                          </form>
+                        {% endif %}
+                      </div>
+                    {% endif %}
                   </div>
                 </td>
               </tr>

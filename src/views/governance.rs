@@ -54,6 +54,14 @@ pub struct ConceptMeta {
     pub alert: String,
     pub provenance: Vec<ProvenanceItem>,
     pub drift_sources: Vec<String>,
+    pub file_hash: String,
+    pub root: String,
+    pub href: String,
+    pub id: String,
+    pub show_verify: bool,
+    pub show_promote: bool,
+    pub author_enabled: bool,
+    pub author_title: String,
 }
 
 pub fn governance_stats(workspace: &Workspace) -> Vec<StatCard> {
@@ -370,6 +378,14 @@ pub fn concept_meta(concept: &Concept, diagnostics: &[Diagnostic]) -> ConceptMet
         },
         provenance,
         drift_sources,
+        file_hash: String::new(),
+        root: String::new(),
+        href: String::new(),
+        id: String::new(),
+        show_verify: false,
+        show_promote: false,
+        author_enabled: false,
+        author_title: String::new(),
     }
 }
 

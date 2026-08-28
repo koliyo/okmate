@@ -84,6 +84,10 @@ fn build_writes_engine_catalog_html_landmarks_and_pages_json() {
     assert!(concept.contains("Owners"), "{concept}");
     assert!(concept.contains("okmate-md-table"), "{concept}");
     assert!(concept.contains("<table>"), "{concept}");
+    assert!(
+        !concept.contains("action=\"/__okmate/review\""),
+        "static build must omit review forms: {concept}"
+    );
 
     let stale = fs::read_to_string(output.join("stale").join("index.html")).unwrap();
     assert!(stale.contains("okmate-badge-stale"), "{stale}");
@@ -99,6 +103,10 @@ fn build_writes_engine_catalog_html_landmarks_and_pages_json() {
     assert!(review.contains("Required Action"));
     assert!(review.contains("id=\"diagnostics\""));
     assert!(output.join("__okmate").join("review.js").is_file());
+    assert!(
+        !review.contains("action=\"/__okmate/review\""),
+        "static build must omit review forms: {review}"
+    );
 
     let settings = fs::read_to_string(output.join("settings").join("index.html")).unwrap();
     assert!(settings.contains("id=\"okmate-settings\""));
