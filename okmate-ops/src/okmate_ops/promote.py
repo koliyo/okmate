@@ -55,7 +55,18 @@ def github_repo() -> str:
     return result.stdout.strip()
 
 
-def wait_for_promote_ci(sha: str) -> None:
+def dispatch_hosted_ci(from_ref: str) -> None:
+    gh_run(["workflow", "run", "ci.yml", "--ref", from_ref])
+
+
+def wait_for_promote_ci(sha: str, from_ref: str = "main") -> None:
+    if os.environ.get("GITHUB_ACTIONS"):
+        print(
+            "GITHUB_TOKEN pushes do not start CI; dispatching ci.yml on "
+            f"{from_ref}",
+            flush=True,
+        )
+        dispatch_hosted_ci(from_ref)
     repo = github_repo()
 
     def gh(args: list[str]) -> str:
@@ -178,7 +189,7 @@ def promote_tag(
         return 0
     if not movable:
         sha = push_version_update(parse_release_version(tag), from_ref, sha)
-    wait_for_promote_ci(sha)
+    wait_for_promote_ci(sha, from_ref=from_ref)
     tag_argv = ["git", "tag", "-a", tag, "-m", tag, sha]
     push_argv = ["git", "push", "origin", tag]
     if movable or force:

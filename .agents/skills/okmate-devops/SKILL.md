@@ -24,7 +24,9 @@ commands.
 5. Hosted release workflows:
    - `.github/workflows/cut-release.yml` — `workflow_dispatch` only.
      Runs `okmate-ops release` (same version commit → Test → tag → tap
-     path as localhost). Versioned cuts need repository secret
+     path as localhost). After a `GITHUB_TOKEN` push, it dispatches
+     `ci.yml` (token pushes do not start `on: push` workflows) and
+     waits for those checks. Versioned cuts need repository secret
      `HOMEBREW_TAP_TOKEN`. Do not attach this job to the `release`
      environment; `main` is not allowed to deploy there.
    - `.github/workflows/release.yml` — tag push (`v*`, `dev`) or

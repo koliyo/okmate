@@ -29,7 +29,7 @@ concurrency:
 permissions:
   contents: write
   checks: read
-  actions: read
+  actions: write
 
 jobs:
   cut:

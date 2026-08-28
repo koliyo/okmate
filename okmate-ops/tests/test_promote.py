@@ -61,7 +61,10 @@ def test_promote_tag_pushes_version_then_tags(monkeypatch, tmp_path) -> None:
         "okmate_ops.promote.push_version_update",
         lambda version, from_ref, remote_sha: f"{version}:{from_ref}:{remote_sha}",
     )
-    monkeypatch.setattr("okmate_ops.promote.wait_for_promote_ci", waited.append)
+    monkeypatch.setattr(
+        "okmate_ops.promote.wait_for_promote_ci",
+        lambda sha, from_ref="main": waited.append(sha),
+    )
     taps: list[str] = []
     monkeypatch.setattr("okmate_ops.promote.push_tap_version", taps.append)
 
@@ -90,7 +93,10 @@ def test_promote_tag_force_overwrites_versioned_tag(monkeypatch, tmp_path) -> No
         "okmate_ops.promote.push_version_update",
         lambda version, from_ref, remote_sha: "newsha",
     )
-    monkeypatch.setattr("okmate_ops.promote.wait_for_promote_ci", lambda sha: None)
+    monkeypatch.setattr(
+        "okmate_ops.promote.wait_for_promote_ci",
+        lambda sha, from_ref="main": None,
+    )
     monkeypatch.setattr("okmate_ops.promote.push_tap_version", lambda version: None)
 
     assert promote_tag("v1.2.3", force=True) == 0
@@ -112,7 +118,10 @@ def test_promote_tag_force_moves_dev(monkeypatch, tmp_path) -> None:
         "okmate_ops.promote.run",
         lambda argv, cwd=None: calls.append(list(argv)),
     )
-    monkeypatch.setattr("okmate_ops.promote.wait_for_promote_ci", lambda sha: None)
+    monkeypatch.setattr(
+        "okmate_ops.promote.wait_for_promote_ci",
+        lambda sha, from_ref="main": None,
+    )
     monkeypatch.setattr(
         "okmate_ops.promote.push_version_update",
         lambda *args, **kwargs: (_ for _ in ()).throw(AssertionError("dev must not bump versions")),
@@ -147,7 +156,7 @@ def test_promote_tag_does_not_push_when_ci_fails(monkeypatch, tmp_path) -> None:
     )
     monkeypatch.setattr(
         "okmate_ops.promote.wait_for_promote_ci",
-        lambda sha: (_ for _ in ()).throw(SystemExit(f"CI failed for {sha}")),
+        lambda sha, from_ref="main": (_ for _ in ()).throw(SystemExit(f"CI failed for {sha}")),
     )
     try:
         promote_tag("v1.2.3")
@@ -160,15 +169,41 @@ def test_promote_tag_does_not_push_when_ci_fails(monkeypatch, tmp_path) -> None:
 
 def test_wait_for_promote_ci_waits_default_checks(monkeypatch) -> None:
     seen: list[str] = []
+    dispatched: list[list[str]] = []
+    monkeypatch.delenv("GITHUB_ACTIONS", raising=False)
     monkeypatch.setattr("okmate_ops.promote.github_repo", lambda: "koliyo/okmate")
     monkeypatch.setattr("okmate_ops.promote.gh_run", lambda args: type("R", (), {"stdout": ""})())
+    monkeypatch.setattr(
+        "okmate_ops.promote.dispatch_hosted_ci",
+        lambda from_ref: dispatched.append([from_ref]),
+    )
     monkeypatch.setattr(
         "okmate_ops.promote.wait_for_check",
         lambda **kwargs: seen.append(kwargs["check"]),
     )
     wait_for_promote_ci("abc")
+    assert dispatched == []
     assert seen == list(DEFAULT_CHECKS)
     assert DEFAULT_CHECKS == ("Code Formatting & Lints", "Test")
+
+
+def test_wait_for_promote_ci_dispatches_from_actions(monkeypatch) -> None:
+    seen: list[str] = []
+    dispatched: list[str] = []
+    monkeypatch.setenv("GITHUB_ACTIONS", "true")
+    monkeypatch.setattr("okmate_ops.promote.github_repo", lambda: "koliyo/okmate")
+    monkeypatch.setattr("okmate_ops.promote.gh_run", lambda args: type("R", (), {"stdout": ""})())
+    monkeypatch.setattr(
+        "okmate_ops.promote.dispatch_hosted_ci",
+        lambda from_ref: dispatched.append(from_ref),
+    )
+    monkeypatch.setattr(
+        "okmate_ops.promote.wait_for_check",
+        lambda **kwargs: seen.append(kwargs["check"]),
+    )
+    wait_for_promote_ci("abc", from_ref="release")
+    assert dispatched == ["release"]
+    assert seen == list(DEFAULT_CHECKS)
 
 
 def _git(cwd: Path, *args: str) -> subprocess.CompletedProcess[str]:
@@ -336,7 +371,10 @@ def test_promote_tag_patch_resolves_from_sha(monkeypatch, tmp_path, capsys) -> N
         "okmate_ops.promote.push_version_update",
         lambda version, from_ref, remote_sha: f"{version}:{from_ref}:{remote_sha}",
     )
-    monkeypatch.setattr("okmate_ops.promote.wait_for_promote_ci", waited.append)
+    monkeypatch.setattr(
+        "okmate_ops.promote.wait_for_promote_ci",
+        lambda sha, from_ref="main": waited.append(sha),
+    )
     taps: list[str] = []
     monkeypatch.setattr("okmate_ops.promote.push_tap_version", taps.append)
 

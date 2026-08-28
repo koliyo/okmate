@@ -3,7 +3,7 @@ name = "okmate-ops"
 version = "0.1.0"
 description = "CI and maintainer commands for the Okmate repository."
 requires-python = ">=3.12"
-dependencies = []
+dependencies = ["tqdm>=4.66"]
 
 [project.scripts]
 okmate-ops = "okmate_ops.cli:main"

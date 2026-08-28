@@ -5,20 +5,10 @@ import sys
 import time
 from typing import IO, Callable
 
+from tqdm import tqdm
+
 DEFAULT_CHECKS = ("Code Formatting & Lints", "Test")
-BAR_WIDTH = 24
 DEFAULT_BAR_WINDOW_S = 600.0
-
-
-def format_elapsed(seconds: float) -> str:
-    total = max(0, int(seconds))
-    return f"{total // 60:02d}:{total % 60:02d}"
-
-
-def render_bar(elapsed: float, window: float, width: int = BAR_WIDTH) -> str:
-    frac = 0.0 if window <= 0 else min(1.0, elapsed / window)
-    filled = int(frac * width)
-    return f"[{'#' * filled}{'-' * (width - filled)}]"
 
 
 def parse_check_line(result: str) -> tuple[str, str] | None:
@@ -42,40 +32,45 @@ def wait_for_check(
     started = time.monotonic()
     stream = out or sys.stdout
     window = deadline_s if deadline_s is not None else DEFAULT_BAR_WINDOW_S
-
-    def tick(label: str) -> None:
-        elapsed = time.monotonic() - started
-        line = f"{check} {render_bar(elapsed, window)} {format_elapsed(elapsed)} {label}"
-        stream.write(f"\r{line}\033[K")
-        stream.flush()
-
-    while True:
-        if deadline_s is not None and time.monotonic() - started > deadline_s:
-            stream.write("\n")
-            raise SystemExit(f"timed out waiting for {check}")
-        raw = gh(
-            [
-                "api",
-                f"repos/{repo}/commits/{sha}/check-runs",
-                "--jq",
-                f'.check_runs[] | select(.name == "{check}") | .status + " " + (.conclusion // "pending")',
-            ]
-        )
-        parsed = parse_check_line(raw)
-        if parsed is None:
-            tick("waiting")
-        else:
-            status, conclusion = parsed
-            if status == "completed":
-                if conclusion == "success":
-                    tick("passed")
-                    stream.write("\n")
-                    return
-                tick(f"failed ({conclusion})")
-                stream.write("\n")
-                raise SystemExit(f"{check} failed ({conclusion})")
-            tick(f"{status} {conclusion}")
-        sleep(10)
+    bar = tqdm(
+        total=int(window),
+        desc=check,
+        unit="s",
+        file=stream,
+        ascii=True,
+        ncols=80,
+        mininterval=0,
+        dynamic_ncols=False,
+        bar_format="{desc}: {bar} {elapsed} {postfix}",
+    )
+    try:
+        while True:
+            if deadline_s is not None and time.monotonic() - started > deadline_s:
+                raise SystemExit(f"timed out waiting for {check}")
+            raw = gh(
+                [
+                    "api",
+                    f"repos/{repo}/commits/{sha}/check-runs",
+                    "--jq",
+                    f'.check_runs[] | select(.name == "{check}") | .status + " " + (.conclusion // "pending")',
+                ]
+            )
+            parsed = parse_check_line(raw)
+            if parsed is None:
+                bar.set_postfix_str("waiting", refresh=True)
+            else:
+                status, conclusion = parsed
+                if status == "completed":
+                    if conclusion == "success":
+                        bar.set_postfix_str("passed", refresh=True)
+                        return
+                    bar.set_postfix_str(f"failed ({conclusion})", refresh=True)
+                    raise SystemExit(f"{check} failed ({conclusion})")
+                bar.set_postfix_str(f"{status} {conclusion}", refresh=True)
+            sleep(10)
+            bar.update(10)
+    finally:
+        bar.close()
 
 
 def gh_run(args: list[str], check: bool = True) -> subprocess.CompletedProcess:
