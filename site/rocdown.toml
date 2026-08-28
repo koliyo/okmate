@@ -1,0 +1,8 @@
+[site]
+title = "OKMate"
+description = "OKMate is an open-source OKF knowledge tool."
+language = "en"
+repository = "https://github.com/koliyo/okmate"
+
+[build]
+output = "../dist/site"

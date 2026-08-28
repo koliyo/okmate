@@ -1,0 +1,9 @@
+@page {
+    layout: "home",
+    meta: {
+        title: "OKMate",
+        description: "OKMate product website placeholder.",
+    },
+}
+
+# OKMate
