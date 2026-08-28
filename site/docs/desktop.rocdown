@@ -1,0 +1,36 @@
+@page {
+    layout: "docs",
+    meta: {
+        title: "Desktop",
+        description: "OKMate.app opens a knowledge window. Sparkle updates the app from GitHub Releases. CLI-only binaries do not self-update.",
+    },
+}
+
+# Desktop
+
+Double-click `OKMate.app` to open the knowledge window (`view`) and restore
+`~/.okmate/state` when present. **Choose folder…** uses a native folder
+picker, not an HTTP route.
+
+## What the window is
+
+The desktop host wraps the same live HTML preview as `okmate view`. It is
+not this Rocdown website and not a hosted editor.
+
+## Updates
+
+Sparkle may ask to check automatically after the second launch. **Check for
+Updates…** and `brew upgrade --cask okmate` follow GitHub
+`releases/latest`. Details stay in
+[Install OKMate.app (macOS)](https://github.com/koliyo/okmate/blob/main/README.md#install-okmateapp-macos).
+
+A `cargo install` or copied `okmate` on `PATH` does not self-update.
+
+## CLI-only builds
+
+```sh
+cargo test -p okmate --no-default-features
+```
+
+Those builds omit the webview. `view` without `--no-window` needs the
+default `desktop` feature.

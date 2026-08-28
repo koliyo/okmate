@@ -7,3 +7,30 @@
 }
 
 # Install
+
+Install commands are published in the repository
+[README](https://github.com/koliyo/okmate/blob/main/README.md). Do not treat
+this page as a second source of truth.
+
+## macOS app and Homebrew cask
+
+The signed `OKMate.app` zip is on
+[GitHub Releases](https://github.com/koliyo/okmate/releases/latest). The
+Homebrew cask and the fully qualified `brew install --cask` line live under
+[Install OKMate.app (macOS)](https://github.com/koliyo/okmate/blob/main/README.md#install-okmateapp-macos).
+
+## CLI from this repository
+
+Maintainer and contributor installs stay in
+[Development](https://github.com/koliyo/okmate/blob/main/README.md#development)
+(`uv run --no-dev okmate-ops install cli`, or `cargo run --no-default-features`).
+A `cargo install` or copied `okmate` binary on `PATH` does not self-update.
+
+## After install
+
+```sh
+okmate check knowledge --profile strict --format terminal
+```
+
+`check`, `inspect`, `search`, and `build` take one root. If you have several
+configured trees, list them first: [Multiple bundles](/docs/multiple-bundles/).

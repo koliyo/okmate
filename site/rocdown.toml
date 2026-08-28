@@ -18,7 +18,16 @@ label = "Docs"
 
 [[nav.groups]]
 label = "Manual"
-items = ["docs/index", "docs/install"]
+items = [
+    "docs/index",
+    "docs/install",
+    "docs/first-bundle",
+    "docs/git-ownership",
+    "docs/multiple-bundles",
+    "docs/cli",
+    "docs/desktop",
+    "docs/okf",
+]
 
 [[nav]]
 label = "Agents"

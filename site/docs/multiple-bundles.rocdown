@@ -1,0 +1,43 @@
+@page {
+    layout: "docs",
+    meta: {
+        title: "Multiple bundles",
+        description: "Coordinate several OKF roots without merging catalogs: list paths with okmate roots, then check, inspect, search, or build one root.",
+    },
+}
+
+# Multiple bundles
+
+OKMate can keep several knowledge trees configured. It does not merge them
+into one catalog. `check`, `inspect`, `search`, and `build` stay single-root.
+
+## List, then inspect one path
+
+```sh
+okmate roots --format paths
+```
+
+```sh
+okmate roots --format paths | while IFS= read -r root; do
+  okmate inspect --profile strict catalog "$root"
+done
+```
+
+If the config is missing or `roots` is empty, `./knowledge` is printed when
+that directory exists.
+
+## Sync git roots
+
+```sh
+okmate roots --format json --no-sync
+okmate sync
+```
+
+`--sync` (the default for some listings) fetches configured git roots first.
+`--no-sync` prints what is already resolved.
+
+## What this is not
+
+There is no merged cross-root search, no hosted query API, and no MCP server
+in the shipped binary. Those appear in landscape notes as boundaries, not
+features.

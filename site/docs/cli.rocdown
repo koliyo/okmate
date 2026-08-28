@@ -1,0 +1,44 @@
+@page {
+    layout: "docs",
+    meta: {
+        title: "CLI",
+        description: "okmate CLI: check, inspect, search, build, view, roots, and sync. The command table in the repository README stays canonical.",
+    },
+}
+
+# CLI
+
+The binary is `okmate`. The command table in the
+[README](https://github.com/koliyo/okmate/blob/main/README.md#cli) is the
+canonical list.
+
+## Everyday commands
+
+```sh
+okmate check knowledge --profile strict --format json
+okmate inspect catalog knowledge
+okmate inspect concept architecture/system-overview knowledge
+okmate inspect graph knowledge
+okmate search "system overview" knowledge --profile strict
+okmate build knowledge -o dist/knowledge
+okmate view knowledge --no-window
+okmate roots --format json --no-sync
+okmate sync
+```
+
+`--format json` is the machine-readable form for `check`, `roots`, and
+`timings`. `inspect` and `search` already emit JSON.
+
+Place `--profile` before the `catalog`, `concept`, or `graph` target.
+
+## One root at a time
+
+Pass the bundle directory (or a path the CLI resolves to a root). Do not
+expect a single invocation to search every configured root. See
+[Multiple bundles](/docs/multiple-bundles/).
+
+## Preview ports
+
+`view` serves localhost. With a window, `--port` defaults to `auto`.
+`--no-window` defaults to `8000`. `--public` binds every interface. Settings
+POST is loopback-only.

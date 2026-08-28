@@ -7,3 +7,16 @@
 }
 
 # Docs
+
+OKMate is the application for Open Knowledge Format bundles. These pages are
+the human manual. Visiting agents should start at [Agents](/agents/).
+
+:card-grid.begin
+    :link-card[page: "docs/install", title: "Install", summary: "Homebrew cask, cargo, and the macOS app zip — command blocks stay in the README."]
+    :link-card[page: "docs/first-bundle", title: "First bundle", summary: "Open the in-repo knowledge tree and run check, inspect, and search."]
+    :link-card[page: "docs/git-ownership", title: "Git ownership", summary: "Writable directories versus read-only git snapshots."]
+    :link-card[page: "docs/multiple-bundles", title: "Multiple bundles", summary: "List roots, then run one-root commands."]
+    :link-card[page: "docs/cli", title: "CLI", summary: "check, inspect, search, build, view, roots, and sync."]
+    :link-card[page: "docs/desktop", title: "Desktop", summary: "OKMate.app window, live preview, and what Sparkle updates."]
+    :link-card[page: "docs/okf", title: "OKF", summary: "The format, the okf crate, and the okmate app."]
+:card-grid.end
