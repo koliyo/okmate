@@ -14,7 +14,7 @@ fn build_writes_engine_catalog_html_landmarks_and_pages_json() {
         valid_strict_concept(
             "Hello",
             "",
-            "Intro paragraph.\n\n## Details\n\nMore about the concept.\n",
+            "Intro paragraph.\n\n## Details\n\nMore about the concept.\n\n| Lane | Job |\n| --- | --- |\n| Home | Cards |\n",
         ),
     )
     .unwrap();
@@ -82,6 +82,8 @@ fn build_writes_engine_catalog_html_landmarks_and_pages_json() {
     assert!(concept.contains("generated"), "{concept}");
     assert!(concept.contains("Test concept Hello"), "{concept}");
     assert!(concept.contains("Owners"), "{concept}");
+    assert!(concept.contains("okmate-md-table"), "{concept}");
+    assert!(concept.contains("<table>"), "{concept}");
 
     let stale = fs::read_to_string(output.join("stale").join("index.html")).unwrap();
     assert!(stale.contains("okmate-badge-stale"), "{stale}");
@@ -122,13 +124,17 @@ fn build_writes_engine_catalog_html_landmarks_and_pages_json() {
     assert!(css.contains("pointer-events: none"), "{css}");
     assert!(css.contains("66ch"), "{css}");
     assert!(css.contains(".okmate-col-resizer"), "{css}");
+    assert!(css.contains(".okmate-md-table"), "{css}");
+    assert!(css.contains(".okmate-table-resizer"), "{css}");
     assert!(css.contains(".okmate-toc-link.is-current"), "{css}");
     assert!(css.contains(".okmate-recents-list"), "{css}");
     assert!(css.contains("flex-direction: column"), "{css}");
     assert!(output.join("__okmate").join("resize.js").is_file());
+    assert!(output.join("__okmate").join("tables.js").is_file());
     assert!(output.join("__okmate").join("reading.js").is_file());
     assert!(output.join("__okmate").join("toc.js").is_file());
     assert!(home.contains("/__okmate/resize.js"), "{home}");
+    assert!(home.contains("/__okmate/tables.js"), "{home}");
     assert!(home.contains("/__okmate/reading.js"), "{home}");
     assert!(!home.contains("font-size: 110%"), "{home}");
     assert!(!home.contains("data-okmate-wrap=\"off\""), "{home}");

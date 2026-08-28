@@ -392,6 +392,77 @@ html[data-okmate-wrap="off"] #okmate-main pre {
 #okmate-main p { margin: 0 0 1rem; }
 #okmate-main ul, #okmate-main ol { margin: 0 0 1rem; padding-left: 1.4rem; }
 
+#okmate-main .okmate-md-table {
+  position: relative;
+  max-width: 100%;
+  margin: 1rem 0 1.5rem;
+  overflow-x: auto;
+}
+#okmate-main .okmate-md-table table {
+  width: 100%;
+  border-collapse: collapse;
+  table-layout: auto;
+  overflow-wrap: normal;
+  word-break: normal;
+}
+#okmate-main .okmate-md-table th,
+#okmate-main .okmate-md-table td {
+  vertical-align: top;
+  text-align: left;
+  padding: 0.45rem 0.65rem;
+  border: 1px solid var(--rd-border);
+  overflow-wrap: break-word;
+  word-break: normal;
+}
+#okmate-main .okmate-md-table th {
+  font-weight: 650;
+  background: color-mix(in srgb, var(--rd-bg-subtle) 70%, transparent);
+}
+#okmate-main .okmate-md-table th:first-child,
+#okmate-main .okmate-md-table td:first-child {
+  white-space: nowrap;
+}
+#okmate-main .okmate-md-table code {
+  padding: 0.1em 0.35em;
+  border-radius: 0.25rem;
+  background: var(--rd-bg-subtle);
+  font-size: 0.88em;
+  white-space: normal;
+}
+html[data-okmate-wrap="off"] #okmate-main .okmate-md-table,
+html[data-okmate-wrap="off"] #okmate-main .okmate-md-table th,
+html[data-okmate-wrap="off"] #okmate-main .okmate-md-table td {
+  white-space: normal;
+}
+html[data-okmate-wrap="off"] #okmate-main .okmate-md-table th:first-child,
+html[data-okmate-wrap="off"] #okmate-main .okmate-md-table td:first-child {
+  white-space: nowrap;
+}
+
+.okmate-table-resizer {
+  position: absolute;
+  top: 0;
+  width: 11px;
+  z-index: 3;
+  cursor: col-resize;
+  touch-action: none;
+  background: transparent;
+}
+.okmate-table-resizer::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 5px;
+  width: 1px;
+  background: transparent;
+}
+.okmate-table-resizer:hover::after,
+.okmate-table-resizer:focus-visible::after,
+.okmate-table-resizer.is-active::after {
+  background: var(--rd-primary);
+}
+
 .okmate-toc {
   box-sizing: border-box;
   min-width: 0;
@@ -881,7 +952,8 @@ html[data-okmate-wrap="off"] #okmate-main pre {
     overflow: visible;
   }
   .okmate-toc,
-  .okmate-col-resizer { display: none; }
+  .okmate-col-resizer,
+  .okmate-table-resizer { display: none; }
   .okmate-chrome { max-height: none; }
   .okmate-nav-menu { display: block; margin-bottom: 0.75rem; }
   .okmate-desktop-nav { display: none; }
