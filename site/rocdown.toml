@@ -1,6 +1,7 @@
 [site]
 title = "OKMate"
 description = "OKMate is an open-source OKF knowledge tool."
+base_url = "https://koliyo.github.io/okmate"
 language = "en"
 repository = "https://github.com/koliyo/okmate"
 social_image = "/assets/og.png"
