@@ -809,10 +809,12 @@ mod tests {
     #[test]
     fn restored_location_keeps_valid_route_and_drops_unknown() {
         let workspace = Workspace::empty();
-        let mut session = Session::default();
-        session.open_path = Some("/review/".into());
-        session.open_hash = Some("queue".into());
-        session.main_scroll = Some(40);
+        let mut session = Session {
+            open_path: Some("/review/".into()),
+            open_hash: Some("queue".into()),
+            main_scroll: Some(40),
+            ..Session::default()
+        };
         let (path, hash, scroll) = restored_view_location(&workspace, &session, false, "/");
         assert_eq!(path, "/review/");
         assert_eq!(hash.as_deref(), Some("queue"));
