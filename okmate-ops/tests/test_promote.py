@@ -48,17 +48,22 @@ def test_release_command_routes(monkeypatch) -> None:
     called: list[str] = []
     monkeypatch.setattr(
         "okmate_ops.promote.promote_tag",
-        lambda tag, from_ref="main", force=False: called.append(f"{tag}:{from_ref}:{force}") or 0,
+        lambda tag, from_ref="main", force=False, dry_run=False: called.append(
+            f"{tag}:{from_ref}:{force}:{dry_run}"
+        )
+        or 0,
     )
     assert release_command(["v1.2.3"]) == 0
     assert release_command(["v1.2.3", "--from", "release"]) == 0
     assert release_command(["v1.2.3", "--force"]) == 0
     assert release_command(["patch"]) == 0
+    assert release_command(["patch", "--dry-run"]) == 0
     assert called == [
-        "v1.2.3:main:False",
-        "v1.2.3:release:False",
-        "v1.2.3:main:True",
-        "patch:main:False",
+        "v1.2.3:main:False:False",
+        "v1.2.3:release:False:False",
+        "v1.2.3:main:True:False",
+        "patch:main:False:False",
+        "patch:main:False:True",
     ]
 
 
@@ -66,12 +71,15 @@ def test_promote_command_routes(monkeypatch, capsys) -> None:
     called: list[str] = []
     monkeypatch.setattr(
         "okmate_ops.promote.promote_tag",
-        lambda tag, from_ref="main", force=False: called.append(f"{tag}:{from_ref}:{force}") or 0,
+        lambda tag, from_ref="main", force=False, dry_run=False: called.append(
+            f"{tag}:{from_ref}:{force}:{dry_run}"
+        )
+        or 0,
     )
     assert promote_command(["tag", "v1.2.3"]) == 0
     assert promote_command(["tag", "v1.2.3", "--from", "release"]) == 0
     assert promote_command(["tag", "v1.2.3", "--force"]) == 0
-    assert called == ["v1.2.3:main:False", "v1.2.3:release:False", "v1.2.3:main:True"]
+    assert called == ["v1.2.3:main:False:False", "v1.2.3:release:False:False", "v1.2.3:main:True:False"]
     assert capsys.readouterr().err == PROMOTE_DEPRECATED * 3
 
 
@@ -282,6 +290,48 @@ def test_push_tap_version_commits_and_pushes(tmp_path: Path, monkeypatch) -> Non
     subprocess.run(["git", "clone", str(origin), str(checkout)], check=True)
     assert tap_files_match(checkout, "2.3.4")
     push_tap_version("2.3.4")
+
+
+def test_promote_tag_dry_run_does_not_push(monkeypatch, tmp_path, capsys) -> None:
+    calls: list[list[str]] = []
+    cargo = 'version = "1.2.3"\n'
+    lock = (
+        '[[package]]\nname = "okf"\nversion = "1.2.3"\n\n'
+        '[[package]]\nname = "okmate"\nversion = "1.2.3"\n'
+    )
+
+    def capture(argv, cwd=None):
+        if argv[:2] == ["git", "rev-parse"]:
+            return type("Result", (), {"returncode": 0, "stdout": "abc\n"})()
+        path = argv[2].split(":", 1)[1]
+        if path == "Cargo.lock":
+            return _show_result(lock)
+        return _show_result(cargo)
+
+    monkeypatch.setattr("okmate_ops.promote.repo_root", lambda: tmp_path)
+    monkeypatch.setattr("okmate_ops.promote.git_capture", capture)
+    monkeypatch.setattr(
+        "okmate_ops.promote.run",
+        lambda argv, cwd=None: calls.append(list(argv)),
+    )
+    monkeypatch.setattr(
+        "okmate_ops.promote.push_version_update",
+        lambda *args, **kwargs: (_ for _ in ()).throw(AssertionError("dry-run must not bump")),
+    )
+    monkeypatch.setattr(
+        "okmate_ops.promote.wait_for_promote_ci",
+        lambda sha: (_ for _ in ()).throw(AssertionError("dry-run must not wait")),
+    )
+    monkeypatch.setattr(
+        "okmate_ops.promote.push_tap_version",
+        lambda version: (_ for _ in ()).throw(AssertionError("dry-run must not bump the tap")),
+    )
+
+    assert promote_tag("v1.2.3", dry_run=True) == 0
+    assert calls == [["git", "fetch", "origin", "refs/heads/main:refs/remotes/origin/main"]]
+    out = capsys.readouterr().out
+    assert "okmate-ops release v1.2.3" in out
+    assert "dry-run: release files match=true" in out
 
 
 def test_promote_tag_requires_v_prefix_or_dev() -> None:

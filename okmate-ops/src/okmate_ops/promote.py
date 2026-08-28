@@ -19,6 +19,7 @@ from okmate_ops.version import (
     apply_cask_version,
     apply_release_version,
     crate_versions,
+    first_package_version,
     next_release_version,
     parse_release_version,
     release_files_match,
@@ -26,10 +27,13 @@ from okmate_ops.version import (
 )
 
 RELEASE_USAGE = (
-    "usage: okmate-ops release <patch|minor|major|vX.Y.Z|dev> [--from BRANCH] [--force]"
+    "usage: okmate-ops release <patch|minor|major|vX.Y.Z|dev> "
+    "[--from BRANCH] [--force] [--dry-run]"
 )
 PROMOTE_USAGE = "usage: okmate-ops promote tag"
-PROMOTE_TAG_USAGE = "usage: okmate-ops promote tag <tag> [--from BRANCH] [--force]"
+PROMOTE_TAG_USAGE = (
+    "usage: okmate-ops promote tag <tag> [--from BRANCH] [--force] [--dry-run]"
+)
 PROMOTE_DEPRECATED = "okmate-ops promote tag is deprecated; use okmate-ops release\n"
 
 
@@ -134,7 +138,25 @@ def resolve_release_tag(spec: str, sha: str) -> str:
     return spec
 
 
-def promote_tag(spec: str, from_ref: str = "main", *, force: bool = False) -> int:
+def release_files_match_at_sha(sha: str, version: str) -> bool:
+    cargo = git_show(sha, CARGO_TOML)
+    okf = git_show(sha, OKF_CARGO_TOML)
+    lock = git_show(sha, CARGO_LOCK)
+    return (
+        first_package_version(cargo) == version
+        and first_package_version(okf) == version
+        and f'name = "okmate"\nversion = "{version}"' in lock
+        and f'name = "okf"\nversion = "{version}"' in lock
+    )
+
+
+def promote_tag(
+    spec: str,
+    from_ref: str = "main",
+    *,
+    force: bool = False,
+    dry_run: bool = False,
+) -> int:
     if spec not in ("dev", *BUMP_LEVELS):
         parse_release_version(spec)
     run(
@@ -153,6 +175,13 @@ def promote_tag(spec: str, from_ref: str = "main", *, force: bool = False) -> in
     tag = resolve_release_tag(spec, sha)
     print(f"okmate-ops release {tag}", flush=True)
     movable = tag == "dev"
+    if dry_run:
+        if movable:
+            print("dry-run: would move dev", flush=True)
+        else:
+            matched = release_files_match_at_sha(sha, parse_release_version(tag))
+            print(f"dry-run: release files match={str(matched).lower()}", flush=True)
+        return 0
     if not movable:
         sha = push_version_update(parse_release_version(tag), from_ref, sha)
     wait_for_promote_ci(sha)
@@ -168,10 +197,11 @@ def promote_tag(spec: str, from_ref: str = "main", *, force: bool = False) -> in
     return 0
 
 
-def parse_tag_argv(argv: list[str], usage: str) -> tuple[str, str, bool]:
+def parse_tag_argv(argv: list[str], usage: str) -> tuple[str, str, bool, bool]:
     from_ref = "main"
     tag: str | None = None
     force = False
+    dry_run = False
     i = 0
     while i < len(argv):
         if argv[i] == "--from":
@@ -184,27 +214,31 @@ def parse_tag_argv(argv: list[str], usage: str) -> tuple[str, str, bool]:
             force = True
             i += 1
             continue
+        if argv[i] == "--dry-run":
+            dry_run = True
+            i += 1
+            continue
         if tag is not None:
             raise SystemExit(usage)
         tag = argv[i]
         i += 1
     if tag is None:
         raise SystemExit(usage)
-    return tag, from_ref, force
+    return tag, from_ref, force, dry_run
 
 
 def release_command(argv: list[str]) -> int:
     if not argv or argv[0] in ("-h", "--help"):
         raise SystemExit(RELEASE_USAGE)
-    tag, from_ref, force = parse_tag_argv(argv, RELEASE_USAGE)
-    return promote_tag(tag, from_ref=from_ref, force=force)
+    tag, from_ref, force, dry_run = parse_tag_argv(argv, RELEASE_USAGE)
+    return promote_tag(tag, from_ref=from_ref, force=force, dry_run=dry_run)
 
 
 def promote_tag_command(argv: list[str]) -> int:
     if not argv or argv[0] in ("-h", "--help"):
         raise SystemExit(PROMOTE_TAG_USAGE)
-    tag, from_ref, force = parse_tag_argv(argv, PROMOTE_TAG_USAGE)
-    return promote_tag(tag, from_ref=from_ref, force=force)
+    tag, from_ref, force, dry_run = parse_tag_argv(argv, PROMOTE_TAG_USAGE)
+    return promote_tag(tag, from_ref=from_ref, force=force, dry_run=dry_run)
 
 
 def promote_command(argv: list[str]) -> int:
