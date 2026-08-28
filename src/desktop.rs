@@ -1,10 +1,11 @@
 use anyhow::{Context, Result};
 
-const PICK_FOLDER_ALIAS: &str = r#"
-window.addEventListener("h35-pick-folder", function (event) {
-  window.dispatchEvent(new CustomEvent("okmate-pick-folder", { detail: event.detail }));
-});
-"#;
+const PICK_FOLDER_ALIAS: &str = concat!(
+    "window.__h35FindRoot = '#okmate-main';\n",
+    "window.addEventListener('h35-pick-folder', function (event) {\n",
+    "  window.dispatchEvent(new CustomEvent('okmate-pick-folder', { detail: event.detail }));\n",
+    "});\n",
+);
 
 const APP_ICON: &[u8] = include_bytes!("../assets/brand/okmate-app-icon-macos.png");
 
@@ -54,6 +55,7 @@ mod tests {
     fn pick_folder_alias_forwards_h35_event() {
         assert!(PICK_FOLDER_ALIAS.contains("h35-pick-folder"));
         assert!(PICK_FOLDER_ALIAS.contains("okmate-pick-folder"));
+        assert!(PICK_FOLDER_ALIAS.contains("window.__h35FindRoot = '#okmate-main'"));
     }
 
     #[test]
