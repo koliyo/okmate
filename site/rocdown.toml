@@ -13,6 +13,9 @@ footer = "Experimental software — not a production-ready platform."
 output = "../dist/site"
 assets = "assets"
 
+[snippets]
+roots = ["../.agents/skills/manage-okmate-knowledge"]
+
 [[nav]]
 label = "Docs"
 
@@ -34,7 +37,12 @@ label = "Agents"
 
 [[nav.groups]]
 label = "Start"
-items = ["agents/index"]
+items = [
+    "agents/index",
+    "agents/install",
+    "agents/skills",
+    "agents/cli",
+]
 
 [[nav]]
 label = "Project"

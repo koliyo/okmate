@@ -1,0 +1,36 @@
+@page {
+    layout: "docs",
+    meta: {
+        title: "Agent install",
+        description: "Install the okmate CLI so an agent can check, inspect, and search one OKF root.",
+    },
+}
+
+# Agent install
+
+Humans should use the [Docs install](/docs/install/) page and the repository
+[README](https://github.com/koliyo/okmate/blob/main/README.md#install-okmateapp-macos).
+Agents need the `okmate` binary.
+
+## Preferred
+
+1. Clone [github.com/koliyo/okmate](https://github.com/koliyo/okmate).
+2. From the repo root:
+
+```sh
+cargo run -q --no-default-features -p okmate -- check knowledge --profile strict --format json
+```
+
+Or install the CLI with the maintainer helper documented in
+[Development](https://github.com/koliyo/okmate/blob/main/README.md#development):
+`uv run --no-dev okmate-ops install cli`.
+
+## Confirm
+
+```sh
+okmate roots --format paths
+okmate check knowledge --profile strict --format json
+```
+
+If several roots are configured, pick **one** path from `roots --format paths`
+before `check` / `inspect` / `search`.
