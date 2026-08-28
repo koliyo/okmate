@@ -8,6 +8,8 @@ the same change.
 ## 2026-08-28
 
 - Drafted paired research and plan for the OKMate product website (Rocdown static site, git/OKF/multi-bundle positioning, first-class `/agents/` and `/llms.txt`). Exploratory; do not log complete until hosted CI succeeds.
+- Expanded agent-dev landscape research into agent knowledge management (Karpathy LLM wiki, DeepWiki, Basic Memory, Letta MemFS, llms.txt, Glean/Unblocked/Rovo, PKM MCP). Exploratory; do not log complete until hosted CI succeeds.
+- Drafted research comparing OKMate to Linear, Zed Delta, Beads, AGENTS.md, and agent-memory tools, and assessing adoption for agent-driven development. Exploratory; do not log complete until hosted CI succeeds.
 - Drafted research on using Leptos instead of Askama and Datastar for the okmate viewer (SSR-only vs islands vs hydrate). Exploratory; do not log complete until hosted CI succeeds.
 - Drafted paired research and plan for the release version workflow (`promote tag` → `okmate-ops release` with patch/minor/major; no commit-message auto-tag). Exploratory; do not log complete until hosted CI succeeds.
 
