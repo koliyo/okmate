@@ -18,12 +18,10 @@ concurrency:
 
 permissions:
   contents: read
-  pages: write
-  id-token: write
 
 env:
   # Pinned rocci revision that provides `rocdown` (rocci-rocdown-cli).
-  ROCCI_REV: 0cd2e4d9f51bcee10c1b85863a9f79c765c4bd03
+  ROCCI_REV: 05a4179665c2b55d7d41450cd3e52c36859822f2
   ROC_NIGHTLY_DATE: "2026-08-23"
   ROC_NIGHTLY_SHA: fb208ba
 
@@ -77,22 +75,6 @@ jobs:
         run: |
           rocdown check site
           rocdown build site --output dist/site
-          python3 site/gh-pages-prefix.py dist/site
-          touch dist/site/.nojekyll
+          cp site/llms.txt dist/site/llms.txt
           test -f dist/site/llms.txt
           test -d dist/site/agents
-      - uses: actions/upload-pages-artifact@v3
-        with:
-          path: dist/site
-
-  deploy:
-    name: Deploy GitHub Pages
-    needs: build
-    if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/website')
-    runs-on: ubuntu-latest
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
-    steps:
-      - id: deployment
-        uses: actions/deploy-pages@v4

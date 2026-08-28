@@ -10,7 +10,8 @@
 
 These **Agents** pages and the site `/llms.txt` are the setup path for
 visiting agents and for people wiring agents into a repo. Read `/llms.txt`
-first. Do not scrape the human [Docs](/docs/) lane for that sequence.
+first (authored in `site/llms.txt`). Do not scrape the human [Docs](/docs/)
+lane for that sequence.
 
 OKMate has no MCP server and no hosted query API.
 

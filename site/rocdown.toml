@@ -1,6 +1,6 @@
 [site]
 title = "OKMate"
-description = "OKMate is an open-source OKF knowledge tool."
+description = "Open-source OKF knowledge tool: humans and agents share git-owned Markdown bundles. Start at /llms.txt, then /agents/."
 base_url = "https://koliyo.github.io/okmate"
 language = "en"
 repository = "https://github.com/koliyo/okmate"
