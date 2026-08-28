@@ -1,6 +1,7 @@
 /target
 /dist
 .venv
+assets/brand/.iconset-build/
 __pycache__/
 *.py[cod]
 .DS_Store

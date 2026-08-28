@@ -6,7 +6,7 @@ window.addEventListener("h35-pick-folder", function (event) {
 });
 "#;
 
-const APP_ICON: &[u8] = include_bytes!("../assets/brand/okmate-app-icon.png");
+const APP_ICON: &[u8] = include_bytes!("../assets/brand/okmate-app-icon-macos.png");
 
 pub fn run(options: crate::preview::ViewOptions) -> Result<()> {
     let (tx, rx) = std::sync::mpsc::channel();
@@ -59,6 +59,10 @@ mod tests {
     #[test]
     fn desktop_host_embeds_the_okmate_icon() {
         assert!(APP_ICON.starts_with(b"\x89PNG\r\n\x1a\n"));
+        assert_eq!(
+            APP_ICON[25], 6,
+            "macOS dock icon must be RGBA so corners can be transparent"
+        );
     }
 
     #[test]
