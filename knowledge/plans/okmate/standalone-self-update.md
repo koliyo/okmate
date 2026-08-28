@@ -55,7 +55,7 @@ sources:
     author: process:git
     last_modified: 2026-08-26
   - id: promote
-    resource: ../../../okmate-ops/src/okmate_ops/promote.py
+    resource: ../../../okmate-ops/src/okmate_ops/release.py
     title: promote tag after hosted Test
     author: process:git
     last_modified: 2026-08-27

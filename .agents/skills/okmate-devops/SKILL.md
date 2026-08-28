@@ -26,7 +26,8 @@ commands.
      Runs `okmate-ops release` (same version commit → Test → tag → tap
      path as localhost). After a `GITHUB_TOKEN` push, it dispatches
      `ci.yml` (token pushes do not start `on: push` workflows) and
-     waits for those checks. Versioned cuts need repository secret
+     waits for those checks. After the tag push it dispatches
+     `release.yml` from that tag (same token rule). Versioned cuts need repository secret
      `HOMEBREW_TAP_TOKEN`. Do not attach this job to the `release`
      environment; `main` is not allowed to deploy there.
    - `.github/workflows/release.yml` — tag push (`v*`, `dev`) or

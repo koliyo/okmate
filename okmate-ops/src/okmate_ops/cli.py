@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import sys
 
-from okmate_ops import ci, local, pr_checkout, promote
+from okmate_ops import ci, local, pr_checkout, release
 
 USAGE = """\
 usage: okmate-ops <command> [args...]
@@ -36,7 +36,7 @@ def main(argv: list[str] | None = None) -> None:
     if command == "pr-checkout":
         raise SystemExit(pr_checkout.main(rest))
     if command == "release":
-        raise SystemExit(promote.release_command(rest))
+        raise SystemExit(release.release_command(rest))
     sys.stderr.write(f"unknown command: {command}\n")
     sys.stderr.write(USAGE)
     raise SystemExit(2)

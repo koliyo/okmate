@@ -20,7 +20,7 @@ sources:
     author: process:cursor
     last_modified: 2026-08-27
   - id: promote
-    resource: ../../../okmate-ops/src/okmate_ops/promote.py
+    resource: ../../../okmate-ops/src/okmate_ops/release.py
     title: release after version commit
     author: process:cursor
     last_modified: 2026-08-27

@@ -2,13 +2,13 @@ import subprocess
 from pathlib import Path
 
 from okmate_ops.ghutil import DEFAULT_CHECKS
-from okmate_ops.promote import (
+from okmate_ops.release import (
     RELEASE_USAGE,
-    promote_tag,
+    run_release,
     push_tap_version,
     push_version_update,
     release_command,
-    wait_for_promote_ci,
+    wait_for_release_ci,
 )
 from okmate_ops.version import CASK, first_package_version, release_files_match, tap_files_match
 
@@ -25,7 +25,7 @@ def test_release_usage() -> None:
 def test_release_command_routes(monkeypatch) -> None:
     called: list[str] = []
     monkeypatch.setattr(
-        "okmate_ops.promote.promote_tag",
+        "okmate_ops.release.run_release",
         lambda tag, from_ref="main", force=False, dry_run=False: called.append(
             f"{tag}:{from_ref}:{force}:{dry_run}"
         )
@@ -45,30 +45,54 @@ def test_release_command_routes(monkeypatch) -> None:
     ]
 
 
-def test_promote_tag_pushes_version_then_tags(monkeypatch, tmp_path) -> None:
+def test_run_release_dispatches_release_from_actions(monkeypatch, tmp_path) -> None:
+    released: list[str] = []
+    monkeypatch.setenv("GITHUB_ACTIONS", "true")
+    monkeypatch.setattr("okmate_ops.release.repo_root", lambda: tmp_path)
+    monkeypatch.setattr(
+        "okmate_ops.release.git_capture",
+        lambda *args, **kwargs: type("Result", (), {"returncode": 0, "stdout": "abc\n"})(),
+    )
+    monkeypatch.setattr("okmate_ops.release.run", lambda argv, cwd=None: None)
+    monkeypatch.setattr(
+        "okmate_ops.release.push_version_update",
+        lambda version, from_ref, remote_sha: "newsha",
+    )
+    monkeypatch.setattr(
+        "okmate_ops.release.wait_for_release_ci",
+        lambda sha, from_ref="main": None,
+    )
+    monkeypatch.setattr("okmate_ops.release.dispatch_hosted_release", released.append)
+    monkeypatch.setattr("okmate_ops.release.push_tap_version", lambda version: None)
+    assert run_release("v1.2.3") == 0
+    assert released == ["v1.2.3"]
+
+
+def test_run_release_pushes_version_then_tags(monkeypatch, tmp_path) -> None:
     calls: list[list[str]] = []
     waited: list[str] = []
-    monkeypatch.setattr("okmate_ops.promote.repo_root", lambda: tmp_path)
+    monkeypatch.delenv("GITHUB_ACTIONS", raising=False)
+    monkeypatch.setattr("okmate_ops.release.repo_root", lambda: tmp_path)
     monkeypatch.setattr(
-        "okmate_ops.promote.git_capture",
+        "okmate_ops.release.git_capture",
         lambda *args, **kwargs: type("Result", (), {"returncode": 0, "stdout": "abc\n"})(),
     )
     monkeypatch.setattr(
-        "okmate_ops.promote.run",
+        "okmate_ops.release.run",
         lambda argv, cwd=None: calls.append(list(argv)),
     )
     monkeypatch.setattr(
-        "okmate_ops.promote.push_version_update",
+        "okmate_ops.release.push_version_update",
         lambda version, from_ref, remote_sha: f"{version}:{from_ref}:{remote_sha}",
     )
     monkeypatch.setattr(
-        "okmate_ops.promote.wait_for_promote_ci",
+        "okmate_ops.release.wait_for_release_ci",
         lambda sha, from_ref="main": waited.append(sha),
     )
     taps: list[str] = []
-    monkeypatch.setattr("okmate_ops.promote.push_tap_version", taps.append)
+    monkeypatch.setattr("okmate_ops.release.push_tap_version", taps.append)
 
-    assert promote_tag("v1.2.3") == 0
+    assert run_release("v1.2.3") == 0
     assert waited == ["1.2.3:main:abc"]
     assert taps == ["1.2.3"]
     assert calls == [
@@ -78,28 +102,29 @@ def test_promote_tag_pushes_version_then_tags(monkeypatch, tmp_path) -> None:
     ]
 
 
-def test_promote_tag_force_overwrites_versioned_tag(monkeypatch, tmp_path) -> None:
+def test_run_release_force_overwrites_versioned_tag(monkeypatch, tmp_path) -> None:
     calls: list[list[str]] = []
-    monkeypatch.setattr("okmate_ops.promote.repo_root", lambda: tmp_path)
+    monkeypatch.delenv("GITHUB_ACTIONS", raising=False)
+    monkeypatch.setattr("okmate_ops.release.repo_root", lambda: tmp_path)
     monkeypatch.setattr(
-        "okmate_ops.promote.git_capture",
+        "okmate_ops.release.git_capture",
         lambda *args, **kwargs: type("Result", (), {"returncode": 0, "stdout": "abc\n"})(),
     )
     monkeypatch.setattr(
-        "okmate_ops.promote.run",
+        "okmate_ops.release.run",
         lambda argv, cwd=None: calls.append(list(argv)),
     )
     monkeypatch.setattr(
-        "okmate_ops.promote.push_version_update",
+        "okmate_ops.release.push_version_update",
         lambda version, from_ref, remote_sha: "newsha",
     )
     monkeypatch.setattr(
-        "okmate_ops.promote.wait_for_promote_ci",
+        "okmate_ops.release.wait_for_release_ci",
         lambda sha, from_ref="main": None,
     )
-    monkeypatch.setattr("okmate_ops.promote.push_tap_version", lambda version: None)
+    monkeypatch.setattr("okmate_ops.release.push_tap_version", lambda version: None)
 
-    assert promote_tag("v1.2.3", force=True) == 0
+    assert run_release("v1.2.3", force=True) == 0
     assert calls == [
         ["git", "fetch", "origin", "refs/heads/main:refs/remotes/origin/main"],
         ["git", "tag", "-a", "-f", "v1.2.3", "-m", "v1.2.3", "newsha"],
@@ -107,31 +132,32 @@ def test_promote_tag_force_overwrites_versioned_tag(monkeypatch, tmp_path) -> No
     ]
 
 
-def test_promote_tag_force_moves_dev(monkeypatch, tmp_path) -> None:
+def test_run_release_force_moves_dev(monkeypatch, tmp_path) -> None:
     calls: list[list[str]] = []
-    monkeypatch.setattr("okmate_ops.promote.repo_root", lambda: tmp_path)
+    monkeypatch.delenv("GITHUB_ACTIONS", raising=False)
+    monkeypatch.setattr("okmate_ops.release.repo_root", lambda: tmp_path)
     monkeypatch.setattr(
-        "okmate_ops.promote.git_capture",
+        "okmate_ops.release.git_capture",
         lambda *args, **kwargs: type("Result", (), {"returncode": 0, "stdout": "abc\n"})(),
     )
     monkeypatch.setattr(
-        "okmate_ops.promote.run",
+        "okmate_ops.release.run",
         lambda argv, cwd=None: calls.append(list(argv)),
     )
     monkeypatch.setattr(
-        "okmate_ops.promote.wait_for_promote_ci",
+        "okmate_ops.release.wait_for_release_ci",
         lambda sha, from_ref="main": None,
     )
     monkeypatch.setattr(
-        "okmate_ops.promote.push_version_update",
+        "okmate_ops.release.push_version_update",
         lambda *args, **kwargs: (_ for _ in ()).throw(AssertionError("dev must not bump versions")),
     )
     monkeypatch.setattr(
-        "okmate_ops.promote.push_tap_version",
+        "okmate_ops.release.push_tap_version",
         lambda *args, **kwargs: (_ for _ in ()).throw(AssertionError("dev must not bump the tap")),
     )
 
-    assert promote_tag("dev") == 0
+    assert run_release("dev") == 0
     assert calls == [
         ["git", "fetch", "origin", "refs/heads/main:refs/remotes/origin/main"],
         ["git", "tag", "-a", "-f", "dev", "-m", "dev", "abc"],
@@ -139,27 +165,27 @@ def test_promote_tag_force_moves_dev(monkeypatch, tmp_path) -> None:
     ]
 
 
-def test_promote_tag_does_not_push_when_ci_fails(monkeypatch, tmp_path) -> None:
+def test_run_release_does_not_push_when_ci_fails(monkeypatch, tmp_path) -> None:
     calls: list[list[str]] = []
-    monkeypatch.setattr("okmate_ops.promote.repo_root", lambda: tmp_path)
+    monkeypatch.setattr("okmate_ops.release.repo_root", lambda: tmp_path)
     monkeypatch.setattr(
-        "okmate_ops.promote.git_capture",
+        "okmate_ops.release.git_capture",
         lambda *args, **kwargs: type("Result", (), {"returncode": 0, "stdout": "abc\n"})(),
     )
     monkeypatch.setattr(
-        "okmate_ops.promote.run",
+        "okmate_ops.release.run",
         lambda argv, cwd=None: calls.append(list(argv)),
     )
     monkeypatch.setattr(
-        "okmate_ops.promote.push_version_update",
+        "okmate_ops.release.push_version_update",
         lambda version, from_ref, remote_sha: "newsha",
     )
     monkeypatch.setattr(
-        "okmate_ops.promote.wait_for_promote_ci",
+        "okmate_ops.release.wait_for_release_ci",
         lambda sha, from_ref="main": (_ for _ in ()).throw(SystemExit(f"CI failed for {sha}")),
     )
     try:
-        promote_tag("v1.2.3")
+        run_release("v1.2.3")
     except SystemExit as exc:
         assert "newsha" in str(exc)
     else:
@@ -167,41 +193,41 @@ def test_promote_tag_does_not_push_when_ci_fails(monkeypatch, tmp_path) -> None:
     assert calls == [["git", "fetch", "origin", "refs/heads/main:refs/remotes/origin/main"]]
 
 
-def test_wait_for_promote_ci_waits_default_checks(monkeypatch) -> None:
+def test_wait_for_release_ci_waits_default_checks(monkeypatch) -> None:
     seen: list[str] = []
     dispatched: list[list[str]] = []
     monkeypatch.delenv("GITHUB_ACTIONS", raising=False)
-    monkeypatch.setattr("okmate_ops.promote.github_repo", lambda: "koliyo/okmate")
-    monkeypatch.setattr("okmate_ops.promote.gh_run", lambda args: type("R", (), {"stdout": ""})())
+    monkeypatch.setattr("okmate_ops.release.github_repo", lambda: "koliyo/okmate")
+    monkeypatch.setattr("okmate_ops.release.gh_run", lambda args: type("R", (), {"stdout": ""})())
     monkeypatch.setattr(
-        "okmate_ops.promote.dispatch_hosted_ci",
+        "okmate_ops.release.dispatch_hosted_ci",
         lambda from_ref: dispatched.append([from_ref]),
     )
     monkeypatch.setattr(
-        "okmate_ops.promote.wait_for_check",
+        "okmate_ops.release.wait_for_check",
         lambda **kwargs: seen.append(kwargs["check"]),
     )
-    wait_for_promote_ci("abc")
+    wait_for_release_ci("abc")
     assert dispatched == []
     assert seen == list(DEFAULT_CHECKS)
     assert DEFAULT_CHECKS == ("Code Formatting & Lints", "Test")
 
 
-def test_wait_for_promote_ci_dispatches_from_actions(monkeypatch) -> None:
+def test_wait_for_release_ci_dispatches_from_actions(monkeypatch) -> None:
     seen: list[str] = []
     dispatched: list[str] = []
     monkeypatch.setenv("GITHUB_ACTIONS", "true")
-    monkeypatch.setattr("okmate_ops.promote.github_repo", lambda: "koliyo/okmate")
-    monkeypatch.setattr("okmate_ops.promote.gh_run", lambda args: type("R", (), {"stdout": ""})())
+    monkeypatch.setattr("okmate_ops.release.github_repo", lambda: "koliyo/okmate")
+    monkeypatch.setattr("okmate_ops.release.gh_run", lambda args: type("R", (), {"stdout": ""})())
     monkeypatch.setattr(
-        "okmate_ops.promote.dispatch_hosted_ci",
+        "okmate_ops.release.dispatch_hosted_ci",
         lambda from_ref: dispatched.append(from_ref),
     )
     monkeypatch.setattr(
-        "okmate_ops.promote.wait_for_check",
+        "okmate_ops.release.wait_for_check",
         lambda **kwargs: seen.append(kwargs["check"]),
     )
-    wait_for_promote_ci("abc", from_ref="release")
+    wait_for_release_ci("abc", from_ref="release")
     assert dispatched == ["release"]
     assert seen == list(DEFAULT_CHECKS)
 
@@ -229,7 +255,7 @@ def test_push_version_update_commits_and_pushes(tmp_path: Path, monkeypatch) -> 
     _git(repo, "commit", "-m", "seed")
     _git(repo, "push", "origin", "HEAD:main")
     sha = _git(repo, "rev-parse", "HEAD").stdout.strip()
-    monkeypatch.setattr("okmate_ops.promote.repo_root", lambda: repo)
+    monkeypatch.setattr("okmate_ops.release.repo_root", lambda: repo)
 
     new_sha = push_version_update("2.3.4", "main", sha)
     assert new_sha != sha
@@ -274,14 +300,14 @@ def test_push_tap_version_commits_and_pushes(tmp_path: Path, monkeypatch) -> Non
     monkeypatch.setenv("GIT_CONFIG_GLOBAL", "/dev/null")
     monkeypatch.setenv("GIT_CONFIG_SYSTEM", "/dev/null")
     monkeypatch.setattr(
-        "okmate_ops.promote.run",
+        "okmate_ops.release.run",
         lambda argv, cwd=None: subprocess.run(argv, cwd=cwd, check=True),
     )
 
     def capture(argv, cwd=None):
         return subprocess.run(argv, cwd=cwd, capture_output=True, text=True)
 
-    monkeypatch.setattr("okmate_ops.promote.git_capture", capture)
+    monkeypatch.setattr("okmate_ops.release.git_capture", capture)
     push_tap_version("2.3.4")
     checkout = tmp_path / "check"
     subprocess.run(["git", "clone", str(origin), str(checkout)], check=True)
@@ -289,7 +315,7 @@ def test_push_tap_version_commits_and_pushes(tmp_path: Path, monkeypatch) -> Non
     push_tap_version("2.3.4")
 
 
-def test_promote_tag_dry_run_does_not_push(monkeypatch, tmp_path, capsys) -> None:
+def test_run_release_dry_run_does_not_push(monkeypatch, tmp_path, capsys) -> None:
     calls: list[list[str]] = []
     cargo = 'version = "1.2.3"\n'
     lock = (
@@ -305,35 +331,35 @@ def test_promote_tag_dry_run_does_not_push(monkeypatch, tmp_path, capsys) -> Non
             return _show_result(lock)
         return _show_result(cargo)
 
-    monkeypatch.setattr("okmate_ops.promote.repo_root", lambda: tmp_path)
-    monkeypatch.setattr("okmate_ops.promote.git_capture", capture)
+    monkeypatch.setattr("okmate_ops.release.repo_root", lambda: tmp_path)
+    monkeypatch.setattr("okmate_ops.release.git_capture", capture)
     monkeypatch.setattr(
-        "okmate_ops.promote.run",
+        "okmate_ops.release.run",
         lambda argv, cwd=None: calls.append(list(argv)),
     )
     monkeypatch.setattr(
-        "okmate_ops.promote.push_version_update",
+        "okmate_ops.release.push_version_update",
         lambda *args, **kwargs: (_ for _ in ()).throw(AssertionError("dry-run must not bump")),
     )
     monkeypatch.setattr(
-        "okmate_ops.promote.wait_for_promote_ci",
+        "okmate_ops.release.wait_for_release_ci",
         lambda sha: (_ for _ in ()).throw(AssertionError("dry-run must not wait")),
     )
     monkeypatch.setattr(
-        "okmate_ops.promote.push_tap_version",
+        "okmate_ops.release.push_tap_version",
         lambda version: (_ for _ in ()).throw(AssertionError("dry-run must not bump the tap")),
     )
 
-    assert promote_tag("v1.2.3", dry_run=True) == 0
+    assert run_release("v1.2.3", dry_run=True) == 0
     assert calls == [["git", "fetch", "origin", "refs/heads/main:refs/remotes/origin/main"]]
     out = capsys.readouterr().out
     assert "okmate-ops release v1.2.3" in out
     assert "dry-run: release files match=true" in out
 
 
-def test_promote_tag_requires_v_prefix_or_dev() -> None:
+def test_run_release_requires_v_prefix_or_dev() -> None:
     try:
-        promote_tag("1.2.3")
+        run_release("1.2.3")
     except SystemExit as exc:
         assert "dev" in str(exc)
     else:
@@ -344,9 +370,10 @@ def _show_result(text: str):
     return type("Result", (), {"returncode": 0, "stdout": text})()
 
 
-def test_promote_tag_patch_resolves_from_sha(monkeypatch, tmp_path, capsys) -> None:
+def test_run_release_patch_resolves_from_sha(monkeypatch, tmp_path, capsys) -> None:
     calls: list[list[str]] = []
     waited: list[str] = []
+    monkeypatch.delenv("GITHUB_ACTIONS", raising=False)
     cargo = 'version = "0.1.2"\n'
     lock = (
         '[[package]]\nname = "okf"\nversion = "0.1.2"\n\n'
@@ -361,24 +388,24 @@ def test_promote_tag_patch_resolves_from_sha(monkeypatch, tmp_path, capsys) -> N
             return _show_result(lock)
         return _show_result(cargo)
 
-    monkeypatch.setattr("okmate_ops.promote.repo_root", lambda: tmp_path)
-    monkeypatch.setattr("okmate_ops.promote.git_capture", capture)
+    monkeypatch.setattr("okmate_ops.release.repo_root", lambda: tmp_path)
+    monkeypatch.setattr("okmate_ops.release.git_capture", capture)
     monkeypatch.setattr(
-        "okmate_ops.promote.run",
+        "okmate_ops.release.run",
         lambda argv, cwd=None: calls.append(list(argv)),
     )
     monkeypatch.setattr(
-        "okmate_ops.promote.push_version_update",
+        "okmate_ops.release.push_version_update",
         lambda version, from_ref, remote_sha: f"{version}:{from_ref}:{remote_sha}",
     )
     monkeypatch.setattr(
-        "okmate_ops.promote.wait_for_promote_ci",
+        "okmate_ops.release.wait_for_release_ci",
         lambda sha, from_ref="main": waited.append(sha),
     )
     taps: list[str] = []
-    monkeypatch.setattr("okmate_ops.promote.push_tap_version", taps.append)
+    monkeypatch.setattr("okmate_ops.release.push_tap_version", taps.append)
 
-    assert promote_tag("patch") == 0
+    assert run_release("patch") == 0
     assert waited == ["0.1.3:main:abc"]
     assert taps == ["0.1.3"]
     assert calls == [
@@ -389,7 +416,7 @@ def test_promote_tag_patch_resolves_from_sha(monkeypatch, tmp_path, capsys) -> N
     assert "okmate-ops release v0.1.3" in capsys.readouterr().out
 
 
-def test_promote_tag_mismatched_crates_exit(monkeypatch, tmp_path) -> None:
+def test_run_release_mismatched_crates_exit(monkeypatch, tmp_path) -> None:
     def capture(argv, cwd=None):
         if argv[:2] == ["git", "rev-parse"]:
             return type("Result", (), {"returncode": 0, "stdout": "abc\n"})()
@@ -403,11 +430,11 @@ def test_promote_tag_mismatched_crates_exit(monkeypatch, tmp_path) -> None:
             )
         return _show_result('version = "0.1.2"\n')
 
-    monkeypatch.setattr("okmate_ops.promote.repo_root", lambda: tmp_path)
-    monkeypatch.setattr("okmate_ops.promote.git_capture", capture)
-    monkeypatch.setattr("okmate_ops.promote.run", lambda argv, cwd=None: None)
+    monkeypatch.setattr("okmate_ops.release.repo_root", lambda: tmp_path)
+    monkeypatch.setattr("okmate_ops.release.git_capture", capture)
+    monkeypatch.setattr("okmate_ops.release.run", lambda argv, cwd=None: None)
     try:
-        promote_tag("minor")
+        run_release("minor")
     except SystemExit as exc:
         assert "differ" in str(exc)
     else:

@@ -50,7 +50,7 @@ means strict owners and evidence, not that this repository is Rocci.[^readme]
 | Parse, graph, search, build artifacts | `okf/` |
 | CLI, live preview, Askama site, desktop | this crate |
 | Canonical product knowledge | `knowledge/` |
-| Local CI replay, promote, PR checkout | `okmate-ops` |
+| Local CI replay, release, PR checkout | `okmate-ops` |
 
 `check`, `inspect`, `search`, and `build` stay single-root. Agents list
 resolved folders first with `okmate roots --format paths`.[^readme]

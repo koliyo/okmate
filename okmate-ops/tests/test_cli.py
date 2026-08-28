@@ -11,7 +11,7 @@ def test_usage_lists_build_install_and_package() -> None:
 def test_main_routes_release(monkeypatch) -> None:
     seen: list[list[str]] = []
     monkeypatch.setattr(
-        "okmate_ops.promote.release_command",
+        "okmate_ops.release.release_command",
         lambda argv: seen.append(list(argv)) or 0,
     )
     try:

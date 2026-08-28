@@ -59,7 +59,11 @@ def dispatch_hosted_ci(from_ref: str) -> None:
     gh_run(["workflow", "run", "ci.yml", "--ref", from_ref])
 
 
-def wait_for_promote_ci(sha: str, from_ref: str = "main") -> None:
+def dispatch_hosted_release(tag: str) -> None:
+    gh_run(["workflow", "run", "release.yml", "--ref", tag, "-f", f"tag={tag}"])
+
+
+def wait_for_release_ci(sha: str, from_ref: str = "main") -> None:
     if os.environ.get("GITHUB_ACTIONS"):
         print(
             "GITHUB_TOKEN pushes do not start CI; dispatching ci.yml on "
@@ -155,7 +159,7 @@ def release_files_match_at_sha(sha: str, version: str) -> bool:
     )
 
 
-def promote_tag(
+def run_release(
     spec: str,
     from_ref: str = "main",
     *,
@@ -189,7 +193,7 @@ def promote_tag(
         return 0
     if not movable:
         sha = push_version_update(parse_release_version(tag), from_ref, sha)
-    wait_for_promote_ci(sha, from_ref=from_ref)
+    wait_for_release_ci(sha, from_ref=from_ref)
     tag_argv = ["git", "tag", "-a", tag, "-m", tag, sha]
     push_argv = ["git", "push", "origin", tag]
     if movable or force:
@@ -197,12 +201,19 @@ def promote_tag(
         push_argv = ["git", "push", "--force", "origin", tag]
     run(tag_argv)
     run(push_argv)
+    if os.environ.get("GITHUB_ACTIONS"):
+        print(
+            "GITHUB_TOKEN tag pushes do not start Release; dispatching "
+            f"release.yml on {tag}",
+            flush=True,
+        )
+        dispatch_hosted_release(tag)
     if not movable:
         push_tap_version(parse_release_version(tag))
     return 0
 
 
-def parse_tag_argv(argv: list[str], usage: str) -> tuple[str, str, bool, bool]:
+def parse_release_argv(argv: list[str], usage: str) -> tuple[str, str, bool, bool]:
     from_ref = "main"
     tag: str | None = None
     force = False
@@ -235,5 +246,5 @@ def parse_tag_argv(argv: list[str], usage: str) -> tuple[str, str, bool, bool]:
 def release_command(argv: list[str]) -> int:
     if not argv or argv[0] in ("-h", "--help"):
         raise SystemExit(RELEASE_USAGE)
-    tag, from_ref, force, dry_run = parse_tag_argv(argv, RELEASE_USAGE)
-    return promote_tag(tag, from_ref=from_ref, force=force, dry_run=dry_run)
+    tag, from_ref, force, dry_run = parse_release_argv(argv, RELEASE_USAGE)
+    return run_release(tag, from_ref=from_ref, force=force, dry_run=dry_run)

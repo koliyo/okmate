@@ -10,7 +10,7 @@ authority: exploratory
 owners: [human:nils]
 sources:
   - id: promote
-    resource: ../../../okmate-ops/src/okmate_ops/promote.py
+    resource: ../../../okmate-ops/src/okmate_ops/release.py
     title: Version commit, wait Test, tag, tap
     author: process:git
     last_modified: 2026-08-27
