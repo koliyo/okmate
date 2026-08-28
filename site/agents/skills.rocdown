@@ -1,0 +1,22 @@
+@page {
+    layout: "docs",
+    meta: {
+        title: "Agent skills",
+        description: "The manage-okmate-knowledge skill is the in-repo contract. Include or quote it; the GitHub blob is canonical.",
+    },
+}
+
+# Agent skills
+
+Skills stay at `.agents/skills/**/SKILL.md`. This site includes the file so
+the text cannot drift from the repository.
+
+Canonical URLs:
+
+- Blob: [SKILL.md](https://github.com/koliyo/okmate/blob/main/.agents/skills/manage-okmate-knowledge/SKILL.md)
+- Raw: [SKILL.md](https://github.com/koliyo/okmate/raw/main/.agents/skills/manage-okmate-knowledge/SKILL.md)
+
+Cursor may also inject repository rules. The skill is the retrieve, author,
+and validate procedure for `knowledge/`.
+
+:include[path: "SKILL.md", language: "markdown"]

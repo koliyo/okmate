@@ -1,0 +1,40 @@
+@page {
+    layout: "docs",
+    meta: {
+        title: "Agent install",
+        description: "Install the okmate CLI so an agent can check, inspect, and search one OKF root.",
+    },
+}
+
+# Agent install
+
+Humans should follow the full [Install](/docs/install/) page (app zip,
+Homebrew, cargo, and autoupdate). Agents need the `okmate` binary.
+
+## Preferred
+
+1. Clone [github.com/koliyo/okmate](https://github.com/koliyo/okmate).
+2. From the repo root:
+
+```sh
+cargo run -q --no-default-features -p okmate -- check knowledge --profile strict --format json
+```
+
+Or install the CLI:
+
+```sh
+uv run --no-dev okmate-ops install cli
+```
+
+Sparkle updates the `.app` only. A `cargo install` or copied binary does not
+self-update. See [Install](/docs/install/#autoupdate).
+
+## Confirm
+
+```sh
+okmate roots --format paths
+okmate check knowledge --profile strict --format json
+```
+
+If several roots are configured, pick **one** path from `roots --format paths`
+before `check` / `inspect` / `search`.

@@ -1,0 +1,51 @@
+@page {
+    layout: "docs",
+    meta: {
+        title: "Agents",
+        description: "Visiting-agent entrypoint: install OKMate, install or point at the manage-okmate-knowledge skill, and use the JSON CLI on one root at a time.",
+    },
+}
+
+# Agents
+
+These **Agents** pages and the site `/llms.txt` are the setup path for
+visiting agents and for people wiring agents into a repo. Read `/llms.txt`
+first (authored in `site/llms.txt`). Do not scrape the human [Docs](/docs/)
+lane for that sequence.
+
+OKMate has no MCP server and no hosted query API.
+
+:card-grid.begin
+    :link-card[page: "agents/install", title: "Install", summary: "Get the okmate CLI, then confirm check works on one root."]
+    :link-card[page: "agents/skills", title: "Skills", summary: "manage-okmate-knowledge lives in the repository; include it, do not fork it."]
+    :link-card[page: "agents/cli", title: "CLI", summary: "JSON-oriented check, inspect, search, roots, and sync."]
+:card-grid.end
+
+## Fetch sequence
+
+:steps.begin
+    :step.begin[title: "Read this site's /llms.txt"]
+        Fetch `/llms.txt` on this site. It is the product-site index (page
+        titles and descriptions). It is not a bundle `okmate build` artifact.
+    :step.end
+    :step.begin[title: "Install okmate"]
+        Follow [Install](/docs/install/). You need the `okmate` binary on
+        `PATH`, or `cargo run --no-default-features -p okmate --` from a clone.
+    :step.end
+    :step.begin[title: "Install or point at the skill"]
+        Use [`.agents/skills/manage-okmate-knowledge/SKILL.md`](/agents/skills/)
+        in this repository. Point the agent at that file; do not maintain a
+        drifting copy.
+    :step.end
+    :step.begin[title: "List roots"]
+        Run `okmate roots --format paths`.
+    :step.end
+    :step.begin[title: "Work one root"]
+        Run `check`, `inspect`, or `search` on a single path from that list.
+        Commands stay single-root.
+    :step.end
+    :step.begin[title: "Author Markdown, then re-check"]
+        Edit inert OKF Markdown in that root. Run
+        `okmate check <root> --profile strict --format terminal` again.
+    :step.end
+:steps.end

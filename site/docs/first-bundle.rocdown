@@ -1,0 +1,49 @@
+@page {
+    layout: "docs",
+    meta: {
+        title: "First bundle",
+        description: "Open the in-repo OKMate knowledge tree and run check, inspect, and search on that single root.",
+    },
+}
+
+# First bundle
+
+Clone [github.com/koliyo/okmate](https://github.com/koliyo/okmate) and use the
+checked-in `knowledge/` directory. That tree is inert OKF Markdown. This
+website is Rocdown and is not that bundle.
+
+## Validate
+
+From the repository root:
+
+```sh
+okmate check knowledge --profile strict --format terminal
+```
+
+`--profile strict` is the owners-and-evidence profile used in this project.
+
+## Inspect and search
+
+```sh
+okmate inspect catalog knowledge
+okmate inspect concept architecture/system-overview knowledge
+okmate search "system overview" knowledge --profile strict
+```
+
+`inspect` prints engine JSON. Prefer a concept id or unique filename stem
+over loading the whole catalog into a prompt.
+
+## Preview HTML (optional)
+
+```sh
+okmate view knowledge --no-window
+```
+
+That preview is Askama HTML for the bundle. It is not this product site.
+`okmate` does not compile Rocdown.
+
+## Author a record
+
+Add or edit Markdown under `knowledge/` with OKF YAML. Keep the body inert:
+no Rocdown declarations. After a substantive edit, run `okmate check` again
+on that same root.

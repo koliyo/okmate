@@ -1,0 +1,28 @@
+@page {
+    layout: "home",
+    meta: {
+        title: "OKMate",
+        description: "Open-source OKF knowledge tool: humans and agents share git-owned Markdown bundles, and several roots stay coordinated without merging catalogs.",
+    },
+}
+
+# OKMate
+
+OKMate is an open-source tool for [Open Knowledge Format](/docs/okf/)
+bundles. Humans and agents read and write the same git-owned Markdown.
+
+:card-grid.begin
+    :link-card[page: "docs/install", title: "Install", summary: "Homebrew cask, cargo, the macOS app zip, and how the app updates."]
+    :link-card[page: "docs/index", title: "Docs", summary: "Human manual: first bundle, git ownership, multiple roots, CLI, and desktop."]
+    :link-card[page: "agents/index", title: "Agents", summary: "Fetch /llms.txt, install the CLI and skill, then work one root at a time."]
+    :link-card[href: "https://github.com/koliyo/okmate", title: "GitHub", summary: "Source, releases, and issues."]
+:card-grid.end
+
+## Four claims
+
+- **Open source.** The CLI, desktop preview, and OKF engine live in [github.com/koliyo/okmate](https://github.com/koliyo/okmate).
+- **OKF compatible.** [OKF](/docs/okf/) is a vendor-neutral Markdown-plus-YAML
+  contract (not a hosted wiki). `okmate` checks, inspects, searches, and
+  builds bundles; it does not compile Rocdown.
+- **Git ownership.** Directory roots are writable. Git roots are read-only snapshots. Tokens never appear in `roots` JSON.
+- **Multiple bundles.** Several knowledge trees stay coordinated without merging catalogs. List roots, then run `check`, `inspect`, `search`, or `build` on one path.

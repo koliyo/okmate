@@ -1,0 +1,50 @@
+@page {
+    layout: "docs",
+    meta: {
+        title: "Contributing",
+        description: "How to work in the OKMate repository: AGENTS.md, skills, okmate check, and cargo tests.",
+    },
+}
+
+# Contributing
+
+Start with
+[AGENTS.md](https://github.com/koliyo/okmate/blob/main/AGENTS.md) and the
+skill
+[manage-okmate-knowledge](https://github.com/koliyo/okmate/blob/main/.agents/skills/manage-okmate-knowledge/SKILL.md).
+
+Public tracker: [github.com/koliyo/okmate](https://github.com/koliyo/okmate).
+
+## Ownership
+
+| Change | Owner |
+| --- | --- |
+| Portable OKF parse, validate, search, artifacts | `okf/` |
+| CLI, live preview, Askama HTML, desktop window | this crate (`src/`, `templates/`) |
+| Canonical knowledge bundle | `knowledge/` |
+| Maintainer CI, release, PR checkout | `okmate-ops` |
+| This product site | `site/` (Rocdown; compiled by external `rocdown`) |
+
+Keep `knowledge/**/*.md` inert Markdown with OKF YAML.
+
+## Validate
+
+```sh
+okmate check knowledge --profile strict --format terminal
+cargo test -p okf
+cargo test -p okmate --no-default-features
+cargo fmt --all -- --check
+```
+
+Site sources:
+
+```sh
+rocdown check site
+```
+
+See [site/README.md](https://github.com/koliyo/okmate/blob/main/site/README.md).
+
+## License
+
+Contributions are under Apache-2.0
+([LICENSE](https://github.com/koliyo/okmate/blob/main/LICENSE)).

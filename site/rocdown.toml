@@ -1,0 +1,57 @@
+[site]
+title = "OKMate"
+description = "Open-source OKF knowledge tool: humans and agents share git-owned Markdown bundles. Start at /llms.txt, then /agents/."
+base_url = "https://koliyo.github.io/okmate"
+language = "en"
+repository = "https://github.com/koliyo/okmate"
+social_image = "/assets/og.png"
+favicon = "/assets/favicon.svg"
+apple_touch_icon = "/assets/apple-touch-icon.png"
+subtitle = "Git-owned OKF knowledge for humans and agents"
+footer = "OKMate is open source. Limits and what is not shipped are on Project / Status."
+
+[build]
+output = "../dist/site"
+assets = "assets"
+
+[snippets]
+roots = ["../.agents/skills/manage-okmate-knowledge"]
+
+[[nav]]
+label = "Docs"
+
+[[nav.groups]]
+label = "Manual"
+items = [
+    "docs/index",
+    "docs/install",
+    "docs/first-bundle",
+    "docs/git-ownership",
+    "docs/multiple-bundles",
+    "docs/cli",
+    "docs/desktop",
+    "docs/okf",
+]
+
+[[nav]]
+label = "Agents"
+
+[[nav.groups]]
+label = "Start"
+items = [
+    "agents/index",
+    "agents/install",
+    "agents/skills",
+    "agents/cli",
+]
+
+[[nav]]
+label = "Project"
+
+[[nav.groups]]
+label = "About"
+items = [
+    "project/index",
+    "project/status",
+    "project/contributing",
+]

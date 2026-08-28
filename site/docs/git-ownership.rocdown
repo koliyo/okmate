@@ -1,0 +1,34 @@
+@page {
+    layout: "docs",
+    meta: {
+        title: "Git ownership",
+        description: "OKMate treats git as the store: directory roots are writable, git roots are read-only snapshots, and tokens never appear in roots JSON.",
+    },
+}
+
+# Git ownership
+
+Humans and agents share the same files. Git is the store. OKMate does not
+replace the repository with a hosted wiki.
+
+## Directory roots
+
+A local folder you own is writable. Author Markdown there, commit with git,
+and re-run `okmate check` on that path.
+
+## Git roots
+
+A configured git root is a read-only snapshot. `okmate sync` fetches it into
+the cache (`OKMATE_CACHE`, default `~/.okmate/cache`). Do not expect
+`check` or `inspect` to write into a remote.
+
+## Secrets
+
+`okmate roots --format json` emits `{ id, kind, path, revision, incoming, enabled, error }`.
+It never includes tokens or resolved secrets.
+
+## Settings
+
+Config, cache, and session live under `~/.okmate/` (`OKMATE_CONFIG`,
+`OKMATE_CACHE`, `OKMATE_STATE`). Installing or updating the app does not
+rewrite those paths.

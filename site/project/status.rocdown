@@ -1,0 +1,52 @@
+@page {
+    layout: "docs",
+    meta: {
+        title: "Project status",
+        description: "Shipped OKMate behavior versus experimental limits. Planned work is not listed as shipped.",
+    },
+}
+
+# Project status
+
+This page describes the repository snapshot, not a stability promise.
+
+## Shipped
+
+- Portable `okf` engine: parse, validate (base and strict), graph, search,
+  artifacts (`catalog.json`, `search.json`, `validation.json`, bundle
+  `llms.txt`).
+- `okmate` CLI: `check`, `inspect`, `search`, `build`, `view`, `roots`,
+  `sync`, plus timings and benchmarks documented in the README.
+- Single-root `check` / `inspect` / `search` / `build`. Multi-root
+  coordination via `roots` then one path.
+- Git roots as read-only cached snapshots; directory roots writable.
+- Askama HTML preview and optional tao/wry desktop window.
+- macOS `OKMate.app` zip on GitHub Releases, Homebrew cask, Sparkle updates
+  for the app (not for a raw `cargo install` binary).
+- In-repo agent skill `manage-okmate-knowledge`.
+- This static Rocdown product site, including `/llms.txt` and `/agents/`.
+
+## Experimental limits
+
+- Not a production-ready platform. APIs and HTML chrome can change.
+- No MCP server, no hosted query, no review approve/comment workflow, no
+  merged cross-root catalog.
+- `okmate view` HTML is not this product site. `rocdown` does not compile
+  OKF.
+- Windows and Linux desktop installers are not shipped.
+- Public hostname (`okmate.dev` versus GitHub Pages) is an operator choice.
+
+## Public knowledge demo
+
+This site does **not** mount `okmate build` HTML under `/knowledge/`. Maintainer
+drafts stay in the repository
+[knowledge/](https://github.com/koliyo/okmate/tree/main/knowledge) tree.
+Site `/llms.txt` is the Rocdown product index only. A bundle `llms.txt` from
+`okmate build` is a different artifact and is not published on this host.
+
+A dedicated public demo bundle remains a later, explicit choice.
+
+## Landscape boundary
+
+Tools such as DeepWiki, Basic Memory, or hosted MCP products are named only
+to draw a line. OKMate does not claim feature parity with them.

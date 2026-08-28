@@ -1,0 +1,79 @@
+# OKMate
+
+OKMate (open knowledge mate) is an open-source tool for Open Knowledge Format
+(OKF) bundles. Humans and agents share the same git-owned Markdown. The CLI
+binary is `okmate`.
+
+This file is the product-site starting point for visiting agents. It is not a
+bundle artifact from `okmate build`. After you install the CLI, work one
+knowledge root at a time.
+
+## What to read next
+
+- Agents setup: /agents/ (install, skill, JSON CLI)
+- Human docs: /docs/
+- Install (app, Homebrew, cargo, macOS bundle from source): /docs/install/
+- OKF format vs `okf` crate vs `okmate`: /docs/okf/
+- Project status and limits: /project/status/
+- Repository: https://github.com/koliyo/okmate
+
+## Fetch sequence
+
+1. Read this file, then /agents/.
+2. Install `okmate` (/docs/install/ or /agents/install/).
+3. Point at `.agents/skills/manage-okmate-knowledge/SKILL.md` in the repo
+   (https://github.com/koliyo/okmate/blob/main/.agents/skills/manage-okmate-knowledge/SKILL.md).
+   Do not fork the skill.
+4. `okmate roots --format paths`
+5. On one path: `check`, `inspect`, or `search` (`--profile strict` in this
+   project). Author inert OKF Markdown, then `check` again.
+
+`check`, `inspect`, `search`, and `build` are single-root. There is no MCP
+server and no hosted query API.
+
+## Open Knowledge Format
+
+OKF is a vendor-neutral contract: knowledge lives as ordinary Markdown files
+with YAML frontmatter, collections, and links. It is not a hosted wiki and not
+Google Cloud Knowledge Catalog.
+
+- Spec repository: https://github.com/GoogleCloudPlatform/open-knowledge-format
+- SPEC.md: https://github.com/GoogleCloudPlatform/open-knowledge-format/blob/main/SPEC.md
+- Overview: https://cloud.google.com/blog/products/data-analytics/how-the-open-knowledge-format-can-improve-data-sharing
+- Portable engine in this repo: https://github.com/koliyo/okmate/blob/main/okf/README.md
+
+`okf` is the UI-neutral Rust engine (parse, validate, graph, search,
+artifacts). `okmate` is the application (CLI, Askama preview, optional macOS
+window). A bundle is a directory of OKF Markdown.
+
+## Everyday commands
+
+```
+okmate roots --format paths
+okmate check knowledge --profile strict --format json
+okmate inspect --profile strict catalog knowledge
+okmate inspect --profile strict concept architecture/system-overview knowledge
+okmate search "system overview" knowledge --profile strict
+```
+
+Place `--profile` before `catalog`, `concept`, or `graph`.
+`okmate roots --format json` never includes tokens.
+
+## Site map
+
+- / — Product home (OSS, OKF, git ownership, multiple bundles)
+- /docs/ — Human manual
+- /docs/install/ — Zip, Homebrew, cargo, macOS app from source, autoupdate
+- /docs/first-bundle/ — In-repo `knowledge/` walkthrough
+- /docs/git-ownership/ — Writable directories vs read-only git snapshots
+- /docs/multiple-bundles/ — `roots` then one-path commands
+- /docs/cli/ — Command table
+- /docs/desktop/ — OKMate.app window
+- /docs/okf/ — Format, crate, app, spec links
+- /agents/ — Visiting-agent entry
+- /agents/install/ — CLI-focused install
+- /agents/skills/ — In-repo SKILL.md
+- /agents/cli/ — JSON-oriented commands
+- /project/ — License and boundary
+- /project/status/ — Shipped vs not shipped
+- /project/contributing/ — AGENTS.md, tests, `okmate check`

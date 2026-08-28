@@ -1,0 +1,104 @@
+@page {
+    layout: "docs",
+    meta: {
+        title: "Install",
+        description: "Install OKMate: macOS app zip, Homebrew cask, cargo, assemble OKMate.app from source, and autoupdate.",
+    },
+}
+
+# Install
+
+OKMate ships as a signed macOS app (with a CLI symlink) and as a crate you can
+build from this repository. The same commands live in the
+[README](https://github.com/koliyo/okmate/blob/main/README.md); this page is
+the product-site install guide.
+
+## macOS app zip
+
+Download `OKMate.zip` from the latest
+[GitHub Release](https://github.com/koliyo/okmate/releases/latest), unzip it,
+and drag `OKMate.app` to `/Applications`.
+
+Double-click opens the knowledge window (`view`) and restores
+`~/.okmate/state` when present.
+
+## Homebrew cask
+
+Install the same release archive from the
+[`koliyo/homebrew-okmate`](https://github.com/koliyo/homebrew-okmate) tap:
+
+```sh
+brew install --cask koliyo/okmate/okmate
+```
+
+Homebrew 6 requires an explicit trust step for third-party taps. The fully
+qualified cask name taps `koliyo/okmate` and trusts only that cask. To trust
+the whole tap instead:
+
+```sh
+brew tap koliyo/okmate
+brew trust koliyo/okmate
+brew install --cask okmate
+```
+
+The cask installs `OKMate.app` from that release `OKMate.zip` and uses
+Homebrew’s `binary` stanza so `$(brew --prefix)/bin/okmate` (on Apple Silicon,
+`/opt/homebrew/bin/okmate`) is a symlink to
+`OKMate.app/Contents/MacOS/okmate`. That is the same crate binary: Finder or
+no-args launch opens the window; `okmate check` and the other subcommands stay
+CLI. Sparkle still runs only for the desktop window.
+
+## CLI from this repository
+
+From a clone of [github.com/koliyo/okmate](https://github.com/koliyo/okmate):
+
+```sh
+uv run --no-dev okmate-ops install cli
+```
+
+That puts `okmate` in `~/.local/bin`. For a one-off run without installing:
+
+```sh
+cargo run --no-default-features -p okmate -- check knowledge --profile strict
+```
+
+Release-build the CLI binary with `uv run --no-dev okmate-ops build`.
+
+## macOS app from source
+
+To assemble `OKMate.app` on a Mac (unsigned or ad-hoc unless you have the
+release signing secrets):
+
+```sh
+uv run --no-dev okmate-ops package desktop
+```
+
+That packages the crate into an app bundle the same way a local maintainer
+build does. It is not the signed GitHub Release zip and does not turn on
+Sparkle against `releases/latest` unless you also follow the release path in
+the README. Prefer the [Release zip](https://github.com/koliyo/okmate/releases/latest)
+or the Homebrew cask if you want the published, updating app.
+
+## Autoupdate
+
+The `.app` uses Sparkle. **Check for Updates…** and
+`brew upgrade --cask okmate` both follow GitHub `releases/latest` (the same
+channel as
+[appcast.xml](https://github.com/koliyo/okmate/releases/latest/download/appcast.xml)).
+The cask is marked `auto_updates` so Homebrew does not fight Sparkle. Neither
+path rewrites `~/.okmate/` config, cache, or session.
+
+After the second launch, Sparkle may ask to check automatically. An update
+shows release notes and Install / Remind Me Later / Skip.
+
+A `cargo install` or copied `okmate` binary on `PATH` does not self-update.
+Use a new install, or the `.app`, for updates.
+
+## After install
+
+```sh
+okmate check knowledge --profile strict --format terminal
+```
+
+`check`, `inspect`, `search`, and `build` take one root. If you have several
+configured trees, list them first: [Multiple bundles](/docs/multiple-bundles/).

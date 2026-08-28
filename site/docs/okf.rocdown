@@ -1,0 +1,55 @@
+@page {
+    layout: "docs",
+    meta: {
+        title: "OKF",
+        description: "Open Knowledge Format is a vendor-neutral Markdown-plus-YAML contract for knowledge bundles. OKMate ships the portable okf engine and is one consumer of that spec.",
+    },
+}
+
+# Open Knowledge Format
+
+OKF is a **file format**, not a product. A bundle is a directory of Markdown
+records with YAML frontmatter, typed collections, and links. The files stay
+diffable in git. Nothing in the record body is executed.
+
+That is distinct from a hosted wiki, a proprietary catalog schema, or Google
+Cloud Knowledge Catalog. OKF is the shared contract; tools implement it.
+
+## Three names
+
+| Name | Job |
+| --- | --- |
+| **OKF** | The format: inert Markdown, YAML, collections, graph of concept links. |
+| **`okf` crate** | Portable Rust engine in this repo: parse, validate, graph, search, artifacts. No HTML or desktop. |
+| **`okmate`** | The application: CLI, Askama preview, optional macOS window. Depends on `okf` only. |
+
+A **bundle** is one root directory of OKF files (for example this repo’s
+`knowledge/`). `okmate check` / `inspect` / `search` / `build` take one root.
+
+## Specification and references
+
+- [open-knowledge-format](https://github.com/GoogleCloudPlatform/open-knowledge-format)
+  — canonical specification repository
+- [SPEC.md](https://github.com/GoogleCloudPlatform/open-knowledge-format/blob/main/SPEC.md)
+  — format text
+- [How OKF can improve data sharing](https://cloud.google.com/blog/products/data-analytics/how-the-open-knowledge-format-can-improve-data-sharing)
+  — short public overview
+- [`okf/README.md`](https://github.com/koliyo/okmate/blob/main/okf/README.md)
+  — engine this repository ships (profiles, graph, artifacts)
+
+## Profiles
+
+`Profile::Base` is portable OKF. `Profile::Strict` adds owners and evidence.
+This repository’s knowledge tree uses `--profile strict`.
+
+## Artifacts
+
+`okmate build` writes `catalog.json`, `search.json`, `validation.json`, a
+bundle `llms.txt`, and Askama HTML for **one** bundle. That bundle `llms.txt`
+is not this site’s `/llms.txt`. The product-site file is authored for visiting
+agents (`site/llms.txt`).
+
+## What okmate does not do
+
+`okmate` does not compile Rocdown. `rocdown` refuses OKF records and points
+here. Keep project knowledge in `knowledge/` and product pages in `site/`.

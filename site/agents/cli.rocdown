@@ -1,0 +1,45 @@
+@page {
+    layout: "docs",
+    meta: {
+        title: "Agent CLI",
+        description: "JSON-oriented okmate commands for agents: roots, check, inspect, search, and sync. Single-root except roots and sync.",
+    },
+}
+
+# Agent CLI
+
+Prefer JSON. Human tables live in the
+[README](https://github.com/koliyo/okmate/blob/main/README.md#cli) and
+[Docs CLI](/docs/cli/).
+
+## Roots and sync
+
+```sh
+okmate roots --format json --no-sync
+okmate roots --format paths
+okmate sync
+```
+
+JSON objects are `{ id, kind, path, revision, incoming, enabled, error }`.
+Tokens never appear.
+
+## One-root query
+
+```sh
+okmate check knowledge --profile strict --format json
+okmate inspect --profile strict catalog knowledge
+okmate inspect --profile strict concept architecture/system-overview knowledge
+okmate inspect --profile strict graph knowledge
+okmate search "system overview" knowledge --profile strict
+```
+
+Place `--profile` before `catalog`, `concept`, or `graph`.
+
+## Author loop
+
+1. `okmate roots --format paths`
+2. `okmate inspect --profile strict catalog <root>`
+3. Edit Markdown in that root only.
+4. `okmate check <root> --profile strict --format json`
+
+There is no MCP tool and no cross-root `search`.
