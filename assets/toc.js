@@ -92,11 +92,10 @@
     function done() {
       ySet(scroller, to);
       restorePending();
-      if (history.replaceState) {
+      if (window.__okmateNav && typeof window.__okmateNav.finishInPage === "function") {
+        window.__okmateNav.finishInPage(href);
+      } else if (history.replaceState) {
         history.replaceState(null, "", href);
-      }
-      if (window.__okmateNav && typeof window.__okmateNav.persistLocation === "function") {
-        window.__okmateNav.persistLocation();
       }
       syncSpy();
     }
@@ -229,6 +228,9 @@
       event.preventDefault();
       if (event.stopImmediatePropagation) {
         event.stopImmediatePropagation();
+      }
+      if (window.__okmateNav && typeof window.__okmateNav.beginInPage === "function") {
+        window.__okmateNav.beginInPage(href);
       }
       restorePending();
       pending = { el: el, id: id };

@@ -450,28 +450,32 @@ html[data-okmate-wrap="off"] #okmate-main pre {
   overflow-x: auto;
 }
 #okmate-main .okmate-md-table table {
+  display: grid;
+  grid-template-columns: var(--okmate-cols, minmax(0, 1fr));
   width: 100%;
-  border-collapse: collapse;
-  table-layout: auto;
-  overflow-wrap: normal;
-  word-break: normal;
+  column-gap: 0;
+  row-gap: 0;
+}
+#okmate-main .okmate-md-table thead,
+#okmate-main .okmate-md-table tbody,
+#okmate-main .okmate-md-table tfoot,
+#okmate-main .okmate-md-table tr {
+  display: contents;
 }
 #okmate-main .okmate-md-table th,
 #okmate-main .okmate-md-table td {
   vertical-align: top;
   text-align: left;
+  min-width: 0;
   padding: 0.45rem 0.65rem;
   border: 1px solid var(--rd-border);
-  overflow-wrap: break-word;
+  overflow-wrap: anywhere;
   word-break: normal;
+  white-space: normal;
 }
 #okmate-main .okmate-md-table th {
   font-weight: 650;
   background: color-mix(in srgb, var(--rd-bg-subtle) 70%, transparent);
-}
-#okmate-main .okmate-md-table th:first-child,
-#okmate-main .okmate-md-table td:first-child {
-  white-space: nowrap;
 }
 #okmate-main .okmate-md-table code {
   padding: 0.1em 0.35em;
@@ -480,13 +484,14 @@ html[data-okmate-wrap="off"] #okmate-main pre {
   font-size: 0.88em;
   white-space: normal;
 }
+html[data-okmate-wrap="off"] #okmate-main .okmate-md-table table {
+  width: max-content;
+  min-width: 100%;
+}
 html[data-okmate-wrap="off"] #okmate-main .okmate-md-table,
 html[data-okmate-wrap="off"] #okmate-main .okmate-md-table th,
 html[data-okmate-wrap="off"] #okmate-main .okmate-md-table td {
-  white-space: normal;
-}
-html[data-okmate-wrap="off"] #okmate-main .okmate-md-table th:first-child,
-html[data-okmate-wrap="off"] #okmate-main .okmate-md-table td:first-child {
+  overflow-wrap: normal;
   white-space: nowrap;
 }
 

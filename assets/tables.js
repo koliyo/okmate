@@ -15,24 +15,13 @@
     return Math.round(MIN_REM * remPx());
   }
 
+  function wrapOff() {
+    return document.documentElement.getAttribute("data-okmate-wrap") === "off";
+  }
+
   function headerCells(table) {
     var row = table.querySelector("tr");
     return row ? Array.prototype.slice.call(row.children) : [];
-  }
-
-  function ensureColgroup(table, count) {
-    var group = table.querySelector(":scope > colgroup");
-    if (!group) {
-      group = document.createElement("colgroup");
-      table.insertBefore(group, table.firstChild);
-    }
-    while (group.children.length < count) {
-      group.appendChild(document.createElement("col"));
-    }
-    while (group.children.length > count) {
-      group.removeChild(group.lastChild);
-    }
-    return group;
   }
 
   function snapshotWidths(table) {
@@ -41,27 +30,50 @@
     });
   }
 
-  function applyFixed(table, widths) {
-    var group = ensureColgroup(table, widths.length);
-    var total = 0;
-    for (var i = 0; i < group.children.length; i++) {
-      var width = widths[i] || minCol();
-      group.children[i].style.width = width + "px";
-      total += width;
+  function defaultCols(count) {
+    if (wrapOff()) {
+      return Array(count)
+        .fill("max-content")
+        .join(" ");
     }
-    table.style.tableLayout = "fixed";
-    table.style.width = total + "px";
-    table.style.minWidth = total + "px";
+    return "repeat(" + count + ", minmax(0, 1fr))";
+  }
+
+  function colsFromWidths(widths) {
+    if (wrapOff()) {
+      return widths
+        .map(function (width) {
+          return Math.max(minCol(), width) + "px";
+        })
+        .join(" ");
+    }
+    return widths
+      .map(function (width) {
+        return "minmax(" + MIN_REM + "rem, " + Math.max(1, width) + "fr)";
+      })
+      .join(" ");
+  }
+
+  function applyCols(table, value) {
+    table.style.setProperty("--okmate-cols", value);
+  }
+
+  function resizeFrom(start, index, delta) {
+    var next = start.slice();
+    var right = index + 1;
+    if (right < next.length) {
+      var pair = start[index] + start[right];
+      var left = Math.max(minCol(), Math.min(pair - minCol(), start[index] + delta));
+      next[index] = left;
+      next[right] = pair - left;
+    } else {
+      next[index] = Math.max(minCol(), start[index] + delta);
+    }
+    return next;
   }
 
   function resetTable(table) {
-    table.style.tableLayout = "";
-    table.style.width = "";
-    table.style.minWidth = "";
-    var group = table.querySelector(":scope > colgroup");
-    if (group) {
-      group.remove();
-    }
+    applyCols(table, defaultCols(headerCells(table).length));
     placeHandles(table);
   }
 
@@ -105,12 +117,11 @@
       event.preventDefault();
       handle.setPointerCapture(event.pointerId);
       var widths = snapshotWidths(table);
-      applyFixed(table, widths);
+      applyCols(table, colsFromWidths(widths));
       dragging = {
         table: table,
         index: index,
         startX: event.clientX,
-        startW: widths[index],
         widths: widths,
       };
       handle.classList.add("is-active");
@@ -120,9 +131,7 @@
       if (!dragging || dragging.table !== table || dragging.index !== index) {
         return;
       }
-      var next = dragging.widths.slice();
-      next[index] = Math.max(minCol(), dragging.startW + (event.clientX - dragging.startX));
-      applyFixed(table, next);
+      applyCols(table, colsFromWidths(resizeFrom(dragging.widths, index, event.clientX - dragging.startX)));
       placeHandles(table);
     });
     handle.addEventListener("pointerup", function (event) {
@@ -147,8 +156,7 @@
         event.preventDefault();
         var widths = snapshotWidths(table);
         var delta = event.key === "ArrowRight" ? step : -step;
-        widths[index] = Math.max(minCol(), widths[index] + delta);
-        applyFixed(table, widths);
+        applyCols(table, colsFromWidths(resizeFrom(widths, index, delta)));
         placeHandles(table);
       } else if (event.key === "Home") {
         event.preventDefault();
@@ -158,13 +166,19 @@
   }
 
   function mount(table) {
+    var wrapper = wrapperOf(table);
+    var cells = headerCells(table);
+    if (!wrapper || !cells.length) {
+      return;
+    }
+    if (!table.style.getPropertyValue("--okmate-cols")) {
+      applyCols(table, defaultCols(cells.length));
+    }
     if (table.__okmateCols) {
       placeHandles(table);
       return;
     }
-    var wrapper = wrapperOf(table);
-    var cells = headerCells(table);
-    if (!wrapper || cells.length < 2) {
+    if (cells.length < 2) {
       return;
     }
     table.__okmateCols = true;

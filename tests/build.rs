@@ -125,6 +125,7 @@ fn build_writes_engine_catalog_html_landmarks_and_pages_json() {
     assert!(css.contains("66ch"), "{css}");
     assert!(css.contains(".okmate-col-resizer"), "{css}");
     assert!(css.contains(".okmate-md-table"), "{css}");
+    assert!(css.contains("grid-template-columns"), "{css}");
     assert!(css.contains(".okmate-table-resizer"), "{css}");
     assert!(css.contains(".okmate-toc-link.is-current"), "{css}");
     assert!(css.contains(".okmate-recents-list"), "{css}");
@@ -148,6 +149,8 @@ fn build_writes_engine_catalog_html_landmarks_and_pages_json() {
     assert!(nav.contains("open_path"), "{nav}");
     assert!(nav.contains("persistLocation"), "{nav}");
     assert!(nav.contains("history.pushState"), "{nav}");
+    assert!(nav.contains("scrollRestoration"), "{nav}");
+    assert!(nav.contains("mainScroll"), "{nav}");
     assert!(nav.contains("data-on:click__prevent"), "{nav}");
     let pages: serde_json::Value =
         serde_json::from_str(&fs::read_to_string(output.join("pages.json")).unwrap()).unwrap();

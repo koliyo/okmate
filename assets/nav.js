@@ -6,6 +6,11 @@
   var SECTIONS_KEY = "okmate-nav-sections";
   var SCROLL_KEY = "okmate-nav-scroll";
   var pendingRoute = "";
+  var afterPatch = "auto";
+  var mountedRoute = normalizeRoute(window.location.pathname);
+  if (history.scrollRestoration) {
+    history.scrollRestoration = "manual";
+  }
 
   function normalizeRoute(path) {
     var route = (path || "/").split(/[?#]/)[0];
@@ -137,8 +142,60 @@
     return inner === prefix || inner.indexOf(prefix) === 0;
   }
 
+  function mainEl() {
+    return document.getElementById("okmate-main");
+  }
+
+  function mainScroll() {
+    var main = mainEl();
+    return main ? Math.max(0, Math.round(main.scrollTop)) : 0;
+  }
+
+  function applyMainScroll(top) {
+    var main = mainEl();
+    if (main && typeof top === "number" && !isNaN(top)) {
+      main.scrollTop = Math.max(0, top);
+    }
+  }
+
+  function historyState(extra) {
+    var state = { mainScroll: mainScroll() };
+    if (extra) {
+      Object.keys(extra).forEach(function (key) {
+        state[key] = extra[key];
+      });
+    }
+    return state;
+  }
+
+  function replaceHistory(url) {
+    try {
+      if (url) {
+        history.replaceState(historyState(), "", url);
+      } else {
+        history.replaceState(historyState(), "");
+      }
+    } catch (err) {}
+  }
+
+  function rememberHere() {
+    replaceHistory();
+  }
+
+  function beginInPage(href) {
+    rememberHere();
+    try {
+      history.pushState(historyState({ mainScroll: 0 }), "", href);
+    } catch (err) {}
+  }
+
+  function finishInPage(href) {
+    replaceHistory(href);
+    persistLocation();
+  }
+
   function resetMainScroll() {
-    var main = document.getElementById("okmate-main");
+    var main = mainEl();
     if (main) {
       main.scrollTop = 0;
     }
@@ -156,6 +213,19 @@
     main.scrollTop = Math.max(0, top);
   }
 
+  function applyHistoryScroll(state) {
+    if (state && typeof state.mainScroll === "number") {
+      applyMainScroll(state.mainScroll);
+      return true;
+    }
+    resetMainScroll();
+    return false;
+  }
+
+  function sameDocumentUrl(url) {
+    return normalizeRoute(url.pathname) === mountedRoute;
+  }
+
   function syncTitle() {
     var crumb = document.querySelector(".okmate-crumb-current");
     var heading = document.querySelector("#okmate-main h1");
@@ -166,20 +236,19 @@
   }
 
   function persistLocation() {
-    var main = document.getElementById("okmate-main");
     var hash = (window.location.hash || "").replace(/^#/, "");
     if (window.__okmateReading && typeof window.__okmateReading.persist === "function") {
       window.__okmateReading.persist({
         open_path: window.location.pathname,
         open_hash: hash || null,
-        main_scroll: main ? Math.max(0, Math.round(main.scrollTop)) : 0,
+        main_scroll: mainScroll(),
       });
     }
   }
 
   function restoreMainLocation() {
-    var main = document.getElementById("okmate-main");
-    if (!main) {
+    if (history.state && typeof history.state.mainScroll === "number") {
+      applyMainScroll(history.state.mainScroll);
       return;
     }
     var hash = window.location.hash;
@@ -190,7 +259,7 @@
     var raw = document.documentElement.getAttribute("data-okmate-main-scroll") || "";
     var top = parseInt(raw, 10);
     if (!isNaN(top) && top > 0) {
-      main.scrollTop = top;
+      applyMainScroll(top);
     }
   }
 
@@ -207,14 +276,26 @@
     if (pendingRoute) {
       if (normalizeRoute(window.location.pathname) !== normalizeRoute(pendingRoute)) {
         try {
-          history.pushState(null, "", pendingRoute);
+          history.pushState({ mainScroll: 0 }, "", pendingRoute);
         } catch (err) {}
       }
       pendingRoute = "";
+      afterPatch = window.location.hash && window.location.hash !== "#" ? "hash" : "top";
     }
     syncNav(route);
     restoreSections();
-    resetMainScroll();
+    if (typeof afterPatch === "number") {
+      applyMainScroll(afterPatch);
+    } else if (afterPatch === "hash") {
+      resetMainScroll();
+    } else if (afterPatch === "top") {
+      applyMainScroll(0);
+    } else if (afterPatch === "auto") {
+      restoreMainLocation();
+    }
+    afterPatch = "auto";
+    mountedRoute = normalizeRoute(window.location.pathname);
+    replaceHistory();
     syncTitle();
     reportLocation();
     if (window.__okmateToc && typeof window.__okmateToc.enhance === "function") {
@@ -271,7 +352,23 @@
         return;
       }
       var href = link.getAttribute("href") || "";
-      if (!href || href.charAt(0) === "#" || href.indexOf("/__okmate/") === 0) {
+      if (!href || href.indexOf("/__okmate/") === 0) {
+        return;
+      }
+      var dest;
+      try {
+        dest = new URL(link.href, window.location.href);
+      } catch (err) {
+        return;
+      }
+      if (dest.origin === window.location.origin && dest.hash && sameDocumentUrl(dest)) {
+        if (link.classList.contains("okmate-toc-link") || link.classList.contains("okmate-outline-link")) {
+          return;
+        }
+        event.preventDefault();
+        beginInPage(dest.pathname + dest.search + dest.hash);
+        resetMainScroll();
+        finishInPage(dest.pathname + dest.search + dest.hash);
         return;
       }
       var action =
@@ -279,6 +376,7 @@
       if (action.indexOf("@get") === -1 && !link.closest("#okmate-nav")) {
         return;
       }
+      rememberHere();
       pendingRoute = href;
     },
     true
@@ -299,11 +397,16 @@
     }, 0);
   }
 
-  window.addEventListener("popstate", function () {
+  window.addEventListener("popstate", function (event) {
     syncNav(window.location.pathname);
     restoreSections();
-    resetMainScroll();
     reportLocation();
+    if (sameDocumentUrl(window.location)) {
+      applyHistoryScroll(event.state);
+      return;
+    }
+    afterPatch =
+      event.state && typeof event.state.mainScroll === "number" ? event.state.mainScroll : "hash";
     requestDocument(window.location.pathname + window.location.search);
   });
   window.addEventListener("pagehide", function () {
@@ -382,5 +485,8 @@
     enhance: enhance,
     sync: syncNav,
     persistLocation: persistLocation,
+    rememberHere: rememberHere,
+    beginInPage: beginInPage,
+    finishInPage: finishInPage,
   };
 })();
