@@ -108,6 +108,13 @@ fn build_writes_engine_catalog_html_landmarks_and_pages_json() {
     let css = fs::read_to_string(output.join("__okmate").join("app.css")).unwrap();
     assert!(css.contains("--okmate-nav-width"), "{css}");
     assert!(css.contains("--okmate-main-max-width"), "{css}");
+    assert!(css.contains("--okmate-ui-font"), "{css}");
+    assert!(css.contains("font-size: var(--okmate-ui-font)"), "{css}");
+    assert!(
+        css.contains("--okmate-toolbar-height: calc(2.65 * 16px)"),
+        "{css}"
+    );
+    assert!(!css.contains("--okmate-toolbar-height: 2.65rem"), "{css}");
     assert!(css.contains("overflow-x: hidden"), "{css}");
     assert!(css.contains("overflow-x: auto"), "{css}");
     assert!(css.contains("overflow-wrap: anywhere"), "{css}");
