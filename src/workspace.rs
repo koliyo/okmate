@@ -552,6 +552,36 @@ mod tests {
     }
 
     #[test]
+    fn for_view_infers_knowledge_from_git_toplevel() {
+        let repo = temp("git-view");
+        let status = std::process::Command::new("git")
+            .arg("-C")
+            .arg(&repo)
+            .args(["init", "--initial-branch=main"])
+            .status()
+            .unwrap();
+        assert!(status.success());
+        fs::create_dir_all(repo.join("knowledge")).unwrap();
+        write_bundle(&repo.join("knowledge"), "Inferred", false);
+        let cfg_dir = temp("git-view-cfg");
+        let config = cfg_dir.join("config.toml");
+        fs::write(&config, "").unwrap();
+        let loaded = Workspace::for_view(
+            Some(&repo),
+            crate::preview::view_load_options(Profile::Strict, false),
+            &config,
+            &cfg_dir.join("cache"),
+            None,
+        )
+        .unwrap();
+        assert_eq!(
+            loaded.workspace.primary_path().map(Path::to_path_buf),
+            Some(fs::canonicalize(repo.join("knowledge")).unwrap())
+        );
+        assert_eq!(loaded.open_path, "/");
+    }
+
+    #[test]
     fn default_view_load_options_are_strict_without_provenance() {
         let options = crate::preview::view_load_options(Profile::Strict, false);
         assert_eq!(options.profile, Profile::Strict);
