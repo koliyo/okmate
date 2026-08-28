@@ -56,3 +56,6 @@ opt-level = 3
 
 [profile.dev.package.finl_unicode]
 opt-level = 3
+
+[profile.dev.package.syntect]
+opt-level = 3

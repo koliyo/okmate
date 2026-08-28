@@ -117,6 +117,72 @@ fn article_html_includes_assigned_heading_ids() {
 }
 
 #[test]
+fn article_html_highlights_shell_fences() {
+    let root = temp("highlight-sh");
+    fs::write(
+        root.join("index.md"),
+        "---\nokf_version: \"0.2\"\n---\n\n# Knowledge\n",
+    )
+    .unwrap();
+    fs::write(
+        root.join("hello.md"),
+        valid_strict_concept(
+            "Hello",
+            "",
+            "Intro.\n\n```sh\n# prefer path\necho hi\n```\n",
+        ),
+    )
+    .unwrap();
+
+    let bundle = load(&root, Profile::Strict).expect("load");
+    let html = &bundle
+        .concepts
+        .iter()
+        .find(|concept| concept.id == "hello")
+        .expect("hello")
+        .article_html;
+    assert!(html.contains("okmate-code-block"), "{html}");
+    assert!(html.contains("tok-comment"), "{html}");
+    assert!(html.contains("prefer path"), "{html}");
+
+    let _ = fs::remove_dir_all(root);
+}
+
+#[test]
+fn article_html_escapes_unknown_fence() {
+    let root = temp("highlight-unknown");
+    fs::write(
+        root.join("index.md"),
+        "---\nokf_version: \"0.2\"\n---\n\n# Knowledge\n",
+    )
+    .unwrap();
+    fs::write(
+        root.join("hello.md"),
+        valid_strict_concept(
+            "Hello",
+            "",
+            "Intro.\n\n```unknown_lang\n<script>alert(1)</script>\n```\n",
+        ),
+    )
+    .unwrap();
+
+    let bundle = load(&root, Profile::Strict).expect("load");
+    let html = &bundle
+        .concepts
+        .iter()
+        .find(|concept| concept.id == "hello")
+        .expect("hello")
+        .article_html;
+    assert!(
+        html.contains("&lt;script&gt;alert(1)&lt;/script&gt;"),
+        "{html}"
+    );
+    assert!(!html.contains("<script>"), "{html}");
+
+    let _ = fs::remove_dir_all(root);
+}
+
+#[test]
 fn test_okf_unknown_metadata_and_body_offsets() {
     let root = temp("metadata");
     fs::write(

@@ -6,6 +6,7 @@ pub mod benchmark;
 pub mod diagnostic;
 pub mod frontmatter;
 pub mod graph;
+mod highlight;
 pub mod markdown;
 pub mod parse_cache;
 pub mod preview;

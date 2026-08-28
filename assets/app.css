@@ -11,6 +11,19 @@
   --rd-green: #98c379;
   --rd-orange: #d19a66;
   --rd-red: #e06c75;
+  --rd-code-block-background: #2c313c;
+  --rd-code-inline-background: color-mix(in srgb, var(--rd-bg-subtle) 55%, #3e4451);
+  --syntax-keyword: #c678dd;
+  --syntax-string: #98c379;
+  --syntax-comment: #7f848e;
+  --syntax-type: #e5c07b;
+  --syntax-function: #61afef;
+  --syntax-variable: #e06c75;
+  --syntax-property: #d19a66;
+  --syntax-operator: #56b6c2;
+  --syntax-number: #d19a66;
+  --syntax-tag: #e06c75;
+  --syntax-punctuation: #abb2bf;
   --okmate-ui-font: 16px;
   --okmate-toolbar-height: calc(2.65 * 16px);
   --okmate-chrome-bottom: calc(var(--okmate-toolbar-height) + env(safe-area-inset-bottom, 0px));
@@ -381,10 +394,41 @@ html[data-okmate-wrap="off"] #okmate-main pre {
   white-space: pre;
 }
 
-#okmate-main pre {
+#okmate-main pre,
+#okmate-main .okmate-code-block {
   max-width: 100%;
+  margin: 0 0 1.25rem;
+  padding: 1rem 1.1rem;
   overflow-x: auto;
+  border-radius: 0.5rem;
+  background: var(--rd-code-block-background);
 }
+#okmate-main pre code,
+#okmate-main .okmate-code {
+  display: block;
+  padding: 0;
+  background: transparent;
+  color: var(--rd-fg);
+  font-size: 0.92em;
+  line-height: 1.55;
+}
+#okmate-main :not(pre) > code {
+  padding: 0.15em 0.4em;
+  border-radius: 0.3rem;
+  background: var(--rd-code-inline-background);
+  font-size: 0.88em;
+}
+#okmate-main .tok-keyword { color: var(--syntax-keyword); }
+#okmate-main .tok-string { color: var(--syntax-string); }
+#okmate-main .tok-comment { color: var(--syntax-comment); font-style: italic; }
+#okmate-main .tok-type { color: var(--syntax-type); }
+#okmate-main .tok-function { color: var(--syntax-function); }
+#okmate-main .tok-variable { color: var(--syntax-variable); }
+#okmate-main .tok-property { color: var(--syntax-property); }
+#okmate-main .tok-operator { color: var(--syntax-operator); }
+#okmate-main .tok-number { color: var(--syntax-number); }
+#okmate-main .tok-tag { color: var(--syntax-tag); }
+#okmate-main .tok-punctuation { color: var(--syntax-punctuation); }
 
 #okmate-main h1 { font-size: 2rem; line-height: 1.2; margin: 0 0 1rem; }
 #okmate-main h2 { font-size: 1.35rem; margin: 2rem 0 0.75rem; }

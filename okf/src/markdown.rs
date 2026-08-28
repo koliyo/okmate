@@ -1,6 +1,7 @@
 use std::collections::{BTreeSet, HashMap};
 
 use comrak::nodes::{AstNode, NodeValue};
+use comrak::options::Plugins;
 use comrak::{Arena, Options, parse_document};
 
 use crate::ast::{Heading, HeadingSection, Link, Span};
@@ -87,8 +88,11 @@ pub fn parse_markdown_body(
         heading_sections.push(prev);
     }
 
+    let highlighter = crate::highlight::adapter();
+    let mut plugins = Plugins::default();
+    plugins.render.codefence_syntax_highlighter = Some(highlighter);
     let mut article_html = String::new();
-    let _ = comrak::format_html(root, &options, &mut article_html);
+    let _ = comrak::format_html_with_plugins(root, &options, &mut article_html, &plugins);
     article_html = inject_heading_ids(&article_html, &walker.headings);
 
     MarkdownOutput {

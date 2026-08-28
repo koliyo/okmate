@@ -10,6 +10,7 @@ Portable, UI-neutral engine for Open Knowledge Format (OKF) bundles.
 
 Dependencies:
 - `comrak`: Inert CommonMark markdown body parsing.
+- `syntect`: Class-based syntax highlighting for fenced code in `article_html`.
 - `yaml-rust`: YAML frontmatter extraction with lossless preservation of custom keys.
 - `serde`, `serde_json`, `toml`: Data serialization and benchmark parsing.
 - `sha2`: Cryptographic digest calculations.
