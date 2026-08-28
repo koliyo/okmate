@@ -88,6 +88,21 @@ cargo test -p okf
 cargo test -p okmate --no-default-features
 ```
 
+`h35-desktop` is a git dependency with no `rev` in `Cargo.toml`. Cargo
+records the resolved commit in `Cargo.lock` and `cargo build` does not
+re-fetch GitHub. After a push to
+[`koliyo/h35-desktop`](https://github.com/koliyo/h35-desktop), update the
+pin and rebuild:
+
+```sh
+cargo update -p h35-desktop
+```
+
+To iterate against a sibling checkout, temporarily use
+`h35-desktop = { path = "../h35-desktop", optional = true }` and restore
+the git line before committing. Then run `cargo update -p h35-desktop`
+again so the lockfile SHA matches the remote.
+
 Release-build the `okmate` binary with `uv run --no-dev okmate-ops build`.
 To install it into `~/.local/bin`, run `uv run --no-dev okmate-ops install cli`.
 On macOS, assemble `OKMate.app` with
