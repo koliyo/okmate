@@ -5,6 +5,7 @@ from okmate_ops.local import (
     CLI_BINARY,
     CLI_CRATE,
     DEFAULT_SU_FEED_URL,
+    DEFAULT_SU_PUBLIC_ED_KEY,
     INSTALL_USAGE,
     PACKAGE_APPCAST_USAGE,
     PACKAGE_SIGN_USAGE,
@@ -146,6 +147,8 @@ def test_package_desktop_runs_h35_packager(monkeypatch, tmp_path) -> None:
     assert envs[0]["CRATE"] == CLI_CRATE
     assert envs[0]["PRODUCT_ROOT"] == str(root)
     assert envs[0]["SU_FEED_URL"] == DEFAULT_SU_FEED_URL
+    assert envs[0]["SU_PUBLIC_ED_KEY"] == DEFAULT_SU_PUBLIC_ED_KEY
+    assert DEFAULT_SU_PUBLIC_ED_KEY == "lSXTvcKDK7P4DEjd+o/k2BM6OPTNGyYdvhIk2DxJyao="
     assert app_bundle_dir(root) == root / "dist" / f"{APP_NAME}.app"
 
 

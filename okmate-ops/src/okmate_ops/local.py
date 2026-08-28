@@ -18,7 +18,7 @@ BUNDLE_IDENTIFIER = "com.koliyo.okmate"
 DEFAULT_SU_FEED_URL = (
     "https://github.com/koliyo/okmate/releases/latest/download/appcast.xml"
 )
-DEFAULT_SU_PUBLIC_ED_KEY = "0cxKUYv/b7Z7qSI2l2lEzV0IcV/rb59l6lFnRD5vs2U="
+DEFAULT_SU_PUBLIC_ED_KEY = "lSXTvcKDK7P4DEjd+o/k2BM6OPTNGyYdvhIk2DxJyao="
 
 BUILD_USAGE = "usage: okmate-ops build"
 INSTALL_USAGE = "usage: okmate-ops install cli"

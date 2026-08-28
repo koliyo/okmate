@@ -88,15 +88,23 @@ First pair (only if the shipped public key is not already yours):
 ```
 
 Sparkle stores the private key in the login keychain and prints the
-public key (`SUPublicEDKey`). Print the existing private key for
-`generate_appcast --ed-key-file -`:
+public key (`SUPublicEDKey`). Confirm that public key matches
+`DEFAULT_SU_PUBLIC_ED_KEY`:
 
 ```sh
 ../h35-desktop/target/sparkle/2.8.1/bin/generate_keys -p
 ```
 
-That printed value is `SPARKLE_EDDSA_PRIVATE_KEY`. Never pass `-s` to
-`generate_appcast`.
+Export the private key for `SPARKLE_EDDSA_PRIVATE_KEY` (never `-p`; that
+prints the public key, and Sparkle will treat a 32-byte public key as a
+new seed):
+
+```sh
+../h35-desktop/target/sparkle/2.8.1/bin/generate_keys -x sparkle_ed_key
+```
+
+The file contents are `SPARKLE_EDDSA_PRIVATE_KEY`. Delete the file after
+storing the secret. Never pass `-s` to `generate_appcast`.
 
 ### Developer ID Application
 
