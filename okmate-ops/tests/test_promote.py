@@ -3,12 +3,15 @@ from pathlib import Path
 
 from okmate_ops.ghutil import DEFAULT_CHECKS
 from okmate_ops.promote import (
+    PROMOTE_DEPRECATED,
     PROMOTE_TAG_USAGE,
     PROMOTE_USAGE,
+    RELEASE_USAGE,
     promote_command,
     promote_tag,
     push_tap_version,
     push_version_update,
+    release_command,
     wait_for_promote_ci,
 )
 from okmate_ops.version import CASK, first_package_version, release_files_match, tap_files_match
@@ -32,7 +35,28 @@ def test_promote_tag_usage() -> None:
         raise AssertionError("expected SystemExit")
 
 
-def test_promote_command_routes(monkeypatch) -> None:
+def test_release_usage() -> None:
+    try:
+        release_command([])
+    except SystemExit as exc:
+        assert str(exc) == RELEASE_USAGE
+    else:
+        raise AssertionError("expected SystemExit")
+
+
+def test_release_command_routes(monkeypatch) -> None:
+    called: list[str] = []
+    monkeypatch.setattr(
+        "okmate_ops.promote.promote_tag",
+        lambda tag, from_ref="main", force=False: called.append(f"{tag}:{from_ref}:{force}") or 0,
+    )
+    assert release_command(["v1.2.3"]) == 0
+    assert release_command(["v1.2.3", "--from", "release"]) == 0
+    assert release_command(["v1.2.3", "--force"]) == 0
+    assert called == ["v1.2.3:main:False", "v1.2.3:release:False", "v1.2.3:main:True"]
+
+
+def test_promote_command_routes(monkeypatch, capsys) -> None:
     called: list[str] = []
     monkeypatch.setattr(
         "okmate_ops.promote.promote_tag",
@@ -42,6 +66,7 @@ def test_promote_command_routes(monkeypatch) -> None:
     assert promote_command(["tag", "v1.2.3", "--from", "release"]) == 0
     assert promote_command(["tag", "v1.2.3", "--force"]) == 0
     assert called == ["v1.2.3:main:False", "v1.2.3:release:False", "v1.2.3:main:True"]
+    assert capsys.readouterr().err == PROMOTE_DEPRECATED * 3
 
 
 def test_promote_tag_pushes_version_then_tags(monkeypatch, tmp_path) -> None:

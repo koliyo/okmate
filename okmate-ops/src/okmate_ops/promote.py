@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import os
 import subprocess
+import sys
 import tempfile
 import time
 from pathlib import Path
@@ -18,8 +19,10 @@ from okmate_ops.version import (
     tap_files_match,
 )
 
+RELEASE_USAGE = "usage: okmate-ops release <tag> [--from BRANCH] [--force]"
 PROMOTE_USAGE = "usage: okmate-ops promote tag"
 PROMOTE_TAG_USAGE = "usage: okmate-ops promote tag <tag> [--from BRANCH] [--force]"
+PROMOTE_DEPRECATED = "okmate-ops promote tag is deprecated; use okmate-ops release\n"
 
 
 def run(argv: list[str], *, cwd: Path | None = None) -> None:
@@ -133,9 +136,7 @@ def promote_tag(tag: str, from_ref: str = "main", *, force: bool = False) -> int
     return 0
 
 
-def promote_tag_command(argv: list[str]) -> int:
-    if not argv or argv[0] in ("-h", "--help"):
-        raise SystemExit(PROMOTE_TAG_USAGE)
+def parse_tag_argv(argv: list[str], usage: str) -> tuple[str, str, bool]:
     from_ref = "main"
     tag: str | None = None
     force = False
@@ -143,7 +144,7 @@ def promote_tag_command(argv: list[str]) -> int:
     while i < len(argv):
         if argv[i] == "--from":
             if i + 1 >= len(argv):
-                raise SystemExit(PROMOTE_TAG_USAGE)
+                raise SystemExit(usage)
             from_ref = argv[i + 1]
             i += 2
             continue
@@ -152,15 +153,30 @@ def promote_tag_command(argv: list[str]) -> int:
             i += 1
             continue
         if tag is not None:
-            raise SystemExit(PROMOTE_TAG_USAGE)
+            raise SystemExit(usage)
         tag = argv[i]
         i += 1
     if tag is None:
+        raise SystemExit(usage)
+    return tag, from_ref, force
+
+
+def release_command(argv: list[str]) -> int:
+    if not argv or argv[0] in ("-h", "--help"):
+        raise SystemExit(RELEASE_USAGE)
+    tag, from_ref, force = parse_tag_argv(argv, RELEASE_USAGE)
+    return promote_tag(tag, from_ref=from_ref, force=force)
+
+
+def promote_tag_command(argv: list[str]) -> int:
+    if not argv or argv[0] in ("-h", "--help"):
         raise SystemExit(PROMOTE_TAG_USAGE)
+    tag, from_ref, force = parse_tag_argv(argv, PROMOTE_TAG_USAGE)
     return promote_tag(tag, from_ref=from_ref, force=force)
 
 
 def promote_command(argv: list[str]) -> int:
+    sys.stderr.write(PROMOTE_DEPRECATED)
     if not argv or argv[0] in ("-h", "--help"):
         raise SystemExit(PROMOTE_USAGE)
     if argv[0] == "tag":
