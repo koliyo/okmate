@@ -103,6 +103,7 @@ macro_rules! document_template {
             pub log_window: ListWindow,
             pub html_style: String,
             pub reading_wrap: bool,
+            pub reading_full: bool,
             pub reading_nav: bool,
             pub reading_toc: bool,
             pub reading_font: u16,
@@ -139,6 +140,7 @@ macro_rules! document_template {
                     log_window: document.log_window,
                     html_style: document.html_style,
                     reading_wrap: document.reading_wrap,
+                    reading_full: document.reading_full,
                     reading_nav: document.reading_nav,
                     reading_toc: document.reading_toc,
                     reading_font: document.reading_font,
@@ -186,6 +188,7 @@ pub struct Document {
     pub log_window: ListWindow,
     pub html_style: String,
     pub reading_wrap: bool,
+    pub reading_full: bool,
     pub reading_nav: bool,
     pub reading_toc: bool,
     pub reading_font: u16,
@@ -397,6 +400,7 @@ mod tests {
             log_window: ListWindow::default(),
             html_style: String::new(),
             reading_wrap: true,
+            reading_full: false,
             reading_nav: true,
             reading_toc: true,
             reading_font: 100,
@@ -437,11 +441,13 @@ mod tests {
         document.html_style =
             "font-size: 110%; --okmate-main-max-width: 70ch; --okmate-nav-width: 264px".into();
         document.reading_wrap = false;
+        document.reading_full = true;
         document.reading_font = 110;
         document.reading_width = 70;
         let html = document.render_page().unwrap();
         assert!(html.contains("style=\"font-size: 110%; --okmate-main-max-width: 70ch; --okmate-nav-width: 264px\""), "{html}");
         assert!(html.contains("data-okmate-wrap=\"off\""), "{html}");
+        assert!(html.contains("data-okmate-full=\"on\""), "{html}");
         assert!(html.contains("value=\"70\""), "{html}");
         assert!(html.contains(">110%</button>"), "{html}");
     }

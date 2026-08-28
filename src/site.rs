@@ -206,6 +206,7 @@ fn document(
         log_window: crate::views::ListWindow::default(),
         html_style: String::new(),
         reading_wrap: true,
+        reading_full: false,
         reading_nav: true,
         reading_toc: true,
         reading_font: 100,
@@ -217,6 +218,7 @@ fn document(
 pub fn apply_reading_prefs(document: &mut Document, session: &crate::preview::Session) {
     document.html_style = session.html_style();
     document.reading_wrap = session.wrap;
+    document.reading_full = session.full_width;
     document.reading_nav = session.nav_visible;
     document.reading_toc = session.toc_visible;
     document.reading_font = session.font_size;

@@ -9,7 +9,7 @@
   var LEGACY_TOC_KEY = "okmate-toc-visible";
   var LEGACY_FONT_KEY = "okmate-font-size";
   var MIN_CH = 45;
-  var MAX_CH = 90;
+  var MAX_CH = 100;
   var DEFAULT_CH = 66;
   var MIN_FONT = 80;
   var MAX_FONT = 160;
@@ -20,6 +20,7 @@
     font: DEFAULT_FONT,
     width: null,
     wrap: true,
+    full: false,
     nav: true,
     toc: true,
     navWidth: "",
@@ -84,6 +85,7 @@
       font_size: state.font,
       main_width: state.width,
       wrap: state.wrap,
+      full_width: state.full,
       nav_visible: state.nav,
       toc_visible: state.toc,
     };
@@ -114,6 +116,11 @@
     } else {
       root.removeAttribute("data-okmate-wrap");
     }
+    if (state.full) {
+      root.setAttribute("data-okmate-full", "on");
+    } else {
+      root.removeAttribute("data-okmate-full");
+    }
     if (!state.nav) {
       root.setAttribute("data-okmate-nav", "off");
     } else {
@@ -143,18 +150,23 @@
     var slider = document.getElementById("okmate-main-width");
     var output = document.getElementById("okmate-main-width-value");
     var wrap = document.getElementById("okmate-main-wrap");
+    var full = document.getElementById("okmate-main-full");
     var navToggle = document.getElementById("okmate-nav-toggle");
     var tocToggle = document.getElementById("okmate-toc-toggle");
     var fontValue = document.getElementById("okmate-font-value");
     if (slider) {
       slider.value = String(state.width == null ? DEFAULT_CH : state.width);
-      slider.setAttribute("aria-valuetext", widthLabel(state.width));
+      slider.setAttribute("aria-valuetext", state.full ? "full" : widthLabel(state.width));
+      slider.disabled = state.full;
     }
     if (output) {
-      output.textContent = widthLabel(state.width);
+      output.textContent = state.full ? "full" : widthLabel(state.width);
     }
     if (wrap) {
       wrap.checked = state.wrap;
+    }
+    if (full) {
+      full.checked = state.full;
     }
     if (navToggle) {
       navToggle.setAttribute("aria-pressed", state.nav ? "true" : "false");
@@ -173,6 +185,7 @@
   function bind() {
     var slider = document.getElementById("okmate-main-width");
     var wrap = document.getElementById("okmate-main-wrap");
+    var full = document.getElementById("okmate-main-full");
     var navToggle = document.getElementById("okmate-nav-toggle");
     var tocToggle = document.getElementById("okmate-toc-toggle");
     var fontSmaller = document.getElementById("okmate-font-smaller");
@@ -190,6 +203,14 @@
       wrap.dataset.bound = "1";
       wrap.addEventListener("change", function () {
         state.wrap = wrap.checked;
+        apply();
+        persist();
+      });
+    }
+    if (full && full.dataset.bound !== "1") {
+      full.dataset.bound = "1";
+      full.addEventListener("change", function () {
+        state.full = full.checked;
         apply();
         persist();
       });
@@ -268,6 +289,7 @@
     }
     state.width = parseCh(root.style.getPropertyValue("--okmate-main-max-width"));
     state.wrap = root.getAttribute("data-okmate-wrap") !== "off";
+    state.full = root.getAttribute("data-okmate-full") === "on";
     state.nav = root.getAttribute("data-okmate-nav") !== "off";
     state.toc = root.getAttribute("data-okmate-toc") !== "off";
     state.navWidth = root.style.getPropertyValue("--okmate-nav-width").trim();

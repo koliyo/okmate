@@ -44,7 +44,7 @@ const MIN_FONT: u16 = 80;
 const MAX_FONT: u16 = 160;
 const FONT_STEP: u16 = 10;
 const MIN_CH: u16 = 45;
-const MAX_CH: u16 = 90;
+const MAX_CH: u16 = 100;
 const DEFAULT_CH: u16 = 66;
 
 fn default_true() -> bool {
@@ -69,6 +69,8 @@ pub struct Session {
     pub main_width: Option<u16>,
     #[serde(default = "default_true")]
     pub wrap: bool,
+    #[serde(default)]
+    pub full_width: bool,
     #[serde(default = "default_true")]
     pub nav_visible: bool,
     #[serde(default = "default_true")]
@@ -94,6 +96,7 @@ impl Default for Session {
             font_size: DEFAULT_FONT,
             main_width: None,
             wrap: true,
+            full_width: false,
             nav_visible: true,
             toc_visible: true,
             nav_width: None,
@@ -118,6 +121,9 @@ impl Session {
         }
         if let Some(wrap) = obj.get("wrap").and_then(serde_json::Value::as_bool) {
             self.wrap = wrap;
+        }
+        if let Some(full) = obj.get("full_width").and_then(serde_json::Value::as_bool) {
+            self.full_width = full;
         }
         if let Some(visible) = obj.get("nav_visible").and_then(serde_json::Value::as_bool) {
             self.nav_visible = visible;

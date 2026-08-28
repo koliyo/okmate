@@ -145,7 +145,11 @@
     if (!links.length) {
       return;
     }
-    var mark = 48;
+    var pane = document.getElementById("okmate-main");
+    var paneBox = pane ? pane.getBoundingClientRect() : null;
+    var mark = paneBox
+      ? paneBox.top + paneBox.height * 0.25
+      : window.innerHeight * 0.25;
     var currentId = "";
     var firstId = "";
     for (var i = 0; i < links.length; i++) {

@@ -74,6 +74,7 @@ fn sample() -> Document {
         log_window: okmate::views::ListWindow::default(),
         html_style: String::new(),
         reading_wrap: true,
+        reading_full: false,
         reading_nav: true,
         reading_toc: true,
         reading_font: 100,

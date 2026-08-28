@@ -271,6 +271,9 @@ body.is-col-resizing {
   font-weight: 650;
   gap: 0.5em;
 }
+.okmate-toolbar-toc {
+  margin-left: auto;
+}
 
 .okmate-nav-mode {
   position: relative;
@@ -376,13 +379,17 @@ body.is-col-resizing {
   min-width: 0;
   min-height: 0;
   width: 100%;
-  max-width: min(var(--okmate-main-max-width, 66ch), 100%);
-  margin: 0 auto;
-  padding: 2.5rem 1.25rem 4rem;
+  max-width: none;
+  margin: 0;
+  padding: 2.5rem max(1.25rem, calc((100% - var(--okmate-main-max-width, 66ch)) / 2)) 4rem;
   overflow-x: hidden;
   overflow-y: auto;
   overflow-wrap: anywhere;
   background: color-mix(in srgb, var(--rd-bg) 82%, #4b5568);
+}
+html[data-okmate-full="on"] #okmate-main {
+  padding-left: 1.25rem;
+  padding-right: 1.25rem;
 }
 
 html[data-okmate-wrap="off"] #okmate-main {
@@ -1002,7 +1009,7 @@ html[data-okmate-wrap="off"] #okmate-main .okmate-md-table td:first-child {
   .okmate-nav-menu { display: block; margin-bottom: 0.75rem; }
   .okmate-desktop-nav { display: none; }
   #okmate-main {
-    width: min(var(--okmate-main-max-width, 66ch), calc(100% - 2rem));
+    width: 100%;
     overflow-x: hidden;
     overflow-y: visible;
   }
