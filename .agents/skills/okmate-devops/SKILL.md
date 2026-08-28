@@ -24,11 +24,12 @@ commands.
 5. Hosted release workflows:
    - `.github/workflows/cut-release.yml` — `workflow_dispatch` only.
      Runs `okmate-ops release` (same version commit → Test → tag → tap
-     path as localhost). Versioned cuts need `HOMEBREW_TAP_TOKEN` on
-     the `release` environment.
+     path as localhost). Versioned cuts need repository secret
+     `HOMEBREW_TAP_TOKEN`. Do not attach this job to the `release`
+     environment; `main` is not allowed to deploy there.
    - `.github/workflows/release.yml` — tag push (`v*`, `dev`) or
-     `workflow_dispatch` with an existing tag (rebuild/notarize retry).
-     Do not treat a branch dispatch as a release.
+     `workflow_dispatch` *from that tag* (rebuild/notarize retry).
+     Dispatching from `main` is rejected by environment protection.
 
 ## Rolling `dev` tag
 
@@ -60,7 +61,7 @@ gh run watch RUN_ID
 gh pr checks
 gh run rerun RUN_ID --failed
 gh workflow run cut-release.yml -f spec=patch -f from=main
-gh workflow run release.yml -f tag=v0.1.3
+gh workflow run release.yml --ref v0.1.3 -f tag=v0.1.3
 ```
 
 ## Reproduce locally

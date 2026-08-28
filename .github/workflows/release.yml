@@ -4,7 +4,7 @@ on:
   workflow_dispatch:
     inputs:
       tag:
-        description: Existing git tag to rebuild (vX.Y.Z or dev)
+        description: Existing git tag to rebuild. Use workflow from that tag, not main.
         required: true
         type: string
   push:

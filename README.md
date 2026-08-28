@@ -163,10 +163,12 @@ The same cut can run from **Actions → Cut release** (`workflow_dispatch`).
 That job calls `okmate-ops release` on Ubuntu, waits for hosted **Test**,
 then pushes the tag so **Release** still packages from the tag. Versioned
 cuts need repository secret `HOMEBREW_TAP_TOKEN` (write access to
-`koliyo/homebrew-okmate`) on the `release` environment. `dev` does not.
-Do not dispatch **Release** against a branch; that workflow only accepts
-an existing `v*` or `dev` tag (or a tag push). To retry signing, run
-**Release** and pass that tag.
+`koliyo/homebrew-okmate`). That secret is a repo secret, not a `release`
+environment secret: **Cut release** runs from `main`, and `main` is not
+allowed to deploy to `release` (signing). `dev` does not need the tap
+token. To retry signing, run **Release** *from the tag*
+(`Use workflow from` the tag, or `gh workflow run release.yml --ref vX.Y.Z -f tag=vX.Y.Z`).
+A dispatch from `main` cannot use the `release` environment.
 
 Replay local validation with `uv run --no-dev okmate-ops ci`. To publish a
 GitHub release tag from `origin/main`, run

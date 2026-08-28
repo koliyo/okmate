@@ -35,7 +35,6 @@ jobs:
   cut:
     name: okmate-ops release
     runs-on: ubuntu-latest
-    environment: release
     env:
       RELEASE_SPEC: ${{ inputs.spec }}
       RELEASE_FROM: ${{ inputs.from }}

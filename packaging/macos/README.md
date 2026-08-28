@@ -9,10 +9,12 @@ attach an unsigned production archive.
 
 The `.github/workflows/release.yml` workflow signs, zips that
 bundle, and runs `okmate-ops package appcast` on a `v*` or `dev` tag
-push, or on `workflow_dispatch` of an existing tag (rebuild). The job
-uses the GitHub Actions environment `release`, so repository secrets
-scoped to that environment are the ones `package sign` and
-`package appcast` see.
+push, or on `workflow_dispatch` *from that tag* (rebuild). The job
+uses the GitHub Actions environment `release`, so secrets scoped to
+that environment are the ones `package sign` and `package appcast`
+see. Dispatching **Release** from `main` is rejected by environment
+protection; use the tag as **Use workflow from**. **Cut release** does
+not use that environment.
 Operators still create
 immutable `v*` tags only with `okmate-ops release` (`patch`, `minor`,
 `major`, or `vX.Y.Z`) or **Actions → Cut release**, which writes
@@ -32,7 +34,7 @@ also runs this workflow and attaches a GitHub **prerelease**; it is not
 | `APPLE_API_KEY_ID` | `okmate-ops package sign` | App Store Connect API key id for `notarytool`. |
 | `APPLE_API_ISSUER` | `okmate-ops package sign` | App Store Connect API issuer UUID. |
 | `APPLE_API_KEY` | `okmate-ops package sign` | App Store Connect API `.p8` contents. Written to a temp file only. |
-| `HOMEBREW_TAP_TOKEN` | `cut-release.yml` | PAT (or fine-grained token) with write access to `koliyo/homebrew-okmate`. Required for versioned **Cut release**; unused for `dev`. |
+| `HOMEBREW_TAP_TOKEN` | `cut-release.yml` | Repository secret (not `release` env). PAT with write access to `koliyo/homebrew-okmate`. Required for versioned **Cut release**; unused for `dev`. |
 
 `SUPublicEDKey` in `Info.plist` is the production Sparkle public key and must
 match `SPARKLE_EDDSA_PRIVATE_KEY`. Generate a pair with Sparkle

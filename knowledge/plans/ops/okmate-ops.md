@@ -51,9 +51,9 @@ Give CI and localhost one `uv run --no-dev okmate-ops` surface so hosted
   then bump `Casks/okmate.rb` on `koliyo/homebrew-okmate`[^promote][^cask]
 - `release dev` — wait for hosted `Test` and force-move the rolling
   prerelease tag (no version rewrite)[^promote]
-- Hosted **Cut release** runs that same command via `workflow_dispatch`.
-  Hosted **Release** packages an existing tag only (tag push or dispatch
-  with `tag`).
+- Hosted **Cut release** runs that same command via `workflow_dispatch`
+  from `main` (no `release` environment). Hosted **Release** packages
+  an existing tag only (tag push or dispatch *from that tag*).
 
 ## Out of bound
 
