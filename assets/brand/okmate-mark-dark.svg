@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" role="img" aria-labelledby="title desc">
+  <title id="title">OKMate mark, dark</title>
+  <desc id="desc">Two interlocking off-white rings with a Rocci-orange shared centre.</desc>
+  <defs>
+    <clipPath id="overlap">
+      <circle cx="96" cy="128" r="64"/>
+      <circle cx="160" cy="128" r="64"/>
+    </clipPath>
+  </defs>
+  <rect width="256" height="256" rx="56" fill="#111111"/>
+  <rect width="256" height="256" fill="#E64B2F" clip-path="url(#overlap)"/>
+  <circle cx="96" cy="128" r="64" fill="none" stroke="#f8fffb" stroke-width="20"/>
+  <circle cx="160" cy="128" r="64" fill="none" stroke="#f8fffb" stroke-width="20"/>
+</svg>
