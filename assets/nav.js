@@ -156,8 +156,24 @@
     main.scrollTop = Math.max(0, top);
   }
 
+  function syncTitle() {
+    var crumb = document.querySelector(".okmate-crumb-current");
+    var heading = document.querySelector("#okmate-main h1");
+    var title = ((crumb && crumb.textContent) || (heading && heading.textContent) || "").trim();
+    if (title) {
+      document.title = title;
+    }
+  }
+
+  function reportLocation() {
+    var href = window.location.href;
+    if (window.ipc && window.ipc.postMessage) {
+      window.ipc.postMessage("location:" + href);
+    }
+  }
+
   function afterDocumentPatch() {
-    var route = pendingRoute || window.location.pathname;
+    var route = pendingRoute || window.location.pathname + window.location.search;
     if (pendingRoute) {
       if (normalizeRoute(window.location.pathname) !== normalizeRoute(pendingRoute)) {
         try {
@@ -169,6 +185,8 @@
     syncNav(route);
     restoreSections();
     resetMainScroll();
+    syncTitle();
+    reportLocation();
     if (window.__okmateToc && typeof window.__okmateToc.enhance === "function") {
       window.__okmateToc.enhance();
     }
@@ -215,7 +233,7 @@
         rememberAllSections();
         return;
       }
-      var link = event.target.closest && event.target.closest("#okmate-nav a[href]");
+      var link = event.target.closest && event.target.closest("a[href]");
       if (!link || event.button !== 0) {
         return;
       }
@@ -223,15 +241,37 @@
       if (!href || href.charAt(0) === "#" || href.indexOf("/__okmate/") === 0) {
         return;
       }
+      var action =
+        link.getAttribute("data-on:click__prevent") || link.getAttribute("data-on:click") || "";
+      if (action.indexOf("@get") === -1 && !link.closest("#okmate-nav")) {
+        return;
+      }
       pendingRoute = href;
     },
     true
   );
 
+  function requestDocument(href) {
+    if (!href) {
+      return;
+    }
+    var probe = document.createElement("button");
+    probe.type = "button";
+    probe.hidden = true;
+    probe.setAttribute("data-on:click", "@get('" + href.replace(/'/g, "\\'") + "')");
+    document.body.appendChild(probe);
+    setTimeout(function () {
+      probe.click();
+      probe.remove();
+    }, 0);
+  }
+
   window.addEventListener("popstate", function () {
     syncNav(window.location.pathname);
     restoreSections();
     resetMainScroll();
+    reportLocation();
+    requestDocument(window.location.pathname + window.location.search);
   });
   window.addEventListener("pagehide", function () {
     rememberAllSections();
@@ -284,6 +324,8 @@
     syncNav(window.location.pathname);
     restoreSections();
     restoreScroll();
+    syncTitle();
+    reportLocation();
   }
 
   if (document.readyState === "loading") {
