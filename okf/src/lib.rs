@@ -41,7 +41,9 @@ pub use markdown::{
     MarkdownOutput, footnote_labels, parse_markdown_body, reject_declarations, slugify,
 };
 pub use parse_cache::{PARSE_CACHE_VERSION, ParseCache};
-pub use preview::{PreviewTarget, resolve_preview_path};
+pub use preview::{
+    PreviewTarget, discover_bundles, is_bundle_root_index, resolve_bundle, resolve_preview_path,
+};
 pub use review::{ActionKind, ConceptAction, classify_concept_action};
 pub use search::{SearchChunk, matching_search_chunks, normalize_search_text, search_index};
 pub use validate::{

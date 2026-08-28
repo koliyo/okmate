@@ -141,3 +141,59 @@ async fn settings_post_rejects_non_loopback() {
         .unwrap();
     assert_eq!(response.status(), StatusCode::FORBIDDEN);
 }
+
+#[tokio::test]
+async fn settings_post_sets_actor() {
+    let (root, output, config) = fixture();
+    let app = app(root, output, config.clone(), [127, 0, 0, 1]);
+    let response = app
+        .oneshot(
+            Request::post("/__okmate/settings")
+                .header("content-type", "application/x-www-form-urlencoded")
+                .body(Body::from("action=actor&actor=human:nils"))
+                .unwrap(),
+        )
+        .await
+        .unwrap();
+    assert_eq!(response.status(), StatusCode::OK);
+    let body = body_text(response).await;
+    assert!(body.contains("human:nils"), "{body}");
+    assert!(
+        body.contains("data-on:submit__prevent") && body.contains("contentType: 'form'"),
+        "Datastar must post the actor form: {body}"
+    );
+    let saved = fs::read_to_string(config).unwrap();
+    assert!(saved.contains("actor = \"human:nils\""), "{saved}");
+}
+
+#[tokio::test]
+async fn settings_post_rejects_process_actor() {
+    let (root, output, config) = fixture();
+    let app = app(root, output, config.clone(), [127, 0, 0, 1]);
+    let response = app
+        .oneshot(
+            Request::post("/__okmate/settings")
+                .header("content-type", "application/x-www-form-urlencoded")
+                .body(Body::from("action=actor&actor=process:cursor"))
+                .unwrap(),
+        )
+        .await
+        .unwrap();
+    assert_eq!(response.status(), StatusCode::OK);
+    let body = body_text(response).await;
+    assert!(
+        body.contains("invalid actor") || body.contains("human:"),
+        "{body}"
+    );
+    assert!(
+        !body.contains("process:cursor") || body.contains("invalid"),
+        "{body}"
+    );
+    assert!(
+        !config.is_file()
+            || !fs::read_to_string(&config)
+                .unwrap()
+                .contains("process:cursor"),
+        "rejected actor must not be saved"
+    );
+}

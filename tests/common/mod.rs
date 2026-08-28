@@ -2,7 +2,10 @@
 
 use std::fs;
 use std::path::{Path, PathBuf};
+use std::sync::atomic::{AtomicU64, Ordering};
 use std::time::{SystemTime, UNIX_EPOCH};
+
+static TEMP_SEQ: AtomicU64 = AtomicU64::new(0);
 
 pub fn okmate_bin() -> PathBuf {
     PathBuf::from(env!("CARGO_BIN_EXE_okmate"))
@@ -13,11 +16,13 @@ pub fn temp_dir(name: &str) -> PathBuf {
         .duration_since(UNIX_EPOCH)
         .unwrap()
         .as_nanos();
+    let seq = TEMP_SEQ.fetch_add(1, Ordering::Relaxed);
     let path = std::env::temp_dir().join(format!(
-        "okmate-test-{}-{}-{}",
+        "okmate-test-{}-{}-{}-{}",
         name,
         std::process::id(),
-        nonce
+        nonce,
+        seq
     ));
     let _ = fs::remove_dir_all(&path);
     fs::create_dir_all(&path).unwrap();

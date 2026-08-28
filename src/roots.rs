@@ -441,6 +441,13 @@ fn git_root_dir(cache_parent: &Path, id: &str) -> PathBuf {
     cache_parent.join("okf-roots").join(id)
 }
 
+pub fn is_git_cache_snapshot(path: &Path) -> bool {
+    let cache = cache_dir().join("okf-roots");
+    let path = fs::canonicalize(path).unwrap_or_else(|_| path.to_path_buf());
+    let cache = fs::canonicalize(&cache).unwrap_or(cache);
+    path.starts_with(&cache)
+}
+
 fn bundle_path(repo_dir: &Path, bundle: &str) -> PathBuf {
     if bundle.is_empty() || bundle == "." {
         repo_dir.to_path_buf()

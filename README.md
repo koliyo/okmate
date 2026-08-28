@@ -34,7 +34,7 @@ Settings live under `~/.okmate/` (`OKMATE_CONFIG`, `OKMATE_CACHE`,
 | `okmate benchmark <toml> [root]` | Retrieval benchmark |
 | `okmate timings [path]` | Local load/site/click spans (`--format terminal\|json`, `--scenario`) |
 | `okmate build [root] -o <dir>` | Engine artifacts plus Askama HTML |
-| `okmate view [path]` | Live preview; omit `--no-window` to open tao/wry; `--provenance` turns git checks on |
+| `okmate view [path]` | Live preview; omit `path` to infer the bundle from the current git project (usually `knowledge/`); omit `--no-window` to open tao/wry; `--provenance` turns git checks on |
 | `okmate roots` | Print resolved root paths (`--format json\|paths`, `--sync` / `--no-sync`) |
 | `okmate sync [id]` | Fetch configured git roots |
 
@@ -47,6 +47,7 @@ okmate search "system overview" knowledge --profile strict
 okmate benchmark knowledge/retrieval-benchmark.toml knowledge
 okmate timings knowledge --format json --scenario all
 okmate build knowledge -o dist/knowledge
+okmate view --no-window
 okmate view knowledge --no-window
 okmate roots --format json --no-sync
 okmate sync
@@ -76,6 +77,16 @@ interface). With a window, `--port` defaults to `auto` (a free local port).
 use. Settings POST is `/__okmate/settings` and loopback-only. In the
 desktop window, **Choose folder…** uses `rfd` via wry IPC (`pick-folder`), not
 an HTTP pick-folder route. Without a window, paste the folder path.
+
+Live review writes (also loopback-only, git working tree only) are **Verify**
+and **Promote** on `/__okmate/review`. Set a reviewer actor in Settings
+(`actor = "human:<id>"` in `~/.okmate/config.toml`). Verify appends a
+`human:` event and leaves `status` unchanged. Promote is a separate control
+that sets `draft` → `stable` only after a human event exists, and never for
+`authority: exploratory`. The working-tree file changes; you commit. Queue
+pills such as Fix Errors, Refresh Stale, or Uncommitted Changes are
+classification only — there is no button for them yet. Static `okmate build`
+HTML does not include these controls.
 
 Git cache is `OKMATE_CACHE` (default `~/.okmate/cache`).
 

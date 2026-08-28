@@ -67,6 +67,7 @@ impl PollSetting {
 #[derive(Clone, Debug, Default, PartialEq)]
 pub struct UserConfig {
     pub poll: PollSetting,
+    pub actor: Option<String>,
     pub roots: Vec<RootConfig>,
 }
 
@@ -224,6 +225,18 @@ pub fn parse(source: &str) -> Result<UserConfig> {
         Some(value) => parse_poll(&value)?,
         None => PollSetting::default(),
     };
+    let actor = match table.remove("actor") {
+        Some(toml::Value::String(value)) => {
+            let trimmed = value.trim();
+            if trimmed.is_empty() {
+                None
+            } else {
+                Some(trimmed.to_string())
+            }
+        }
+        Some(_) => bail!("actor must be a string"),
+        None => None,
+    };
     let roots = match table.remove("roots") {
         Some(toml::Value::Array(items)) => items
             .into_iter()
@@ -233,7 +246,7 @@ pub fn parse(source: &str) -> Result<UserConfig> {
         Some(_) => bail!("roots must be an array of tables"),
         None => Vec::new(),
     };
-    let config = UserConfig { poll, roots };
+    let config = UserConfig { poll, actor, roots };
     validate(&config)?;
     Ok(config)
 }
@@ -267,6 +280,10 @@ pub fn valid_id(id: &str) -> bool {
         return false;
     }
     chars.all(|ch| ch.is_ascii_lowercase() || ch.is_ascii_digit() || ch == '-')
+}
+
+pub fn valid_actor(actor: &str) -> bool {
+    actor.strip_prefix("human:").is_some_and(valid_id)
 }
 
 pub fn valid_git_url(url: &str) -> bool {
@@ -382,6 +399,12 @@ fn split_duration(text: &str) -> Option<(&str, char)> {
 }
 
 fn validate(config: &UserConfig) -> Result<()> {
+    if let Some(actor) = &config.actor
+        && !actor.is_empty()
+        && !valid_actor(actor)
+    {
+        bail!("actor must be `human:` followed by a lowercase id, got `{actor}`");
+    }
     let mut seen = std::collections::BTreeSet::new();
     for root in &config.roots {
         if !seen.insert(root.id()) {
@@ -411,6 +434,9 @@ fn to_table(config: &UserConfig) -> toml::Table {
             PollSetting::Interval(_) => toml::Value::String(config.poll.as_form_value()),
         },
     );
+    if let Some(actor) = &config.actor {
+        table.insert("actor".into(), toml::Value::String(actor.clone()));
+    }
     if !config.roots.is_empty() {
         table.insert(
             "roots".into(),
@@ -494,5 +520,16 @@ token_env = "GITHUB_TOKEN"
         assert!(debug.contains("<redacted>"));
         let encoded = to_toml(&config).unwrap();
         assert!(encoded.contains("super-secret-token"));
+    }
+
+    #[test]
+    fn actor_roundtrip_accepts_human_and_rejects_process() {
+        let config = parse("actor = \"human:nils\"\n").unwrap();
+        assert_eq!(config.actor.as_deref(), Some("human:nils"));
+        assert!(to_toml(&config).unwrap().contains("actor = \"human:nils\""));
+        assert!(parse("actor = \"process:cursor\"\n").is_err());
+        assert!(parse("actor = \"human:Nils\"\n").is_err());
+        let empty = parse("actor = \"\"\n").unwrap();
+        assert_eq!(empty.actor, None);
     }
 }

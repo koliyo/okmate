@@ -14,6 +14,7 @@ use tower_http::services::ServeDir;
 
 mod pages;
 mod prefs;
+pub(crate) mod review;
 mod settings;
 
 pub use settings::{render_fragment, render_page, settings_roots};
@@ -68,6 +69,7 @@ pub fn router(state: AppState) -> Router {
         .route("/__okmate/nav-mode", get(set_nav_mode))
         .route("/__okmate/prefs", post(prefs::post))
         .route("/__okmate/settings", post(settings::post))
+        .route("/__okmate/review", post(review::post))
         .route("/__okmate/review-window", get(pages::review_window))
         .route("/__okmate/log-window", get(pages::log_window))
         .nest_service("/__okmate", ServeDir::new(output.join("__okmate")))
@@ -106,7 +108,7 @@ fn redirect_back(headers: &HeaderMap) -> Redirect {
     Redirect::to(&target)
 }
 
-fn referer_path(referer: &str) -> Option<String> {
+pub(crate) fn referer_path(referer: &str) -> Option<String> {
     let uri = referer.parse::<axum::http::Uri>().ok()?;
     let path = uri.path();
     if !path.starts_with('/') || path.starts_with("/__okmate") {

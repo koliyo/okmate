@@ -126,10 +126,12 @@ impl Workspace {
                 open_path: "/".into(),
             });
         }
-        let default = PathBuf::from("knowledge");
-        if default.is_dir() {
+        if let Some(bundle) = std::env::current_dir()
+            .ok()
+            .and_then(|cwd| crate::preview::infer_bundle(&cwd))
+        {
             return Ok(ViewTarget {
-                workspace: Self::load_single_with(&default, options, Some(cache_parent))?,
+                workspace: Self::load_single_with(&bundle, options, Some(cache_parent))?,
                 open_path: "/".into(),
             });
         }
@@ -548,6 +550,36 @@ mod tests {
         .unwrap();
         assert!(loaded.workspace.is_multi());
         assert_eq!(loaded.workspace.len(), 2);
+        assert_eq!(loaded.open_path, "/");
+    }
+
+    #[test]
+    fn for_view_infers_knowledge_from_git_toplevel() {
+        let repo = temp("git-view");
+        let status = std::process::Command::new("git")
+            .arg("-C")
+            .arg(&repo)
+            .args(["init", "--initial-branch=main"])
+            .status()
+            .unwrap();
+        assert!(status.success());
+        fs::create_dir_all(repo.join("knowledge")).unwrap();
+        write_bundle(&repo.join("knowledge"), "Inferred", false);
+        let cfg_dir = temp("git-view-cfg");
+        let config = cfg_dir.join("config.toml");
+        fs::write(&config, "").unwrap();
+        let loaded = Workspace::for_view(
+            Some(&repo),
+            crate::preview::view_load_options(Profile::Strict, false),
+            &config,
+            &cfg_dir.join("cache"),
+            None,
+        )
+        .unwrap();
+        assert_eq!(
+            loaded.workspace.primary_path().map(Path::to_path_buf),
+            Some(fs::canonicalize(repo.join("knowledge")).unwrap())
+        );
         assert_eq!(loaded.open_path, "/");
     }
 

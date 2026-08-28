@@ -69,6 +69,7 @@ fn sample() -> Document {
         meta: ConceptMeta::default(),
         message: String::new(),
         config_path: "~/.okmate/config.toml".into(),
+        actor: String::new(),
         settings_roots: Vec::new(),
         review_window: okmate::views::ListWindow::default(),
         log_window: okmate::views::ListWindow::default(),

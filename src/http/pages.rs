@@ -96,11 +96,13 @@ pub fn live_document(
         document.main_scroll = session.main_scroll.unwrap_or(0);
     }
     crate::preview::persist_open_path_to(&state.session_path, path);
+    let config = crate::config::load_or_default(&state.config_path);
     if document.page_kind == "settings" {
-        let config = crate::config::load_or_default(&state.config_path);
         document.config_path = state.config_path.display().to_string();
         document.settings_roots = crate::http::settings_roots(&config);
+        document.actor = config.actor.clone().unwrap_or_default();
     }
+    crate::views::apply_live_authoring(&mut document, &workspace, &config, path);
     let window = crate::views::WindowQuery::from_raw(query);
     if document.page_kind == "review" {
         crate::views::apply_review_window(&mut document, &window);
