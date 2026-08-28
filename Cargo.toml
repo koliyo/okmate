@@ -3,13 +3,13 @@ resolver = "2"
 members = ["okf"]
 
 [workspace.package]
-version = "0.1.10"
+version = "0.2.0"
 edition = "2024"
 license-file = "LICENSE"
 
 [package]
 name = "okmate"
-version = "0.1.10"
+version = "0.2.0"
 edition = "2024"
 license-file = "LICENSE"
 description = "OKMate — open knowledge mate for OKF bundles"
