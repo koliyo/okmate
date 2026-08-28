@@ -146,6 +146,8 @@ def test_package_desktop_runs_h35_packager(monkeypatch, tmp_path) -> None:
     assert envs[0]["EXECUTABLE"] == CLI_BINARY
     assert envs[0]["CRATE"] == CLI_CRATE
     assert envs[0]["PRODUCT_ROOT"] == str(root)
+    assert envs[0]["APP_ICON"] == str(root / "assets" / "brand" / "okmate.icns")
+    assert envs[0]["INFO_PLIST"] == str(root / "packaging" / "macos" / "Info.plist")
     assert envs[0]["SU_FEED_URL"] == DEFAULT_SU_FEED_URL
     assert envs[0]["SU_PUBLIC_ED_KEY"] == DEFAULT_SU_PUBLIC_ED_KEY
     assert DEFAULT_SU_PUBLIC_ED_KEY == "lSXTvcKDK7P4DEjd+o/k2BM6OPTNGyYdvhIk2DxJyao="

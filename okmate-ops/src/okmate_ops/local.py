@@ -15,6 +15,8 @@ CLI_CRATE = "okmate"
 CLI_BINARY = "okmate"
 APP_NAME = "OKMate"
 BUNDLE_IDENTIFIER = "com.koliyo.okmate"
+APP_ICON = "assets/brand/okmate.icns"
+INFO_PLIST = "packaging/macos/Info.plist"
 DEFAULT_SU_FEED_URL = (
     "https://github.com/koliyo/okmate/releases/latest/download/appcast.xml"
 )
@@ -105,6 +107,8 @@ def package_env(root: Path) -> dict[str, str]:
     env["EXECUTABLE"] = CLI_BINARY
     env["CRATE"] = CLI_CRATE
     env["PRODUCT_ROOT"] = str(root)
+    env["APP_ICON"] = str(root / APP_ICON)
+    env["INFO_PLIST"] = str(root / INFO_PLIST)
     env.setdefault("SU_FEED_URL", DEFAULT_SU_FEED_URL)
     env.setdefault("SU_PUBLIC_ED_KEY", DEFAULT_SU_PUBLIC_ED_KEY)
     return env

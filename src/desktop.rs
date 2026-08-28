@@ -6,6 +6,8 @@ window.addEventListener("h35-pick-folder", function (event) {
 });
 "#;
 
+const APP_ICON: &[u8] = include_bytes!("../assets/brand/okmate-app-icon.png");
+
 pub fn run(options: crate::preview::ViewOptions) -> Result<()> {
     let (tx, rx) = std::sync::mpsc::channel();
     std::thread::spawn(move || {
@@ -28,6 +30,7 @@ pub fn run(options: crate::preview::ViewOptions) -> Result<()> {
     h35_desktop::preview(h35_desktop::HostOptions {
         title: "OKMate".into(),
         identifier: "dev.okmate.preview".into(),
+        icon_png: Some(APP_ICON),
         state_dir: crate::preview::state_dir(),
         url: ready.initial_url,
         home_url: Some(ready.home_url),
@@ -51,6 +54,11 @@ mod tests {
     fn pick_folder_alias_forwards_h35_event() {
         assert!(PICK_FOLDER_ALIAS.contains("h35-pick-folder"));
         assert!(PICK_FOLDER_ALIAS.contains("okmate-pick-folder"));
+    }
+
+    #[test]
+    fn desktop_host_embeds_the_okmate_icon() {
+        assert!(APP_ICON.starts_with(b"\x89PNG\r\n\x1a\n"));
     }
 
     #[test]
