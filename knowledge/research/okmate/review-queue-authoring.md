@@ -1,10 +1,10 @@
 ---
 type: Research Report
-title: Review-queue authoring operations and agent dispatch
-description: The review queue already classifies required work; resolving it needs a small set of UI commands, most of which should dispatch a coding agent into a writable OKF bundle, with human verify/promote kept as direct mutations.
-tags: [domain/okmate, domain/okf, concern/review, concern/agents, concern/authoring, concern/developer-experience]
+title: Review-queue authoring, prompt query, and colocated code
+description: Agents do all Markdown authoring from prompts; query can stay bundle-only, while authoring and research need the colocated git repo that provenance already walks up to from knowledge/.
+tags: [domain/okmate, domain/okf, concern/review, concern/agents, concern/authoring, concern/retrieval, concern/developer-experience]
 status: draft
-generated: { by: process:cursor, at: 2026-08-28T15:45:00Z }
+generated: { by: process:cursor, at: 2026-08-28T17:50:00Z }
 stale_after: 2026-11-28
 authority: exploratory
 owners: [human:nils]
@@ -54,6 +54,26 @@ sources:
     title: Live preview routes; settings is the only POST mutation
     author: process:git
     last_modified: 2026-08-28
+  - id: search-rs
+    resource: ../../../okf/src/search.rs
+    title: Lexical metadata and heading search
+    author: process:git
+    last_modified: 2026-08-28
+  - id: cli
+    resource: ../../../src/cli.rs
+    title: okmate check, inspect, search stay single-root
+    author: process:git
+    last_modified: 2026-08-28
+  - id: goto
+    resource: ../../../assets/goto.js
+    title: Cmd-K page palette over pages.json
+    author: process:git
+    last_modified: 2026-08-28
+  - id: agents-md
+    resource: ../../../AGENTS.md
+    title: Okmate agent instructions at repository root
+    author: process:git
+    last_modified: 2026-08-28
   - id: skill
     resource: ../../../.agents/skills/manage-okmate-knowledge/SKILL.md
     title: Manage okmate knowledge skill
@@ -79,6 +99,16 @@ sources:
     title: Dashboard parity; queue writes out of bound
     author: process:cursor
     last_modified: 2026-08-26
+  - id: verify-plan
+    resource: ../../plans/okmate/verify-promote.md
+    title: Verify and promote from the review UI
+    author: process:cursor
+    last_modified: 2026-08-28
+  - id: git-host
+    resource: ../../decisions/git-repository-bundles.md
+    title: Git working trees as the v1 authoring host
+    author: process:cursor
+    last_modified: 2026-08-28
   - id: gaps
     resource: okf-tool-gaps.md
     title: OKMate feature gaps versus the OKF tool ecosystem
@@ -130,14 +160,18 @@ sources:
 ## Purpose and authority
 
 This report designs how the OKMate review UI could *resolve* the work it
-already classifies, without turning the viewer into a Markdown editor. It is
-exploratory. Queue writes, in-UI agent jobs, and review approve/comment are
-explicitly later work in current plans; they are not shipped.[^extract][^dashboard][^okf-app]
+already classifies, and how a prompt box can **ask** or **author** without
+becoming a Markdown editor. It is exploratory. Queue writes, in-UI agent
+jobs, and review approve/comment are explicitly later work in current plans;
+they are not shipped.[^extract][^dashboard][^okf-app]
 
-The intended product posture: the queue is a **workbench dispatcher**. Typical
-bundle edits go to a coding agent that already knows OKF (skills, `AGENTS.md`,
-`okmate check`). A few trusted human acts stay in the UI as finite mutations.
-The browser is not the domain store.[^rust-vs-rocci][^skill]
+The intended product posture: the queue and a global prompt are a
+**workbench dispatcher**. Typical bundle edits go to a coding agent that
+already knows OKF (skills, `AGENTS.md`, `okmate check`). Query can stay on
+the bundle. Authoring and research usually need the **git repository that
+contains the bundle**, which provenance already discovers. A few trusted
+human acts stay in the UI as finite mutations. The browser is not the domain
+store.[^rust-vs-rocci][^skill][^validate]
 
 ## Current behavior
 
@@ -210,6 +244,120 @@ writes ordinary Markdown; `okmate check` judges.[^skill][^gaps][^tools]
 Do **not** add an in-app frontmatter form or a WYSIWYG body editor for these.
 Peers that write from MCP or `--fix` fight the "agents edit Markdown; the
 tool judges" posture unless gated. The queue should gate, not compete.[^gaps]
+
+## Prompt surfaces: ask versus author
+
+The human-facing authoring tool is a **prompt**, not a record editor. Two
+jobs share a text box and must stay distinguishable. Confusing them is how
+a "chat in the wiki" becomes an accidental write, or how a research task
+runs with no view of `src/`.
+
+| Job | What the user wants | What it may write | What it must see |
+| --- | --- | --- | --- |
+| **Navigate** | Open a known page | nothing | `pages.json` titles/routes |
+| **Ask** | A question about what the bundle already claims | nothing (answer + citations) | one or more OKF roots |
+| **Author** | Change or create records | Markdown under the bundle | git repo that contains the bundle, plus the bundle |
+| **Verify / Promote** | Sign a revision | YAML `verified` / `status` only | the concept; no model |
+
+Cmd-K today is Navigate (`goto.js` over `pages.json`). Keep it. Do not
+overload it with an LLM. Ask is a separate control: a field on home, a
+panel, or "Ask about this concept" on the article. Author is the queue
+primary/overflow plus an explicit **Author from prompt** (new record, or
+"turn this answer into a draft").[^goto][^cli]
+
+Default the empty box to **Ask**. Switching to Author should be a visible
+mode, not inferred from wording. "What did we decide about ports?" is Ask.
+"Write research on prompt query" is Author. A follow-up on an Ask result
+can be **Save as draft** (Author job seeded with the question and answer).
+
+### Ask is easier and bundle-only
+
+Ask does not need the colocated code tree. `okmate search`, `inspect
+catalog|concept|graph`, and `build`'s `search.json` already retrieve from
+one root. The UI can run those deterministically, then optionally compose
+an answer. Git snapshot roots are valid Ask targets. Writes are
+forbidden.[^search-rs][^cli][^multi-roots]
+
+Implementation ladder (ship in this order):
+
+1. **Deterministic retrieve.** Prompt → `okmate search` (and maybe inspect
+   of top hits) → list of concepts with snippets and links. No model. This
+   is already the engine contract; the missing piece is an Ask UI that is
+   not the review-table filter and not Cmd-K.
+2. **Compose over retrieval.** Same hits, then a short LLM pass whose only
+   context is those chunks plus a "cite concept ids" instruction. Lane A
+   (API) is acceptable here: no repo tools, no `--force`. Read-only CLI
+   (`claude -p` without Edit, Codex default read-only sandbox) also works.
+3. **Read-only agent** only when the question needs graph walks, multiple
+   `inspect` calls, or comparison across configured roots (`okmate roots
+   --format paths` then one search per path). Still no writes.
+
+Ask success is a cited answer. Remorph the queue only if the user then
+starts an Author job. Default presentation is Tier 2 (the answer *is* the
+product). Collapse tool traces.
+
+Multi-root Ask fans out the same way agents already must: do not merge
+catalogs. Show which root each citation came from.[^cli][^overview]
+
+Questions that sound like Ask but are really Author/research: "Does this
+architecture record still match the code?" That needs the git tree. Put a
+**Check against sources** control on the concept (Author, repo cwd), not
+in the default Ask path.
+
+### Author and research need the colocated git repo
+
+OKMate's intended layout is **not** a standalone wiki folder. A knowledge
+bundle lives inside a software repository:
+
+```text
+<repo>/                 # git toplevel (cwd for Author agents)
+  AGENTS.md
+  .agents/skills/…
+  src/ … crates/ …
+  knowledge/            # OKF root (okmate view / check path)
+    index.md
+    architecture/…
+```
+
+This is how this repository, Rocci, and typical `okmate view knowledge`
+sessions already work. Provenance does not treat `knowledge/` as the git
+root: `git_repository_root` runs `git rev-parse --show-toplevel` from the
+bundle path and walks up. Cited `resource` paths are relative to the
+record and routinely point at sibling source (`../../../src/review.rs`).
+Drift (`OKF4006`) is "that source file in the **repository** changed after
+verification," not "a file inside the bundle changed."[^validate][^skill][^agents-md]
+
+Configured directory roots are therefore usually `…/knowledge`, not the
+repo. Git roots already have a `bundle` subdirectory for the same
+split.[^multi-roots]
+
+If an Author agent is spawned with `cwd = knowledge/`:
+
+- `AGENTS.md` and `.agents/skills` at the repo root may not load.
+- The agent cannot read `src/` without `../` guesses.
+- `cargo test` and repo hooks are the wrong working directory.
+- Refresh-stale and "reconcile drift" cannot check the evidence the
+  classifier named.
+
+**Author cwd must be the git toplevel** when `git_repository_root(bundle)`
+succeeds. Pass the bundle path in the prompt (`okmate check knowledge
+--profile strict`, edit only under `knowledge/`). If there is no git
+toplevel (orphan directory bundle), fall back to the bundle path and warn
+that source citations to code will be blind.
+
+CLI harnesses are the right Author adapter *because* they already assume a
+project checkout: skills, ignore files, sandbox `workspace-write` on that
+tree. A Messages API call with the bundle files concatenated is the wrong
+Author shape; it can still be a fine Ask composer (step 2 above).[^cursor-cli][^claude-cli]
+
+Research prompts ("investigate how X works, write a report") are Author
+jobs with a research-shaped envelope, not Ask. They depend on code even
+more than a queue Fix Errors. Same cwd rule.
+
+Git snapshot roots (fetched URL cache): Ask later; Author no. v1 authoring
+is local git working trees only; infer the bundle from `okf_version`
+`index.md` at the repo root or one directory down, preferring a unique
+`knowledge/` child.[^git-host]
 
 ## Operation catalog
 
@@ -341,13 +489,19 @@ from `action_detail`, codes, and `okmate inspect concept`.
 
 A good prompt envelope (okmate-owned, not the adapter):
 
-1. Working directory = root path.
-2. Instruction: follow `$manage-okmate-knowledge`; edit Markdown; do not mint
-   `human:` verification; leave `status: draft` unless the user explicitly
-   asked to promote (they should not, from this envelope).
-3. Concept path, kind, diagnostics.
-4. Success criterion: `okmate check <root> --profile strict` with the
-   concept's errors gone (warnings may remain; say so).
+**Ask:** cwd unused or bundle; tools read-only; retrieve with `okmate search`
+/ `inspect` first; answer with concept-id citations; do not write files.
+
+**Author / queue fix / research:**
+
+1. Working directory = `git_repository_root(bundle)` when it exists, else
+   the bundle path.
+2. Bundle path and concept id in the prompt. Instruction: follow
+   `$manage-okmate-knowledge`; edit Markdown under the bundle only; do not
+   mint `human:` verification; leave `status: draft`.
+3. Diagnostics or the user's author prompt.
+4. Success criterion: `okmate check <bundle> --profile strict` (Author) or
+   the concept's errors gone (queue fix).
 5. Optional user note.
 
 ## Agent dispatch: API versus CLI
@@ -411,11 +565,17 @@ spawn { argv, cwd, env, timeout }
 → cancel = kill process group
 ```
 
+`cwd` is job-class specific: unused or bundle for Ask; git toplevel for
+Author. Do not pass the bundle path as cwd "because that is what `view`
+opened."
+
 Settings store named adapters:
 
 - `cursor-cli`, `claude`, `codex`, `pi`
 - `custom` with argv template `{prompt}`, `{cwd}`
-- optional Lane A `cursor-sdk` later if a sidecar exists
+
+Do not add a Lane A SDK adapter. Desktop dispatch is CLI harnesses
+only.[^git-host]
 
 Detect which binaries exist; disable missing ones. Remember last successful
 adapter per machine, not per bundle.
@@ -474,8 +634,9 @@ review queue.
 | Job | Default pane |
 | --- | --- |
 | Direct Verify / Promote | Tier 0 + 1, no panel |
+| Ask (question) | Tier 2 answer + citation links; no queue morph |
 | Git stage/commit via agent | Tier 1; Tier 2 if exit ≠ 0 |
-| Fix Errors, Refresh, source reconcile | Tier 2 streaming |
+| Fix Errors, Refresh, source reconcile, Author from prompt | Tier 2 streaming |
 | User checked "verbose" | Tier 3 |
 
 A **sticky per-user preference** ("Always show full reply") covers people
@@ -486,6 +647,10 @@ Retry and Open in terminal (copy the exact argv). Never auto-retry in a
 loop.
 
 ## UX recommendations
+
+**Ask box.** Separate from Cmd-K. Default mode Ask. Visible switch to
+Author. Concept pages may pre-scope Ask to that record (`inspect` + body)
+without changing cwd rules. Citations are ordinary in-app links.
 
 **Queue row.** Primary pill is already colored. Turn the required-action
 pill into a button (or put a button beside it). `Exploratory` / `Clean` stay
@@ -517,7 +682,11 @@ envelope in `/agents/` later; do not make the only path a hidden UI POST.
 - Records stay inert Markdown. No Rocdown in `knowledge/`.[^overview]
 - `okf` stays UI-neutral; classification stays in the engine.[^review-engine]
 - Loopback-only writes; tokens never echoed.[^settings-http][^extract]
-- Directory roots writable; git roots snapshots.[^multi-roots]
+- Directory roots writable; git URL cache snapshots stay read-only.
+  v1 writes require a local git working tree.[^multi-roots][^git-host]
+- Ask is bundle-only and read-only; Author cwd is git toplevel when
+  present.[^validate][^search-rs]
+- Agent jobs, when built, use CLI harnesses, not vendor APIs.[^git-host]
 - Append verification; do not invent `human:` from an agent.[^skill]
 - One-shot morph first; live SSE only while a job runs.[^extract]
 - Do not ship write-capable MCP as the queue's backend.[^gaps]
@@ -525,29 +694,23 @@ envelope in `/agents/` later; do not make the only path a hidden UI POST.
 ## Non-goals for a first implementation
 
 - In-browser Markdown editing or frontmatter forms.
+- Replacing Cmd-K goto with the Ask model.
+- Merged cross-root search catalogs.
 - GitHub PR approve/request-changes mapping (named in the older application
   plan; optional later adapter).[^okf-app]
 - Hosted multi-user review with auth tokens.
 - Auto-promotion after a green check.
 - Embedding Node/Python SDKs inside the `okmate` binary.
 
-## Suggested first slice (not a plan)
+## Suggested first slice
 
-This is a sequencing hint, not an implementation plan:
-
-1. Direct Verify / Promote on directory roots (settings-shaped POST, morph
-   queue + concept meta). Unblocks the most common "draft sitting there"
-   rows without any adapter.
-2. Adapter settings + Ask agent for `FixErrors` and `RefreshStale` via CLI
-   print-mode, stream into a job panel, reload.
-3. Source drift: agent reconcile + Accept-current-sources as secondary.
-4. Track/Commit as agent jobs.
-
-Lane A (API key SDK) can wait until a customer needs CI-style dispatch
-without a local login.
+Verify/Promote on a git working tree is specified in
+[verify and promote](/plans/okmate/verify-promote.md): infer bundle, actor
+in settings, loopback POST, CAS, morph. Ask UI and CLI Author jobs come
+after that plan. Do not add API-key SDKs.[^verify-plan][^git-host]
 
 [^review-engine]: Action kinds, labels, required flag, diagnostic-driven details.
-[^validate]: OKF4004–4008 stale, regenerated, drift, untracked, dirty sources.
+[^validate]: OKF4004–4008 stale, regenerated, drift, untracked, dirty sources; `git_repository_root` is `rev-parse --show-toplevel`.
 [^diagnostic]: Stable diagnostic code list.
 [^queue]: Read-only queue tables and filters.
 [^article]: Concept alert is display-only.
@@ -555,11 +718,17 @@ without a local login.
 [^governance]: Meta alert copies `action.detail`.
 [^settings-http]: Validate, write, re-read, PatchElements; loopback.
 [^http]: No review POST today.
+[^search-rs]: Metadata and heading chunk search; not BM25.
+[^cli]: `check` / `inspect` / `search` stay single-root; `roots` lists paths.
+[^goto]: Live Cmd-K is title/route filter over `pages.json`.
+[^agents-md]: Repo-root agent instructions, not inside the bundle.
 [^skill]: Agents author Markdown, strict check, never invent human verification.
 [^extract]: Queue writes and in-UI agent jobs out of bound for the extract plan.
 [^okf-app]: Revision-bound approve and CAS metadata commit as later phase.
 [^rust-vs-rocci]: Finite queue mutations vs live agent jobs; morph vs SSE.
 [^dashboard]: Queue writes out of bound for dashboard parity.
+[^verify-plan]: First implementation: discover bundle, surgical YAML, live POST.
+[^git-host]: Git working tree only; one-level okf_version discovery; CLI not API.
 [^gaps]: Read-only authoring posture versus peer write MCP / lint --fix.
 [^tools]: Closed evidence loop; humans review; agents submit Markdown.
 [^overview]: Engine vs app vs knowledge ownership.

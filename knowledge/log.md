@@ -7,6 +7,8 @@ the same change.
 
 ## 2026-08-28
 
+- Drafted paired plan and exploratory decision for review Verify/Promote (git working trees only, one-level `okf_version` bundle inference, CLI harnesses not vendor APIs). Exploratory; do not log complete until hosted CI succeeds.
+- Revised review-queue authoring research: prompt Ask vs Author, bundle-only query, Author cwd at git toplevel beside `knowledge/`. Exploratory; do not log complete until hosted CI succeeds.
 - Drafted research on review-queue authoring operations (direct verify/promote versus CLI/API agent dispatch, result presentation tiers). Exploratory; do not log complete until hosted CI succeeds.
 - Drafted research comparing OKMate to the broader OKF tool field (W4G1/okf, okq, okft, Workbench, OKF4net, okf-schema, IWE, and others): MCP, lint/SARIF, init/index, and ranked search as gaps; review shell, strict evidence, multi-root git, and benchmarks as strengths. Exploratory; do not log complete until hosted CI succeeds.
 - Drafted paired research and plan for the OKMate product website (Rocdown static site, git/OKF/multi-bundle positioning, first-class `/agents/` and `/llms.txt`). Exploratory; do not log complete until hosted CI succeeds.
