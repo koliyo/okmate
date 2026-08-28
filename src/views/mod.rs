@@ -101,6 +101,12 @@ macro_rules! document_template {
             pub settings_roots: Vec<SettingsRoot>,
             pub review_window: ListWindow,
             pub log_window: ListWindow,
+            pub html_style: String,
+            pub reading_wrap: bool,
+            pub reading_nav: bool,
+            pub reading_toc: bool,
+            pub reading_font: u16,
+            pub reading_width: u16,
         }
 
         impl From<Document> for $name {
@@ -130,6 +136,12 @@ macro_rules! document_template {
                     settings_roots: document.settings_roots,
                     review_window: document.review_window,
                     log_window: document.log_window,
+                    html_style: document.html_style,
+                    reading_wrap: document.reading_wrap,
+                    reading_nav: document.reading_nav,
+                    reading_toc: document.reading_toc,
+                    reading_font: document.reading_font,
+                    reading_width: document.reading_width,
                 }
             }
         }
@@ -170,6 +182,12 @@ pub struct Document {
     pub settings_roots: Vec<SettingsRoot>,
     pub review_window: ListWindow,
     pub log_window: ListWindow,
+    pub html_style: String,
+    pub reading_wrap: bool,
+    pub reading_nav: bool,
+    pub reading_toc: bool,
+    pub reading_font: u16,
+    pub reading_width: u16,
 }
 
 impl Document {
@@ -374,6 +392,12 @@ mod tests {
             settings_roots: Vec::new(),
             review_window: ListWindow::default(),
             log_window: ListWindow::default(),
+            html_style: String::new(),
+            reading_wrap: true,
+            reading_nav: true,
+            reading_toc: true,
+            reading_font: 100,
+            reading_width: 66,
         }
     }
 
@@ -399,6 +423,22 @@ mod tests {
         assert!(html.contains("/__okmate/resize.js"), "{html}");
         assert!(html.contains("/__okmate/reading.js"), "{html}");
         assert!(html.contains("/__okmate/toc.js"), "{html}");
+        assert!(!html.contains("font-size: 110%"), "{html}");
+    }
+
+    #[test]
+    fn page_template_seeds_reading_prefs() {
+        let mut document = sample_document(Vec::new());
+        document.html_style =
+            "font-size: 110%; --okmate-main-max-width: 70ch; --okmate-nav-width: 264px".into();
+        document.reading_wrap = false;
+        document.reading_font = 110;
+        document.reading_width = 70;
+        let html = document.render_page().unwrap();
+        assert!(html.contains("style=\"font-size: 110%; --okmate-main-max-width: 70ch; --okmate-nav-width: 264px\""), "{html}");
+        assert!(html.contains("data-okmate-wrap=\"off\""), "{html}");
+        assert!(html.contains("value=\"70\""), "{html}");
+        assert!(html.contains(">110%</button>"), "{html}");
     }
 
     #[test]

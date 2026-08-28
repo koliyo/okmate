@@ -123,6 +123,11 @@ fn build_writes_engine_catalog_html_landmarks_and_pages_json() {
     assert!(output.join("__okmate").join("toc.js").is_file());
     assert!(home.contains("/__okmate/resize.js"), "{home}");
     assert!(home.contains("/__okmate/reading.js"), "{home}");
+    assert!(!home.contains("font-size: 110%"), "{home}");
+    assert!(!home.contains("data-okmate-wrap=\"off\""), "{home}");
+    let reading = fs::read_to_string(output.join("__okmate").join("reading.js")).unwrap();
+    assert!(reading.contains("/__okmate/prefs"), "{reading}");
+    assert!(reading.contains("localStorage.removeItem"), "{reading}");
     assert!(home.contains("/__okmate/toc.js"), "{home}");
     assert!(home.contains("/__okmate/nav.js"), "{home}");
     let pages: serde_json::Value =

@@ -32,7 +32,14 @@ pub async fn post(
         apply_action(&state.config_path, &fields).unwrap_or_else(|error| error.to_string());
     let config = crate::config::load_or_default(&state.config_path);
     let bundle = okf::load(&state.root, state.profile).ok();
-    let fragment = render_fragment(bundle.as_ref(), &config, Some(&message), &state.config_path);
+    let session = crate::preview::load_session_from(&state.session_path);
+    let fragment = render_fragment(
+        bundle.as_ref(),
+        &config,
+        Some(&message),
+        &state.config_path,
+        &session,
+    );
     if is_datastar(&headers) {
         let patch = PatchElements::new(fragment);
         return Sse::new(stream::once(async move {
@@ -40,7 +47,13 @@ pub async fn post(
         }))
         .into_response();
     }
-    let html = render_page(bundle.as_ref(), &config, Some(&message), &state.config_path);
+    let html = render_page(
+        bundle.as_ref(),
+        &config,
+        Some(&message),
+        &state.config_path,
+        &session,
+    );
     let _ = write_settings_page(&state, &html);
     axum::response::Html(html).into_response()
 }
@@ -81,8 +94,9 @@ pub fn render_page(
     config: &UserConfig,
     message: Option<&str>,
     config_file: &Path,
+    session: &crate::preview::Session,
 ) -> String {
-    settings_document(bundle, config, message, config_file)
+    settings_document(bundle, config, message, config_file, session)
         .render_settings()
         .unwrap_or_else(|error| error.to_string())
 }
@@ -92,8 +106,9 @@ pub fn render_fragment(
     config: &UserConfig,
     message: Option<&str>,
     config_file: &Path,
+    session: &crate::preview::Session,
 ) -> String {
-    settings_document(bundle, config, message, config_file)
+    settings_document(bundle, config, message, config_file, session)
         .render_settings_fragment()
         .unwrap_or_else(|error| error.to_string())
 }
@@ -103,6 +118,7 @@ fn settings_document(
     config: &UserConfig,
     message: Option<&str>,
     config_file: &Path,
+    session: &crate::preview::Session,
 ) -> Document {
     let mut document = if let Some(bundle) = bundle {
         site::settings_shell(bundle)
@@ -142,11 +158,18 @@ fn settings_document(
             settings_roots: Vec::new(),
             review_window: crate::views::ListWindow::default(),
             log_window: crate::views::ListWindow::default(),
+            html_style: String::new(),
+            reading_wrap: true,
+            reading_nav: true,
+            reading_toc: true,
+            reading_font: 100,
+            reading_width: 66,
         }
     };
     document.message = message.unwrap_or("").to_string();
     document.config_path = config_file.display().to_string();
     document.settings_roots = settings_roots(config);
+    crate::site::apply_reading_prefs(&mut document, session);
     document
 }
 

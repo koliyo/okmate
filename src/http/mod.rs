@@ -13,6 +13,7 @@ use serde::Deserialize;
 use tower_http::services::ServeDir;
 
 mod pages;
+mod prefs;
 mod settings;
 
 pub use settings::{render_fragment, render_page, settings_roots};
@@ -65,6 +66,7 @@ pub fn router(state: AppState) -> Router {
     let output = state.output.clone();
     Router::new()
         .route("/__okmate/nav-mode", get(set_nav_mode))
+        .route("/__okmate/prefs", post(prefs::post))
         .route("/__okmate/settings", post(settings::post))
         .route("/__okmate/review-window", get(pages::review_window))
         .route("/__okmate/log-window", get(pages::log_window))

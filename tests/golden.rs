@@ -72,6 +72,12 @@ fn sample() -> Document {
         settings_roots: Vec::new(),
         review_window: okmate::views::ListWindow::default(),
         log_window: okmate::views::ListWindow::default(),
+        html_style: String::new(),
+        reading_wrap: true,
+        reading_nav: true,
+        reading_toc: true,
+        reading_font: 100,
+        reading_width: 66,
     }
 }
 
