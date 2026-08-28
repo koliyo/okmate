@@ -1,7 +1,8 @@
 # Okmate
 
-Application, desktop preview, and agent setup.
+Application, desktop preview, agent setup, and product site.
 
+* [OKMate product website](website.md) - Static Rocdown site: OSS/OKF/git/multi-bundle story, human docs, `/agents/` plus `/llms.txt`. Research: [website](/research/okmate/website.md). Exploratory; no phase started.
 * [Agent and knowledge bootstrap](agent-knowledge.md) - Skills, Cursor rules, local bundle, and discussion migration from Rocci.
 * [Standalone app self-update](standalone-self-update.md) - Sparkle 2 in OKMate.app; GitHub Releases feed.
 * [Dashboard parity with rocci-okf](dashboard-parity.md) - Home governance, review queue, concept meta, and preview ports.
