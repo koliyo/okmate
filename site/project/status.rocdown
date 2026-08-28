@@ -36,6 +36,16 @@ This page describes the repository snapshot, not a stability promise.
 - Windows and Linux desktop installers are not shipped.
 - Public hostname (`okmate.dev` versus GitHub Pages) is an operator choice.
 
+## Public knowledge demo
+
+This site does **not** mount `okmate build` HTML under `/knowledge/`. Maintainer
+drafts stay in the repository
+[knowledge/](https://github.com/koliyo/okmate/tree/main/knowledge) tree.
+Site `/llms.txt` is the Rocdown product index only. A bundle `llms.txt` from
+`okmate build` is a different artifact and is not published on this host.
+
+A dedicated public demo bundle remains a later, explicit choice.
+
 ## Landscape boundary
 
 Tools such as DeepWiki, Basic Memory, or hosted MCP products are named only
