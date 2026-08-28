@@ -21,10 +21,18 @@ commands.
 3. When `okmate-ops` is present, replay the same jobs locally with
    `uv run okmate-ops ci`.
 4. `gh` talks to `https://api.github.com`. In a sandbox, run `gh` unsandboxed.
+5. Hosted release workflows:
+   - `.github/workflows/cut-release.yml` — `workflow_dispatch` only.
+     Runs `okmate-ops release` (same version commit → Test → tag → tap
+     path as localhost). Versioned cuts need `HOMEBREW_TAP_TOKEN` on
+     the `release` environment.
+   - `.github/workflows/release.yml` — tag push (`v*`, `dev`) or
+     `workflow_dispatch` with an existing tag (rebuild/notarize retry).
+     Do not treat a branch dispatch as a release.
 
 ## Rolling `dev` tag
 
-`uv run okmate-ops promote tag dev` force-moves the rolling prerelease tag
+`uv run okmate-ops release dev` force-moves the rolling prerelease tag
 after hosted CI on the target SHA. A later `git pull` may report
 `! [rejected] dev -> dev (would clobber existing tag)`. That is expected.
 Do not treat it as a repository or CI failure. This clone should force-update
@@ -36,7 +44,7 @@ git config --local --add remote.origin.fetch '+refs/tags/dev:refs/tags/dev'
 
 Do not force-fetch all tags; `v*` releases stay immutable. One-shot:
 `git fetch origin tag dev --force`. Until `dev` exists, a bare
-`git fetch origin` fails on that refspec; `promote tag` fetches the
+`git fetch origin` fails on that refspec; `okmate-ops release` fetches the
 target branch only.
 
 ## Inspect and monitor CI runs
@@ -51,6 +59,8 @@ gh run view RUN_ID --log-failed
 gh run watch RUN_ID
 gh pr checks
 gh run rerun RUN_ID --failed
+gh workflow run cut-release.yml -f spec=patch -f from=main
+gh workflow run release.yml -f tag=v0.1.3
 ```
 
 ## Reproduce locally

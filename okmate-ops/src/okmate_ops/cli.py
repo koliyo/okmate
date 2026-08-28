@@ -13,7 +13,7 @@ commands:
   install       cli
   package       desktop, sign, appcast
   pr-checkout   list open PRs, or checkout one here as pr/<branch>
-  promote       tag
+  release       patch, minor, major, v*, or dev
 """
 
 
@@ -35,8 +35,8 @@ def main(argv: list[str] | None = None) -> None:
         raise SystemExit(local.package_command(rest))
     if command == "pr-checkout":
         raise SystemExit(pr_checkout.main(rest))
-    if command == "promote":
-        raise SystemExit(promote.promote_command(rest))
+    if command == "release":
+        raise SystemExit(promote.release_command(rest))
     sys.stderr.write(f"unknown command: {command}\n")
     sys.stderr.write(USAGE)
     raise SystemExit(2)

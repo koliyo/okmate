@@ -5,6 +5,10 @@ Independent bullets under the same `## YYYY-MM-DD` heading combine instead of
 conflicting. Add a new list item; do not reword another session's bullet in
 the same change.
 
+## 2026-08-28
+
+- Drafted paired research and plan for the release version workflow (`promote tag` → `okmate-ops release` with patch/minor/major; no commit-message auto-tag). Exploratory; do not log complete until hosted CI succeeds.
+
 ## 2026-08-27
 
 - Viewer-responsiveness Phases 1–5 and 7 passed hosted CI on `500fc80` (workflow run [33070204563](https://github.com/koliyo/okmate/actions/runs/33070204563); Phase 6 skipped).

@@ -10,6 +10,8 @@ LOCK_PACKAGE_RE = re.compile(
 )
 CASK_VERSION_RE = re.compile(r'^(\s*version ")[^"]+(")', re.MULTILINE)
 SEMVER_RE = re.compile(r"^\d+\.\d+\.\d+(?:-[0-9A-Za-z.-]+)?$")
+CORE_SEMVER_RE = re.compile(r"^(\d+)\.(\d+)\.(\d+)$")
+BUMP_LEVELS = ("patch", "minor", "major")
 
 CARGO_TOML = Path("Cargo.toml")
 OKF_CARGO_TOML = Path("okf") / "Cargo.toml"
@@ -47,11 +49,39 @@ APPCAST_LATEST = "https://github.com/koliyo/okmate/releases/latest"
 
 def parse_release_version(tag: str) -> str:
     if not tag.startswith("v") or len(tag) < 2:
-        raise SystemExit("promote tag requires a v* name or the movable dev tag")
+        raise SystemExit("release requires a v* name, bump level, or the movable dev tag")
     version = tag[1:]
     if not SEMVER_RE.fullmatch(version):
-        raise SystemExit(f"promote tag {tag} is not a vX.Y.Z version")
+        raise SystemExit(f"release {tag} is not a vX.Y.Z version")
     return version
+
+
+def next_release_version(current: str, level: str) -> str:
+    if level not in BUMP_LEVELS:
+        raise SystemExit(f"unknown bump level: {level}")
+    match = CORE_SEMVER_RE.fullmatch(current)
+    if not match:
+        raise SystemExit(f"cannot bump {current}; expected X.Y.Z")
+    major, minor, patch = (int(part) for part in match.groups())
+    if level == "patch":
+        return f"{major}.{minor}.{patch + 1}"
+    if level == "minor":
+        return f"{major}.{minor + 1}.0"
+    return f"{major + 1}.0.0"
+
+
+def crate_versions(cargo_text: str, okf_text: str, lock_text: str) -> str:
+    cargo = first_package_version(cargo_text)
+    okf = first_package_version(okf_text)
+    if cargo is None or okf is None:
+        raise SystemExit("could not find package version")
+    if cargo != okf:
+        raise SystemExit(f"crate versions differ: okmate {cargo} vs okf {okf}")
+    if f'name = "okmate"\nversion = "{cargo}"' not in lock_text:
+        raise SystemExit(f"Cargo.lock does not match crate version {cargo}")
+    if f'name = "okf"\nversion = "{cargo}"' not in lock_text:
+        raise SystemExit(f"Cargo.lock does not match crate version {cargo}")
+    return cargo
 
 
 def first_package_version(text: str) -> str | None:

@@ -140,9 +140,11 @@ The update plan is
 [`knowledge/plans/okmate/standalone-self-update.md`](knowledge/plans/okmate/standalone-self-update.md).
 Do not treat this README as an architecture decision.
 
-1. Run `uv run okmate-ops promote tag vX.Y.Z` (or `--from BRANCH`). That is
-   the only operator path that creates an immutable `v*` tag. Pass `--force`
-   only to move an existing `v*` (local and `origin`). For a versioned
+1. Run `uv run okmate-ops release patch` (or `minor`, `major`, or
+   `vX.Y.Z`, optionally `--from BRANCH`). That is the only operator path
+   that creates an immutable `v*` tag. Pass `--force` only to move an
+   existing `v*` (local and `origin`). `--dry-run` prints the resolved
+   tag and whether crate files already match, then exits. For a versioned
    tag it writes `X.Y.Z` to `Cargo.toml`, `okf/Cargo.toml`, and
    `Cargo.lock`, pushes that commit to the target branch, waits for
    hosted **Test** on the version commit, then pushes the tag and updates
@@ -157,11 +159,21 @@ Do not treat this README as an architecture decision.
    `https://github.com/koliyo/okmate/releases/latest/download/appcast.xml`
    serves the new item.
 
+The same cut can run from **Actions → Cut release** (`workflow_dispatch`).
+That job calls `okmate-ops release` on Ubuntu, waits for hosted **Test**,
+then pushes the tag so **Release** still packages from the tag. Versioned
+cuts need repository secret `HOMEBREW_TAP_TOKEN` (write access to
+`koliyo/homebrew-okmate`) on the `release` environment. `dev` does not.
+Do not dispatch **Release** against a branch; that workflow only accepts
+an existing `v*` or `dev` tag (or a tag push). To retry signing, run
+**Release** and pass that tag.
+
 Replay local validation with `uv run --no-dev okmate-ops ci`. To publish a
 GitHub release tag from `origin/main`, run
-`uv run okmate-ops promote tag vX.Y.Z` (or `--from BRANCH`).
+`uv run okmate-ops release patch` (or `minor`, `major`, `vX.Y.Z`, or
+`--from BRANCH`).
 The `dev` tag is not version-bumped.
-`uv run okmate-ops promote tag dev` force-moves the rolling `dev` prerelease
+`uv run okmate-ops release dev` force-moves the rolling `dev` prerelease
 tag. That push triggers **Release**, which publishes a GitHub prerelease
 (same signed `OKMate.zip`, not `releases/latest` / Sparkle). `dev` is not
 `SUFeedURL`. A later `git pull` then reports
@@ -173,5 +185,5 @@ git config --local --add remote.origin.fetch '+refs/tags/dev:refs/tags/dev'
 ```
 
 Do not force-fetch all tags; `v*` releases stay immutable.
-`okmate-ops promote tag` fetches only the target branch. To replace local
+`okmate-ops release` fetches only the target branch. To replace local
 `dev` once without changing config, run `git fetch origin tag dev --force`.
