@@ -34,7 +34,7 @@ Settings live under `~/.okmate/` (`OKMATE_CONFIG`, `OKMATE_CACHE`,
 | `okmate benchmark <toml> [root]` | Retrieval benchmark |
 | `okmate timings [path]` | Local load/site/click spans (`--format terminal\|json`, `--scenario`) |
 | `okmate build [root] -o <dir>` | Engine artifacts plus Askama HTML |
-| `okmate view [path]` | Live preview; omit `--no-window` to open tao/wry; `--provenance` turns git checks on |
+| `okmate view [path]` | Live preview; omit `path` to infer the bundle from the current git project (usually `knowledge/`); omit `--no-window` to open tao/wry; `--provenance` turns git checks on |
 | `okmate roots` | Print resolved root paths (`--format json\|paths`, `--sync` / `--no-sync`) |
 | `okmate sync [id]` | Fetch configured git roots |
 
@@ -47,6 +47,7 @@ okmate search "system overview" knowledge --profile strict
 okmate benchmark knowledge/retrieval-benchmark.toml knowledge
 okmate timings knowledge --format json --scenario all
 okmate build knowledge -o dist/knowledge
+okmate view --no-window
 okmate view knowledge --no-window
 okmate roots --format json --no-sync
 okmate sync

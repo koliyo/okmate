@@ -537,11 +537,22 @@ pub fn resolve_target(path: Option<&Path>) -> Result<okf::PreviewTarget> {
     if let Some(bundle) = load_session().bundle.filter(|path| path.is_dir()) {
         return Ok(okf::PreviewTarget::bundle(bundle));
     }
-    let default = PathBuf::from("knowledge");
-    if default.is_dir() {
-        return okf::resolve_preview_path(&default);
+    if let Some(bundle) = env::current_dir().ok().and_then(|cwd| infer_bundle(&cwd)) {
+        return okf::resolve_preview_path(&bundle);
     }
     bail!("pass a knowledge bundle path, or open one first so ~/.okmate/state remembers it");
+}
+
+pub fn infer_bundle(cwd: &Path) -> Option<PathBuf> {
+    if let Some(git) = okf::git_repository_root(cwd)
+        && let Ok(bundle) = okf::resolve_bundle(&git)
+    {
+        return Some(bundle);
+    }
+    let knowledge = cwd.join("knowledge");
+    knowledge
+        .is_dir()
+        .then(|| fs::canonicalize(&knowledge).unwrap_or(knowledge))
 }
 
 pub fn state_dir() -> PathBuf {
@@ -865,6 +876,57 @@ mod tests {
         let again = load_session_from(&path);
         assert_eq!(again.open_path.as_deref(), Some("/review/"));
         let _ = fs::remove_dir_all(dir);
+    }
+
+    #[test]
+    fn infer_bundle_finds_this_repo_knowledge() {
+        let crate_dir = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
+        let bundle = infer_bundle(&crate_dir).expect("okmate checkout has a knowledge bundle");
+        assert_eq!(
+            bundle.file_name().and_then(|name| name.to_str()),
+            Some("knowledge")
+        );
+        assert!(bundle.join("index.md").is_file(), "{}", bundle.display());
+    }
+
+    #[test]
+    fn infer_bundle_from_nested_dir_of_okmate_layout() {
+        let repo = std::env::temp_dir().join(format!(
+            "okmate-layout-{}-{}",
+            std::process::id(),
+            std::time::SystemTime::now()
+                .duration_since(std::time::UNIX_EPOCH)
+                .unwrap()
+                .as_nanos()
+        ));
+        let _ = fs::remove_dir_all(&repo);
+        fs::create_dir_all(repo.join("knowledge").join("plans")).unwrap();
+        fs::create_dir_all(repo.join("src")).unwrap();
+        fs::create_dir_all(repo.join("okf")).unwrap();
+        fs::write(
+            repo.join("knowledge").join("index.md"),
+            "---\nokf_version: \"0.2\"\n---\n\n# Knowledge\n",
+        )
+        .unwrap();
+        fs::write(
+            repo.join("knowledge").join("plans").join("index.md"),
+            "# Plans\n",
+        )
+        .unwrap();
+        let status = std::process::Command::new("git")
+            .arg("-C")
+            .arg(&repo)
+            .args(["init", "--initial-branch=main"])
+            .status()
+            .unwrap();
+        assert!(status.success());
+        let expected = fs::canonicalize(repo.join("knowledge")).unwrap();
+        assert_eq!(infer_bundle(&repo).as_deref(), Some(expected.as_path()));
+        assert_eq!(
+            infer_bundle(&repo.join("src")).as_deref(),
+            Some(expected.as_path())
+        );
+        let _ = fs::remove_dir_all(repo);
     }
 
     fn empty_bundle(root: &str) -> okf::Bundle {

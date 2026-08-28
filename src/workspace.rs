@@ -126,10 +126,12 @@ impl Workspace {
                 open_path: "/".into(),
             });
         }
-        let default = PathBuf::from("knowledge");
-        if default.is_dir() {
+        if let Some(bundle) = std::env::current_dir()
+            .ok()
+            .and_then(|cwd| crate::preview::infer_bundle(&cwd))
+        {
             return Ok(ViewTarget {
-                workspace: Self::load_single_with(&default, options, Some(cache_parent))?,
+                workspace: Self::load_single_with(&bundle, options, Some(cache_parent))?,
                 open_path: "/".into(),
             });
         }

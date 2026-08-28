@@ -244,6 +244,18 @@ mod tests {
     }
 
     #[test]
+    fn resolve_bundle_finds_this_repo_knowledge() {
+        let crate_dir = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
+        let git = git_repository_root(&crate_dir).expect("okf lives in a git checkout");
+        let bundle = resolve_bundle(&git).unwrap();
+        assert_eq!(
+            bundle.file_name().and_then(|name| name.to_str()),
+            Some("knowledge")
+        );
+        assert!(bundle.join("index.md").is_file(), "{}", bundle.display());
+    }
+
+    #[test]
     fn discover_prefers_knowledge_child_in_git_repo() {
         let repo = git_repo("knowledge-child");
         write_bundle(&repo.join("knowledge"));
