@@ -8,9 +8,8 @@
 
 # Agent install
 
-Humans should use the [Docs install](/docs/install/) page and the repository
-[README](https://github.com/koliyo/okmate/blob/main/README.md#install-okmateapp-macos).
-Agents need the `okmate` binary.
+Humans should follow the full [Install](/docs/install/) page (app zip,
+Homebrew, cargo, and autoupdate). Agents need the `okmate` binary.
 
 ## Preferred
 
@@ -21,9 +20,14 @@ Agents need the `okmate` binary.
 cargo run -q --no-default-features -p okmate -- check knowledge --profile strict --format json
 ```
 
-Or install the CLI with the maintainer helper documented in
-[Development](https://github.com/koliyo/okmate/blob/main/README.md#development):
-`uv run --no-dev okmate-ops install cli`.
+Or install the CLI:
+
+```sh
+uv run --no-dev okmate-ops install cli
+```
+
+Sparkle updates the `.app` only. A `cargo install` or copied binary does not
+self-update. See [Install](/docs/install/#autoupdate).
 
 ## Confirm
 

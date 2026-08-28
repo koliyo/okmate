@@ -8,7 +8,7 @@ social_image = "/assets/og.png"
 favicon = "/assets/favicon.svg"
 apple_touch_icon = "/assets/apple-touch-icon.png"
 subtitle = "Git-owned OKF knowledge for humans and agents"
-footer = "Experimental software — not a production-ready platform."
+footer = "OKMate is open source. Limits and what is not shipped are on Project / Status."
 
 [build]
 output = "../dist/site"

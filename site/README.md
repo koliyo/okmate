@@ -25,7 +25,7 @@ Do not add Rocci crates to this repository's `Cargo.toml`.
 
 GitHub Actions builds and deploys this tree (`.github/workflows/site.yml`).
 That job installs `rocdown` by compiling `rocci-rocdown-cli` from
-`koliyo/rocci` at revision `c1a28910fac72cfc14a84d60cfb2d4bbc3e6243b`, with
+`koliyo/rocci` at revision `0cd2e4d9f51bcee10c1b85863a9f79c765c4bd03`, with
 Roc nightly `2026-08-23` / `fb208ba` (same pin as Rocci's `docker/install-roc.sh`).
 `base_url` is `https://koliyo.github.io/okmate`. A custom domain is an operator
 choice and is not set here.

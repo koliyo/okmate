@@ -12,7 +12,7 @@ OKMate is an open-source tool for Open Knowledge Format (OKF) knowledge.
 Humans and agents read and write the same git-owned Markdown.
 
 :card-grid.begin
-    :link-card[page: "docs/install", title: "Install", summary: "CLI, Homebrew cask, cargo, and the macOS app zip from the repository README."]
+    :link-card[page: "docs/install", title: "Install", summary: "Homebrew cask, cargo, the macOS app zip, and how the app updates."]
     :link-card[page: "docs/index", title: "Docs", summary: "Human manual: first bundle, git ownership, multiple roots, CLI, and desktop."]
     :link-card[page: "agents/index", title: "Agents", summary: "Fetch /llms.txt, install the CLI and skill, then work one root at a time."]
     :link-card[href: "https://github.com/koliyo/okmate", title: "GitHub", summary: "Source, releases, and issues."]
