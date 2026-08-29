@@ -80,6 +80,8 @@ linting, indexes, search, backlinks, and graphs.[^okfcli]
 files, catalog, tag, type, statistics, search, backlinks, registry, and hub
 views over one bundle model. Its local viewer shows that a graph is useful for
 orientation but should coexist with queue, search, and file projections.[^okf-gem]
+A pairwise comparison with OKMate is [OKMate versus
+serradura/okf](../okmate/serradura-okf.md).
 
 Open Knowledge extends the same pattern into agent setup, validation, search,
 viewer, MCP, registry, HTML export, publication filtering, and runtime

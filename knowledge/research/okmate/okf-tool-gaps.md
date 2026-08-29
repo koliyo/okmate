@@ -205,6 +205,9 @@ OKMate is a standalone knowledge application: portable `okf` engine plus
 `okmate` CLI, Askama HTML, Axum preview, optional desktop window. Records stay
 inert Markdown. The shipped agent contract is check / inspect / search / build
 / roots / sync / view / benchmark / timings.[^overview][^readme][^cli][^okf-lib]
+A pairwise comparison with serradura/okf (the Ruby okf-gem stack), including
+which architecture contracts to adopt, is [OKMate versus
+serradura/okf](serradura-okf.md).
 
 Relative to the field, these are **uncommon or stronger here**:
 

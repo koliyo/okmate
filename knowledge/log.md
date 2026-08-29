@@ -5,8 +5,16 @@ Independent bullets under the same `## YYYY-MM-DD` heading combine instead of
 conflicting. Add a new list item; do not reword another session's bullet in
 the same change.
 
+## 2026-08-29
+
+- Drafted paired audit and plan for implementation structure (crate split holds; shrink okf `pub use`, split load/session/nav, typed `PageKind`, persist off Datastar GET). Exploratory; do not log complete until hosted CI succeeds.
+- Surveyed knowledge systems built on OKF across a 128-repository GitHub topic census plus untagged systems, distinguishing canonical bundles, database-backed projections, consumers, and profiles. Exploratory; do not log complete until hosted CI succeeds.
+- Drafted research comparing OKMate and okf-gem knowledge-bundle modelling (type-first work archive versus domain-first product map; Overview, Constraint-versus-Decision, isolate hygiene). Exploratory; do not log complete until hosted CI succeeds.
+- Revised serradura/okf research with architecture contracts to adopt (three lenses, skeleton-first retrieval, skill as judgment, MCP as kernel projection) versus surfaces not to copy. Exploratory; do not log complete until hosted CI succeeds.
+
 ## 2026-08-28
 
+- Drafted research comparing OKMate to serradura/okf (okf-gem): review shell and strict evidence versus skill/MCP/graph/lint/`@all` search. Exploratory; do not log complete until hosted CI succeeds.
 - Drafted paired plan and exploratory decision for review Verify/Promote (git working trees only, one-level `okf_version` bundle inference, CLI harnesses not vendor APIs). Exploratory; do not log complete until hosted CI succeeds.
 - Revised review-queue authoring research: prompt Ask vs Author, bundle-only query, Author cwd at git toplevel beside `knowledge/`. Exploratory; do not log complete until hosted CI succeeds.
 - Drafted research on review-queue authoring operations (direct verify/promote versus CLI/API agent dispatch, result presentation tiers). Exploratory; do not log complete until hosted CI succeeds.
