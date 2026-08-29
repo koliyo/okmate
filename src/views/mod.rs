@@ -7,7 +7,7 @@ mod window;
 pub use governance::{
     ConceptMeta, DASHBOARD_LOG_LIMIT, DiagnosticRow, LogDay, LogEntry, RecentDoc, RelatedLink,
     StatCard, concept_meta, concept_meta_with_graph, diagnostic_rows, governance_stats, merged_log,
-    recent_leaf_documents, review_needs_attention, take_log_entries,
+    recent_leaf_documents, review_needs_attention, take_log_entries, type_color,
 };
 pub use window::{
     LOG_WINDOW, ListWindow, REVIEW_WINDOW, ROW_HEIGHT_PX, WindowQuery, apply_log_window,
@@ -25,6 +25,7 @@ pub struct NavNode {
     pub root: String,
     pub summary: String,
     pub attention: bool,
+    pub type_color: String,
 }
 
 #[derive(Clone, Debug)]
@@ -109,6 +110,7 @@ macro_rules! document_template {
             pub reading_font: u16,
             pub reading_width: u16,
             pub main_scroll: u32,
+            pub nav_scroll: u32,
         }
 
         impl From<Document> for $name {
@@ -146,6 +148,7 @@ macro_rules! document_template {
                     reading_font: document.reading_font,
                     reading_width: document.reading_width,
                     main_scroll: document.main_scroll,
+                    nav_scroll: document.nav_scroll,
                 }
             }
         }
@@ -194,6 +197,7 @@ pub struct Document {
     pub reading_font: u16,
     pub reading_width: u16,
     pub main_scroll: u32,
+    pub nav_scroll: u32,
 }
 
 impl Document {
@@ -364,6 +368,7 @@ mod tests {
                     root: String::new(),
                     summary: String::new(),
                     attention: false,
+                    type_color: String::new(),
                 },
                 NavNode {
                     href: "/review/".into(),
@@ -375,6 +380,7 @@ mod tests {
                     root: String::new(),
                     summary: String::new(),
                     attention: false,
+                    type_color: String::new(),
                 },
             ],
             toc,
@@ -406,6 +412,7 @@ mod tests {
             reading_font: 100,
             reading_width: 66,
             main_scroll: 0,
+            nav_scroll: 0,
         }
     }
 
@@ -459,6 +466,14 @@ mod tests {
         document.main_scroll = 180;
         let html = document.render_page().unwrap();
         assert!(html.contains("data-okmate-main-scroll=\"180\""), "{html}");
+    }
+
+    #[test]
+    fn page_template_seeds_nav_scroll() {
+        let mut document = sample_document(Vec::new());
+        document.nav_scroll = 42;
+        let html = document.render_page().unwrap();
+        assert!(html.contains("data-okmate-nav-scroll=\"42\""), "{html}");
     }
 
     #[test]

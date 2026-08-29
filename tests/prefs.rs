@@ -143,6 +143,42 @@ async fn live_html_seeds_open_document_scroll() {
 }
 
 #[tokio::test]
+async fn live_html_seeds_nav_sections_from_session() {
+    let root = temp_dir("prefs-nav-src");
+    write_index(&root);
+    fs::create_dir_all(root.join("plans")).unwrap();
+    fs::write(root.join("plans").join("index.md"), "# Plans\n").unwrap();
+    fs::write(
+        root.join("plans").join("nested.md"),
+        valid_strict_concept("Nested", "", "Body.\n"),
+    )
+    .unwrap();
+    let workspace = okmate::workspace::Workspace::load_single(&root, Profile::Strict).unwrap();
+    let output = temp_dir("prefs-nav-out");
+    okmate::site::build_workspace(&workspace, &output).unwrap();
+    let session = temp_dir("prefs-nav-session").join("session.json");
+    okmate::preview::persist_prefs_to(
+        &session,
+        &serde_json::json!({
+            "nav_sections": { "plans": true },
+            "nav_scroll": 42
+        }),
+    );
+    let app = okmate::http::router(state(root, output, workspace, session));
+    let html = body_text(
+        app.oneshot(Request::get("/").body(Body::empty()).unwrap())
+            .await
+            .unwrap(),
+    )
+    .await;
+    assert!(
+        html.contains("data-okmate-nav-section=\"plans\" open"),
+        "{html}"
+    );
+    assert!(html.contains("data-okmate-nav-scroll=\"42\""), "{html}");
+}
+
+#[tokio::test]
 async fn prefs_post_merges_and_clamps() {
     let (root, output, workspace) = fixture();
     let session = temp_dir("prefs-post-session").join("session.json");

@@ -5,6 +5,8 @@
         <li>
           {% if crumb.current %}
             <span class="okmate-crumb-current" aria-current="page">{{ crumb.title }}</span>
+          {% else if crumb.href.is_empty() %}
+            <span class="okmate-crumb-bundle">{{ crumb.title }}</span>
           {% else %}
             <a href="{{ crumb.href }}" data-on:click__prevent="@get('{{ crumb.href }}')">{{ crumb.title }}</a>
           {% endif %}

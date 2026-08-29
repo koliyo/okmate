@@ -157,6 +157,8 @@ fn workspace_nav_wraps_each_root_as_a_top_level_section() {
     let html = fs::read_to_string(output.join("index.html")).unwrap();
     assert!(html.contains("data-okmate-nav-section=\"a\""), "{html}");
     assert!(html.contains("data-okmate-nav-section=\"b\""), "{html}");
+    assert!(html.contains("nav-bundle\">@a<"), "{html}");
+    assert!(html.contains("nav-bundle\">@b<"), "{html}");
     assert!(
         html.contains("data-okmate-nav-section=\"a/plans\""),
         "{html}"
@@ -167,6 +169,15 @@ fn workspace_nav_wraps_each_root_as_a_top_level_section() {
     );
     assert!(html.contains("href=\"/@a/plans/shared/\""), "{html}");
     assert!(html.contains("href=\"/@b/plans/shared/\""), "{html}");
+    let shared = fs::read_to_string(
+        output
+            .join("@a")
+            .join("plans")
+            .join("shared")
+            .join("index.html"),
+    )
+    .unwrap();
+    assert!(shared.contains("okmate-crumb-bundle\">@a<"), "{shared}");
 }
 
 #[test]
@@ -185,6 +196,18 @@ fn workspace_merged_nav_unions_plans_with_distinct_leaves() {
     );
     assert!(html.contains("href=\"/@a/plans/shared/\""), "{html}");
     assert!(html.contains("href=\"/@b/plans/shared/\""), "{html}");
+    let shared = fs::read_to_string(
+        output
+            .join("@a")
+            .join("plans")
+            .join("shared")
+            .join("index.html"),
+    )
+    .unwrap();
+    assert!(
+        !shared.contains("okmate-crumb-bundle"),
+        "merged crumbs stay unprefixed: {shared}"
+    );
     let plans = html
         .split("data-okmate-nav-section=\"plans\"")
         .nth(1)

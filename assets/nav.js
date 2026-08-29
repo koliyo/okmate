@@ -3,8 +3,7 @@
     return;
   }
 
-  var SECTIONS_KEY = "okmate-nav-sections";
-  var SCROLL_KEY = "okmate-nav-scroll";
+  var sectionState = {};
   var pendingRoute = "";
   var afterPatch = "auto";
   var mountedRoute = normalizeRoute(window.location.pathname);
@@ -21,17 +20,25 @@
   }
 
   function readSections() {
-    try {
-      return JSON.parse(sessionStorage.getItem(SECTIONS_KEY) || "{}");
-    } catch (err) {
-      return {};
+    return sectionState;
+  }
+
+  function persistNav(immediate) {
+    var nav = navRoot();
+    if (window.__okmateReading && typeof window.__okmateReading.persist === "function") {
+      window.__okmateReading.persist(
+        {
+          nav_sections: sectionState,
+          nav_scroll: nav ? nav.scrollTop : 0,
+        },
+        immediate
+      );
     }
   }
 
   function writeSections(state) {
-    try {
-      sessionStorage.setItem(SECTIONS_KEY, JSON.stringify(state));
-    } catch (err) {}
+    sectionState = state;
+    persistNav(false);
   }
 
   function navRoot() {
@@ -39,13 +46,7 @@
   }
 
   function rememberScroll() {
-    var nav = navRoot();
-    if (!nav) {
-      return;
-    }
-    try {
-      sessionStorage.setItem(SCROLL_KEY, String(nav.scrollTop));
-    } catch (err) {}
+    persistNav(false);
   }
 
   function restoreScroll() {
@@ -53,10 +54,7 @@
     if (!nav) {
       return;
     }
-    var raw = "";
-    try {
-      raw = sessionStorage.getItem(SCROLL_KEY) || "";
-    } catch (err) {}
+    var raw = document.documentElement.getAttribute("data-okmate-nav-scroll") || "";
     var top = parseInt(raw, 10);
     if (!isNaN(top)) {
       nav.scrollTop = top;
@@ -86,15 +84,13 @@
     var state = readSections();
     nav.querySelectorAll("details[data-okmate-nav-section]").forEach(function (section) {
       var key = section.getAttribute("data-okmate-nav-section");
-      if (section.hasAttribute("data-okmate-nav-current") || (key && state[key])) {
-        section.open = true;
-      } else if (key && Object.prototype.hasOwnProperty.call(state, key)) {
+      if (key && Object.prototype.hasOwnProperty.call(state, key)) {
         section.open = !!state[key];
       }
     });
   }
 
-  function syncNav(route) {
+  function syncNav(route, expandCurrent) {
     var nav = navRoot();
     if (!nav) {
       return;
@@ -117,7 +113,9 @@
       var key = section.getAttribute("data-okmate-nav-section") || "";
       if (sectionMatches(route, key)) {
         section.setAttribute("data-okmate-nav-current", "");
-        section.open = true;
+        if (expandCurrent) {
+          section.open = true;
+        }
       }
     });
   }
@@ -282,7 +280,11 @@
       pendingRoute = "";
       afterPatch = window.location.hash && window.location.hash !== "#" ? "hash" : "top";
     }
-    syncNav(route);
+    var expand = !!pendingRoute || normalizeRoute(route) !== mountedRoute;
+    syncNav(route, expand);
+    if (expand) {
+      rememberAllSections();
+    }
     restoreSections();
     if (typeof afterPatch === "number") {
       applyMainScroll(afterPatch);
@@ -334,9 +336,6 @@
       if (summary && summary.closest("#okmate-nav") && event.button === 0) {
         event.preventDefault();
         var section = summary.parentElement;
-        if (section.hasAttribute("data-okmate-nav-current") && section.open) {
-          return;
-        }
         var key = section.getAttribute("data-okmate-nav-section");
         var opening = !section.open;
         var nav = navRoot();
@@ -414,15 +413,19 @@
   });
   window.addEventListener("pagehide", function () {
     rememberAllSections();
-    rememberScroll();
+    persistNav(true);
     persistLocation();
   });
   window.addEventListener(
     "scroll",
     function (event) {
       var main = document.getElementById("okmate-main");
+      var nav = navRoot();
       if (main && event.target === main) {
         persistLocation();
+      }
+      if (nav && event.target === nav) {
+        persistNav(false);
       }
     },
     true

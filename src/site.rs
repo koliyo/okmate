@@ -10,7 +10,7 @@ use crate::preview::NavMode;
 use crate::views::{
     Crumb, DASHBOARD_LOG_LIMIT, Document, NavNode, action_rows, concept_meta_with_graph,
     diagnostic_rows, governance_stats, merged_log, recent_leaf_documents, review_needs_attention,
-    review_rows, take_log_entries, toc_from_headings,
+    review_rows, take_log_entries, toc_from_headings, type_color,
 };
 use crate::workspace::{Workspace, WorkspaceMember, id_from_path, normalize_route};
 
@@ -197,7 +197,7 @@ fn document(
         show_root: false,
         nav_mode: nav_mode.as_str().into(),
         show_nav_mode: workspace.is_multi(),
-        crumbs: breadcrumbs(workspace, route, title),
+        crumbs: breadcrumbs(workspace, route, title, nav_mode),
         diagnostics: Vec::new(),
         meta: crate::views::ConceptMeta::default(),
         message: String::new(),
@@ -213,6 +213,7 @@ fn document(
         reading_font: 100,
         reading_width: 66,
         main_scroll: 0,
+        nav_scroll: 0,
     }
 }
 
@@ -224,9 +225,28 @@ pub fn apply_reading_prefs(document: &mut Document, session: &crate::preview::Se
     document.reading_toc = session.toc_visible;
     document.reading_font = session.font_size;
     document.reading_width = session.reading_width();
+    document.nav_scroll = session.nav_scroll.unwrap_or(0);
+    apply_nav_sections(&mut document.nav, &session.nav_sections);
 }
 
-fn breadcrumbs(workspace: &Workspace, route: &str, title: &str) -> Vec<Crumb> {
+fn apply_nav_sections(
+    nodes: &mut [crate::views::NavNode],
+    saved: &std::collections::BTreeMap<String, bool>,
+) {
+    if saved.is_empty() {
+        return;
+    }
+    for node in nodes {
+        if !node.section_key.is_empty() {
+            if let Some(open) = saved.get(&node.section_key) {
+                node.open = *open;
+            }
+        }
+        apply_nav_sections(&mut node.children, saved);
+    }
+}
+
+fn breadcrumbs(workspace: &Workspace, route: &str, title: &str, nav_mode: NavMode) -> Vec<Crumb> {
     let route = normalize_route(route);
     if Workspace::chrome_route(&route) {
         return Vec::new();
@@ -235,6 +255,13 @@ fn breadcrumbs(workspace: &Workspace, route: &str, title: &str) -> Vec<Crumb> {
     let Some((member, id)) = workspace.parse_document_route(&route) else {
         return crumbs;
     };
+    if workspace.is_multi() && nav_mode == NavMode::Separated {
+        crumbs.push(Crumb {
+            href: String::new(),
+            title: format!("@{}", member.id),
+            current: false,
+        });
+    }
     let parts: Vec<&str> = id.split('/').filter(|part| !part.is_empty()).collect();
     let mut acc = String::new();
     for (index, segment) in parts.iter().enumerate() {
@@ -529,7 +556,7 @@ fn nav_tree(workspace: &Workspace, current: &str, nav_mode: NavMode) -> Vec<NavN
                     let active = current.starts_with(&prefix);
                     items.push(NavNode {
                         href: String::new(),
-                        title: member.id.clone(),
+                        title: format!("@{}", member.id),
                         current: active,
                         open: active,
                         children: nav_forest(workspace, member, &current, &member.id),
@@ -537,6 +564,7 @@ fn nav_tree(workspace: &Workspace, current: &str, nav_mode: NavMode) -> Vec<NavN
                         root: member.id.clone(),
                         summary: String::new(),
                         attention: false,
+                        type_color: String::new(),
                     });
                 }
             }
@@ -548,6 +576,10 @@ fn nav_tree(workspace: &Workspace, current: &str, nav_mode: NavMode) -> Vec<NavN
 }
 
 fn leaf(href: &str, title: &str, current: &str) -> NavNode {
+    colored_leaf(href, title, current, String::new())
+}
+
+fn colored_leaf(href: &str, title: &str, current: &str, type_color: String) -> NavNode {
     NavNode {
         href: href.into(),
         title: title.into(),
@@ -558,7 +590,12 @@ fn leaf(href: &str, title: &str, current: &str) -> NavNode {
         root: String::new(),
         summary: String::new(),
         attention: false,
+        type_color,
     }
+}
+
+fn concept_type_color(concept: &okf::Concept) -> String {
+    type_color(okf::string_field(&concept.metadata, "type").unwrap_or("Concept"))
 }
 
 fn namespaced_key(prefix: &str, path: &str) -> String {
@@ -595,6 +632,7 @@ fn nav_forest(
                 root: String::new(),
                 summary: first_prose_paragraph(&index.article_html),
                 attention: false,
+                type_color: String::new(),
             },
         );
     }
@@ -614,17 +652,12 @@ fn nav_forest(
         let title = okf::string_field(&concept.metadata, "title").unwrap_or(&concept.id);
         if let Some(node) = by_path.get_mut(&owner) {
             let href = workspace.document_href(root_id, &concept.id);
-            node.children.push(NavNode {
-                href: href.clone(),
-                title: title.to_string(),
-                current: href == current,
-                open: false,
-                children: Vec::new(),
-                section_key: String::new(),
-                root: String::new(),
-                summary: String::new(),
-                attention: false,
-            });
+            node.children.push(colored_leaf(
+                &href,
+                title,
+                current,
+                concept_type_color(concept),
+            ));
         }
     }
     for node in by_path.values_mut() {
@@ -764,6 +797,7 @@ fn nav_forest_merged(workspace: &Workspace, current: &str) -> Vec<NavNode> {
                 root: String::new(),
                 summary: String::new(),
                 attention: false,
+                type_color: String::new(),
             });
         }
     }
@@ -784,17 +818,9 @@ fn nav_forest_merged(workspace: &Workspace, current: &str) -> Vec<NavNode> {
             let title = okf::string_field(&concept.metadata, "title").unwrap_or(&concept.id);
             if let Some(node) = by_path.get_mut(&owner) {
                 let href = workspace.document_href(&member.id, &concept.id);
-                node.children.push(NavNode {
-                    href: href.clone(),
-                    title: title.to_string(),
-                    current: href == current,
-                    open: false,
-                    children: Vec::new(),
-                    section_key: String::new(),
-                    root: member.id.clone(),
-                    summary: String::new(),
-                    attention: false,
-                });
+                let mut item = colored_leaf(&href, title, current, concept_type_color(concept));
+                item.root = member.id.clone();
+                node.children.push(item);
             }
         }
     }

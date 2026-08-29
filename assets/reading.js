@@ -80,7 +80,7 @@
     return !!document.querySelector("#okmate-toc .okmate-toc-link");
   }
 
-  function persist(extra) {
+  function persist(extra, immediate) {
     var body = {
       font_size: state.font,
       main_width: state.width,
@@ -95,13 +95,18 @@
       });
     }
     clearTimeout(persistTimer);
-    persistTimer = setTimeout(function () {
+    var send = function () {
       fetch("/__okmate/prefs", {
         method: "POST",
         headers: { "content-type": "application/json" },
         body: JSON.stringify(body),
       }).catch(function () {});
-    }, 200);
+    };
+    if (immediate) {
+      send();
+      return;
+    }
+    persistTimer = setTimeout(send, 200);
   }
 
   function apply() {

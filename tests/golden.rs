@@ -39,6 +39,7 @@ fn sample() -> Document {
             root: String::new(),
             summary: String::new(),
             attention: false,
+            type_color: String::new(),
         }],
         toc: vec![TocEntry {
             id: "section".into(),
@@ -80,6 +81,7 @@ fn sample() -> Document {
         reading_font: 100,
         reading_width: 66,
         main_scroll: 0,
+        nav_scroll: 0,
     }
 }
 

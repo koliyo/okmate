@@ -207,12 +207,54 @@ fn full_documents_differ_in_nav_current_markers() {
         "dashboard is not inside a collection: {home}"
     );
     assert!(
-        nested.contains("class=\"nav-link is-current\" href=\"/plans/nested/\""),
+        nested
+            .contains("class=\"nav-link is-current\" data-nav-depth=\"1\" href=\"/plans/nested/\""),
         "{nested}"
     );
     assert!(nested.contains("data-okmate-nav-current"), "{nested}");
     assert!(
         !nested.contains("class=\"nav-link is-current\" href=\"/\""),
         "{nested}"
+    );
+}
+
+#[test]
+fn nav_uses_fixed_icons_and_type_dots() {
+    let root = temp_dir("nav-chrome-src");
+    write_index(&root);
+    fs::create_dir_all(root.join("plans")).unwrap();
+    fs::write(root.join("plans").join("index.md"), "# Plans\n").unwrap();
+    fs::write(
+        root.join("plans").join("nested.md"),
+        valid_strict_concept("Nested", "", "Body.\n"),
+    )
+    .unwrap();
+    let output = temp_dir("nav-chrome-out");
+    okmate::site::build(&root, &output, Profile::Strict).unwrap();
+    let home = fs::read_to_string(output.join("index.html")).unwrap();
+    assert!(home.contains("okmate-nav-fixed"), "{home}");
+    assert!(home.contains("okmate-nav-tree"), "{home}");
+    assert!(home.contains("okmate-nav-icon"), "{home}");
+    assert!(home.contains("href=\"/\""), "{home}");
+    assert!(home.contains("href=\"/review/\""), "{home}");
+    assert!(home.contains("href=\"/log/\""), "{home}");
+    assert!(home.contains("href=\"/settings/\""), "{home}");
+    let architecture = okmate::views::type_color("Architecture");
+    assert!(
+        home.contains(&format!(
+            "class=\"okmate-type-dot\" style=\"background: {architecture}\""
+        )),
+        "{home}"
+    );
+    assert!(
+        home.contains("data-nav-depth=\"1\""),
+        "tree rows must carry depth: {home}"
+    );
+    assert!(
+        !home.contains(&format!(
+            "class=\"okmate-type-dot\" style=\"background: {}\"",
+            okmate::views::type_color("Index")
+        )),
+        "overview leaves must not use the Index type dot: {home}"
     );
 }

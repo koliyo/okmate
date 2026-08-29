@@ -1,3 +1,4 @@
+use std::collections::BTreeMap;
 use std::env;
 use std::fs;
 use std::path::{Path, PathBuf};
@@ -85,6 +86,10 @@ pub struct Session {
     pub open_hash: Option<String>,
     #[serde(default)]
     pub main_scroll: Option<u32>,
+    #[serde(default)]
+    pub nav_sections: BTreeMap<String, bool>,
+    #[serde(default)]
+    pub nav_scroll: Option<u32>,
 }
 
 impl Default for Session {
@@ -104,6 +109,8 @@ impl Default for Session {
             open_path: None,
             open_hash: None,
             main_scroll: None,
+            nav_sections: BTreeMap::new(),
+            nav_scroll: None,
         }
     }
 }
@@ -148,6 +155,25 @@ impl Session {
         if obj.contains_key("main_scroll") {
             self.main_scroll = obj.get("main_scroll").and_then(as_u32).map(clamp_scroll);
         }
+        if let Some(map) = obj.get("nav_sections").and_then(|value| value.as_object()) {
+            let mut sections = BTreeMap::new();
+            for (key, value) in map {
+                let Some(key) = sanitize_nav_section_key(key) else {
+                    continue;
+                };
+                let Some(open) = value.as_bool() else {
+                    continue;
+                };
+                sections.insert(key, open);
+                if sections.len() >= MAX_NAV_SECTIONS {
+                    break;
+                }
+            }
+            self.nav_sections = sections;
+        }
+        if obj.contains_key("nav_scroll") {
+            self.nav_scroll = obj.get("nav_scroll").and_then(as_u32).map(clamp_scroll);
+        }
     }
 
     pub fn sanitize(&mut self) {
@@ -161,6 +187,19 @@ impl Session {
         self.open_hash = sanitize_open_hash(self.open_hash.as_deref());
         if let Some(scroll) = self.main_scroll {
             self.main_scroll = Some(clamp_scroll(scroll));
+        }
+        self.nav_sections
+            .retain(|key, _| sanitize_nav_section_key(key).is_some());
+        if self.nav_sections.len() > MAX_NAV_SECTIONS {
+            self.nav_sections = self
+                .nav_sections
+                .iter()
+                .take(MAX_NAV_SECTIONS)
+                .map(|(key, open)| (key.clone(), *open))
+                .collect();
+        }
+        if let Some(scroll) = self.nav_scroll {
+            self.nav_scroll = Some(clamp_scroll(scroll));
         }
     }
 
@@ -236,6 +275,22 @@ fn sanitize_open_path(value: Option<&str>) -> Option<String> {
         return None;
     }
     Some(crate::workspace::normalize_route(path))
+}
+
+const MAX_NAV_SECTIONS: usize = 500;
+
+fn sanitize_nav_section_key(key: &str) -> Option<String> {
+    let key = key.trim();
+    if key.is_empty() || key.len() > 200 || key.contains("..") {
+        return None;
+    }
+    if !key
+        .bytes()
+        .all(|byte| byte.is_ascii_alphanumeric() || matches!(byte, b'/' | b'-' | b'_' | b'@'))
+    {
+        return None;
+    }
+    Some(key.to_string())
 }
 
 fn sanitize_open_hash(value: Option<&str>) -> Option<String> {
@@ -735,6 +790,8 @@ mod tests {
         assert_eq!(session.font_size, DEFAULT_FONT);
         assert_eq!(session.main_width, None);
         assert!(session.wrap && session.nav_visible && session.toc_visible);
+        assert!(session.nav_sections.is_empty());
+        assert!(session.nav_scroll.is_none());
         let _ = fs::remove_dir_all(dir);
     }
 
@@ -778,6 +835,22 @@ mod tests {
         let session = load_session_from(&path);
         assert_eq!(session.main_width, None);
         assert_eq!(session.font_size, 110);
+        persist_prefs_to(
+            &path,
+            &serde_json::json!({
+                "nav_sections": { "plans": true, "../evil": false, "okmate/plans": false },
+                "nav_scroll": 80
+            }),
+        );
+        let session = load_session_from(&path);
+        assert_eq!(session.nav_sections.get("plans"), Some(&true));
+        assert_eq!(session.nav_sections.get("okmate/plans"), Some(&false));
+        assert!(!session.nav_sections.contains_key("../evil"));
+        assert_eq!(session.nav_scroll, Some(80));
+        persist_prefs_to(&path, &serde_json::json!({ "font_size": 100 }));
+        let session = load_session_from(&path);
+        assert_eq!(session.nav_sections.get("plans"), Some(&true));
+        assert_eq!(session.nav_scroll, Some(80));
         persist_prefs_to(
             &path,
             &serde_json::json!({

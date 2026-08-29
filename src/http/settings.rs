@@ -136,6 +136,7 @@ fn settings_document(
                 root: String::new(),
                 summary: String::new(),
                 attention: false,
+                type_color: String::new(),
             }],
             toc: Vec::new(),
             article_html: String::new(),
@@ -166,6 +167,7 @@ fn settings_document(
             reading_font: 100,
             reading_width: 66,
             main_scroll: 0,
+            nav_scroll: 0,
         }
     };
     document.message = message.unwrap_or("").to_string();
