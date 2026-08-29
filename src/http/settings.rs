@@ -2,6 +2,7 @@ use std::collections::BTreeMap;
 use std::convert::Infallible;
 use std::net::SocketAddr;
 use std::path::Path;
+use std::sync::PoisonError;
 
 use anyhow::{Result, bail};
 use axum::extract::{ConnectInfo, Form, State};
@@ -9,7 +10,6 @@ use axum::http::{HeaderMap, StatusCode};
 use axum::response::{IntoResponse, Response, Sse, sse::Event};
 use datastar::prelude::PatchElements;
 use futures_util::stream;
-use okf::Bundle;
 
 use crate::config::{
     DirectoryRoot, GitRoot, Incoming, RootConfig, UserConfig, expand_tilde, save, valid_git_url,
@@ -18,6 +18,7 @@ use crate::config::{
 use crate::http::AppState;
 use crate::site;
 use crate::views::{Document, SettingsRoot};
+use crate::workspace::Workspace;
 
 pub async fn post(
     ConnectInfo(addr): ConnectInfo<SocketAddr>,
@@ -31,10 +32,13 @@ pub async fn post(
     let message =
         apply_action(&state.config_path, &fields).unwrap_or_else(|error| error.to_string());
     let config = crate::config::load_or_default(&state.config_path);
-    let bundle = okf::load(&state.root, state.profile).ok();
+    let workspace = state
+        .workspace
+        .read()
+        .unwrap_or_else(PoisonError::into_inner);
     let session = crate::preview::load_session_from(&state.session_path);
     let fragment = render_fragment(
-        bundle.as_ref(),
+        &workspace,
         &config,
         Some(&message),
         &state.config_path,
@@ -48,7 +52,7 @@ pub async fn post(
         .into_response();
     }
     let html = render_page(
-        bundle.as_ref(),
+        &workspace,
         &config,
         Some(&message),
         &state.config_path,
@@ -90,40 +94,41 @@ pub fn settings_roots(config: &UserConfig) -> Vec<SettingsRoot> {
 }
 
 pub fn render_page(
-    bundle: Option<&Bundle>,
+    workspace: &Workspace,
     config: &UserConfig,
     message: Option<&str>,
     config_file: &Path,
     session: &crate::preview::Session,
 ) -> String {
-    settings_document(bundle, config, message, config_file, session)
+    settings_document(workspace, config, message, config_file, session)
         .render_settings()
         .unwrap_or_else(|error| error.to_string())
 }
 
 pub fn render_fragment(
-    bundle: Option<&Bundle>,
+    workspace: &Workspace,
     config: &UserConfig,
     message: Option<&str>,
     config_file: &Path,
     session: &crate::preview::Session,
 ) -> String {
-    settings_document(bundle, config, message, config_file, session)
+    settings_document(workspace, config, message, config_file, session)
         .render_settings_fragment()
         .unwrap_or_else(|error| error.to_string())
 }
 
 fn settings_document(
-    bundle: Option<&Bundle>,
+    workspace: &Workspace,
     config: &UserConfig,
     message: Option<&str>,
     config_file: &Path,
     session: &crate::preview::Session,
 ) -> Document {
-    let mut document = if let Some(bundle) = bundle {
-        site::settings_shell(bundle)
-    } else {
+    let mut document = if workspace.is_empty() {
         Document::for_settings_host()
+    } else {
+        site::page_for_route_nav(workspace, "/settings/", session.nav_mode)
+            .unwrap_or_else(Document::for_settings_host)
     };
     document.message = message.unwrap_or("").to_string();
     document.config_path = config_file.display().to_string();

@@ -77,6 +77,29 @@ async fn datastar_get_concept_returns_main_fragment() {
 }
 
 #[tokio::test]
+async fn datastar_get_succeeds_when_session_path_is_not_writable() {
+    let (root, output) = fixture();
+    let mut state = live_state(root, output);
+    let blocker = temp_dir("nav-ro-session").join("not-a-dir");
+    fs::write(&blocker, "x").unwrap();
+    state.session_path = blocker.join("session.json");
+    let app = okmate::http::router(state);
+    let response = app
+        .oneshot(
+            Request::get("/hello/")
+                .header("datastar-request", "true")
+                .body(Body::empty())
+                .unwrap(),
+        )
+        .await
+        .unwrap();
+    assert_eq!(response.status(), StatusCode::OK);
+    let body = body_text(response).await;
+    assert!(body.contains("id=\"okmate-main\""), "{body}");
+    assert!(body.contains("id=\"okmate-toc\""), "{body}");
+}
+
+#[tokio::test]
 async fn datastar_get_reads_memory_until_workspace_swap() {
     let (root, output) = fixture();
     let state = live_state(root.clone(), output);

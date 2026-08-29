@@ -1,4 +1,5 @@
 use std::convert::Infallible;
+use std::path::PathBuf;
 use std::time::Instant;
 
 use axum::extract::{Request, State};
@@ -16,17 +17,18 @@ pub async fn datastar_get(State(state): State<AppState>, request: Request, next:
     if request.method() != Method::GET {
         return next.run(request).await;
     }
-    let path = request.uri().path();
+    let path = request.uri().path().to_string();
     let query = request.uri().query().map(str::to_string);
     if path.starts_with("/__okmate") || path.ends_with(".json") {
         return next.run(request).await;
     }
     if is_datastar(request.headers()) {
         let Some((fragment, reload_ms, render_ms)) =
-            render_main_fragment(&state, path, query.as_deref())
+            render_main_fragment(&state, &path, query.as_deref())
         else {
             return next.run(request).await;
         };
+        persist_open_path_async(state.session_path.clone(), path).await;
         let bytes = fragment.len();
         let patch = PatchElements::new(fragment);
         let mut response = Sse::new(stream::once(async move {
@@ -39,16 +41,24 @@ pub async fn datastar_get(State(state): State<AppState>, request: Request, next:
         }
         return response;
     }
-    let Some((html, reload_ms, render_ms)) = render_full_page(&state, path, query.as_deref())
+    let Some((html, reload_ms, render_ms)) = render_full_page(&state, &path, query.as_deref())
     else {
         return next.run(request).await;
     };
+    persist_open_path_async(state.session_path.clone(), path).await;
     let bytes = html.len();
     let mut response = Html(html).into_response();
     if let Ok(value) = HeaderValue::from_str(&server_timing_header(reload_ms, render_ms, bytes)) {
         response.headers_mut().insert("server-timing", value);
     }
     response
+}
+
+async fn persist_open_path_async(session_path: PathBuf, route: String) {
+    let _ = tokio::task::spawn_blocking(move || {
+        crate::session::persist_open_path_to(&session_path, &route);
+    })
+    .await;
 }
 
 pub fn is_datastar(headers: &HeaderMap) -> bool {
@@ -95,7 +105,6 @@ pub fn live_document(
     if session.open_path.as_deref() == Some(crate::workspace::normalize_route(path).as_str()) {
         document.main_scroll = session.main_scroll.unwrap_or(0);
     }
-    crate::preview::persist_open_path_to(&state.session_path, path);
     if document.page_kind == crate::views::PageKind::Settings {
         let config = crate::config::load_or_default(&state.config_path);
         document.config_path = state.config_path.display().to_string();

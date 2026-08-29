@@ -321,11 +321,6 @@ fn ancestor_title(bundle: &Bundle, path: &str, segment: &str) -> String {
     segment.to_string()
 }
 
-pub(crate) fn settings_shell(bundle: &Bundle) -> crate::views::Document {
-    let workspace = Workspace::from_loaded("bundle", PathBuf::new(), bundle.clone());
-    settings_document(&workspace, NavMode::Separated)
-}
-
 fn settings_document(workspace: &Workspace, nav_mode: NavMode) -> Document {
     let config = crate::config::load().unwrap_or_default();
     let mut document = document(
@@ -420,7 +415,7 @@ pub(crate) fn write_settings_host(output: &Path) -> Result<()> {
     let config_path = crate::config::config_path();
     let config = crate::config::load_or_default(&config_path);
     let html = crate::http::render_page(
-        None,
+        &Workspace::empty(),
         &config,
         None,
         &config_path,
