@@ -5,6 +5,10 @@ use std::time::Duration;
 
 use anyhow::{Context, Result, bail};
 
+use crate::paths::home_dir;
+
+pub use crate::paths::{cache_dir, config_path};
+
 const DEFAULT_POLL: Duration = Duration::from_secs(300);
 const DEFAULT_GIT_BRANCH: &str = "main";
 const MAX_ID_LEN: usize = 64;
@@ -171,28 +175,6 @@ impl std::fmt::Debug for GitRoot {
     }
 }
 
-pub fn cache_dir() -> PathBuf {
-    if let Some(path) = env::var_os("OKMATE_CACHE") {
-        return PathBuf::from(path);
-    }
-    home_dir()
-        .unwrap_or_else(|| PathBuf::from("."))
-        .join(".okmate")
-        .join("cache")
-}
-
-pub fn config_path() -> PathBuf {
-    if let Ok(path) = env::var("OKMATE_CONFIG")
-        && !path.is_empty()
-    {
-        return PathBuf::from(path);
-    }
-    home_dir()
-        .unwrap_or_else(|| PathBuf::from("."))
-        .join(".okmate")
-        .join("config.toml")
-}
-
 pub fn load() -> Result<UserConfig> {
     let path = config_path();
     if path.is_file() {
@@ -284,12 +266,6 @@ pub fn expand_tilde(path: &str) -> PathBuf {
         return home.join(rest);
     }
     PathBuf::from(path)
-}
-
-fn home_dir() -> Option<PathBuf> {
-    env::var_os("HOME")
-        .or_else(|| env::var_os("USERPROFILE"))
-        .map(PathBuf::from)
 }
 
 fn parse_root(value: toml::Value, index: usize) -> Result<RootConfig> {

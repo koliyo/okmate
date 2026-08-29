@@ -1,6 +1,6 @@
 use std::net::{IpAddr, Ipv4Addr, SocketAddr};
 use std::path::{Path, PathBuf};
-use std::sync::{Arc, RwLock};
+use std::sync::{Arc, PoisonError, RwLock};
 
 use axum::Router;
 use axum::extract::{Query, State};
@@ -38,12 +38,15 @@ impl AppState {
             workspace: share_workspace(workspace),
             profile,
             config_path,
-            session_path: crate::preview::session_path(),
+            session_path: crate::session::session_path(),
         }
     }
 
     pub fn replace_workspace(&self, workspace: crate::workspace::Workspace) {
-        *self.workspace.write().expect("workspace lock") = workspace;
+        *self
+            .workspace
+            .write()
+            .unwrap_or_else(PoisonError::into_inner) = workspace;
     }
 }
 
@@ -89,9 +92,12 @@ async fn set_nav_mode(
     Query(query): Query<NavModeQuery>,
     headers: HeaderMap,
 ) -> Redirect {
-    if let Some(mode) = crate::preview::NavMode::parse(&query.mode) {
-        crate::preview::persist_nav_mode_to(&state.session_path, mode);
-        let workspace = state.workspace.read().expect("workspace lock");
+    if let Some(mode) = crate::session::NavMode::parse(&query.mode) {
+        crate::session::persist_nav_mode_to(&state.session_path, mode);
+        let workspace = state
+            .workspace
+            .read()
+            .unwrap_or_else(PoisonError::into_inner);
         let _ = crate::site::build_workspace_nav(&workspace, &state.output, mode);
     }
     redirect_back(&headers)
