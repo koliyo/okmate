@@ -5,9 +5,9 @@ mod governance;
 mod window;
 
 pub use governance::{
-    ConceptMeta, DASHBOARD_LOG_LIMIT, DiagnosticRow, LogDay, LogEntry, ProvenanceItem, RecentDoc,
-    StatCard, concept_meta, diagnostic_rows, governance_stats, merged_log, recent_leaf_documents,
-    review_needs_attention, take_log_entries,
+    ConceptMeta, DASHBOARD_LOG_LIMIT, DiagnosticRow, LogDay, LogEntry, RecentDoc, RelatedLink,
+    StatCard, concept_meta, concept_meta_with_graph, diagnostic_rows, governance_stats, merged_log,
+    recent_leaf_documents, review_needs_attention, take_log_entries,
 };
 pub use window::{
     LOG_WINDOW, ListWindow, REVIEW_WINDOW, ROW_HEIGHT_PX, WindowQuery, apply_log_window,
@@ -430,6 +430,7 @@ mod tests {
         assert!(html.contains("/__okmate/nav.js"), "{html}");
         assert!(html.contains("/__okmate/resize.js"), "{html}");
         assert!(html.contains("/__okmate/tables.js"), "{html}");
+        assert!(html.contains("/__okmate/meta.js"), "{html}");
         assert!(html.contains("/__okmate/reading.js"), "{html}");
         assert!(html.contains("/__okmate/toc.js"), "{html}");
         assert!(!html.contains("font-size: 110%"), "{html}");
@@ -693,6 +694,9 @@ mod tests {
         assert!(meta.stale);
         assert!(meta.alert.contains("stale_after"));
         assert_eq!(meta.description, "An old plan.");
-        assert_eq!(meta.trust_slug, "generated");
+        assert_eq!(meta.trust_slug, "unverified");
+        assert_eq!(meta.trust_label, "unverified");
+        assert_eq!(meta.generated_at, "2020-01-01T00:00:00Z");
+        assert_eq!(meta.generated_by, "process:test");
     }
 }

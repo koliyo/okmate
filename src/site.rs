@@ -8,7 +8,7 @@ use serde::Serialize;
 
 use crate::preview::NavMode;
 use crate::views::{
-    Crumb, DASHBOARD_LOG_LIMIT, Document, NavNode, action_rows, compact_type_label, concept_meta,
+    Crumb, DASHBOARD_LOG_LIMIT, Document, NavNode, action_rows, concept_meta_with_graph,
     diagnostic_rows, governance_stats, merged_log, recent_leaf_documents, review_needs_attention,
     review_rows, take_log_entries, toc_from_headings,
 };
@@ -24,6 +24,7 @@ const TOC_JS: &str = include_str!("../assets/toc.js");
 const REVIEW_JS: &str = include_str!("../assets/review.js");
 const LOG_JS: &str = include_str!("../assets/log.js");
 const TABLES_JS: &str = include_str!("../assets/tables.js");
+const META_JS: &str = include_str!("../assets/meta.js");
 
 #[derive(Serialize)]
 struct NavPage {
@@ -138,7 +139,7 @@ pub fn page_for_route_nav(
                     )
                     .with_kind("page")
                     .with_article(&workspace.rewrite_article(&member.id, &concept.article_html))
-                    .with_meta(concept, &bundle.diagnostics),
+                    .with_meta(workspace, member, concept),
                 )
             } else {
                 bundle
@@ -230,11 +231,7 @@ fn breadcrumbs(workspace: &Workspace, route: &str, title: &str) -> Vec<Crumb> {
     if Workspace::chrome_route(&route) {
         return Vec::new();
     }
-    let mut crumbs = vec![Crumb {
-        href: "/".into(),
-        title: "Dashboard".into(),
-        current: false,
-    }];
+    let mut crumbs = Vec::new();
     let Some((member, id)) = workspace.parse_document_route(&route) else {
         return crumbs;
     };
@@ -307,17 +304,26 @@ impl Document {
         self
     }
 
-    fn with_meta(mut self, concept: &okf::Concept, diagnostics: &[okf::Diagnostic]) -> Self {
-        self.concept_type =
-            compact_type_label(okf::string_field(&concept.metadata, "type").unwrap_or("Concept"))
-                .to_string();
+    fn with_meta(
+        mut self,
+        workspace: &Workspace,
+        member: &WorkspaceMember,
+        concept: &okf::Concept,
+    ) -> Self {
+        self.concept_type = okf::string_field(&concept.metadata, "type")
+            .unwrap_or("Concept")
+            .to_string();
         self.status = okf::string_field(&concept.metadata, "status")
             .unwrap_or("draft")
             .to_string();
         self.authority = okf::string_field(&concept.metadata, "authority")
             .unwrap_or("descriptive")
             .to_string();
-        self.meta = concept_meta(concept, diagnostics);
+        self.meta = concept_meta_with_graph(
+            concept,
+            &member.bundle.diagnostics,
+            Some((workspace, member)),
+        );
         self
     }
 
@@ -398,7 +404,8 @@ fn write_assets(output: &Path) -> Result<()> {
     fs::write(dir.join("toc.js"), TOC_JS).context("failed to write toc.js")?;
     fs::write(dir.join("review.js"), REVIEW_JS).context("failed to write review.js")?;
     fs::write(dir.join("log.js"), LOG_JS).context("failed to write log.js")?;
-    fs::write(dir.join("tables.js"), TABLES_JS).context("failed to write tables.js")
+    fs::write(dir.join("tables.js"), TABLES_JS).context("failed to write tables.js")?;
+    fs::write(dir.join("meta.js"), META_JS).context("failed to write meta.js")
 }
 
 fn nav_pages(workspace: &Workspace) -> Vec<NavPage> {

@@ -1,13 +1,10 @@
 {% include "fragments/chrome.html" %}
 {% if !concept_type.is_empty() %}
   <section class="okmate-concept-meta" aria-label="Concept Metadata &amp; Governance">
-    <div class="okmate-badge-group">
-      <span class="okmate-badge okmate-type">{{ concept_type }}</span>
-      {% if !status.is_empty() %}<span class="okmate-badge okmate-status okmate-status-{{ status }}">{{ status }}</span>{% endif %}
-      {% if !authority.is_empty() %}<span class="okmate-badge okmate-auth okmate-auth-{{ authority }}">{{ authority }}</span>{% endif %}
-      {% if !meta.trust_label.is_empty() %}<span class="okmate-badge okmate-trust okmate-trust-{{ meta.trust_slug }}">{{ meta.trust_label }}</span>{% endif %}
-      {% if meta.stale %}<span class="okmate-badge okmate-badge-stale">stale</span>{% endif %}
-    </div>
+    <span class="okmate-badge okmate-type okmate-type-chip">
+      {% if !meta.type_color.is_empty() %}<span class="okmate-type-dot" style="background: {{ meta.type_color }}"></span>{% endif %}
+      {{ concept_type }}
+    </span>
     {% if !meta.alert.is_empty() %}
       <div class="okmate-alert-banner" role="alert">
         <div class="okmate-alert-content">
@@ -18,15 +15,57 @@
     {% if !meta.description.is_empty() %}
       <p class="okmate-lead">{{ meta.description }}</p>
     {% endif %}
-    {% if !meta.provenance.is_empty() %}
-      <div class="okmate-meta-grid">
-        {% for item in meta.provenance %}
-          <div class="okmate-meta-item">
-            <span class="okmate-meta-label">{{ item.label }}</span>
-            {% if item.unverified %}<em>{{ item.value }}</em>{% else %}<code>{{ item.value }}</code>{% endif %}
-          </div>
+    <div class="okmate-summary">
+      {% if !status.is_empty() %}<span class="okmate-badge okmate-status okmate-status-{{ status }}">{{ status }}</span>{% endif %}
+      {% if !meta.trust_label.is_empty() %}<span class="okmate-badge okmate-trust okmate-trust-{{ meta.trust_slug }}">{{ meta.trust_label }}</span>{% endif %}
+      {% if !authority.is_empty() %}<span class="okmate-badge okmate-auth okmate-auth-{{ authority }}">{{ authority }}</span>{% endif %}
+      {% if !meta.generated_at.is_empty() %}<time class="okmate-summary-time" datetime="{{ meta.generated_at }}">{{ meta.generated_at }}</time>{% endif %}
+      {% if !meta.generated_by.is_empty() %}<span class="okmate-summary-by">by {{ meta.generated_by }}</span>{% endif %}
+      {% if !meta.stale_after.is_empty() %}<span class="okmate-summary-stale{% if meta.stale %} okmate-badge-stale{% endif %}">(stale by {{ meta.stale_after }})</span>{% endif %}
+    </div>
+    {% if !meta.tags.is_empty() %}
+      <div class="okmate-tags">
+        {% for tag in meta.tags %}
+          <span class="okmate-tag">{{ tag }}</span>
         {% endfor %}
       </div>
+    {% endif %}
+    {% if meta.has_links() %}
+      <details class="okmate-rel" id="okmate-rel" open>
+        <summary>Links</summary>
+        {% if !meta.links_to.is_empty() %}
+          <div class="okmate-rel-group">
+            <p class="okmate-rel-label">Outgoing</p>
+            <div class="okmate-rellist">
+              {% for link in meta.links_to %}
+                <a href="{{ link.href }}"{% if link.broken %} class="is-broken"{% endif %}{% if !link.broken %} data-on:click__prevent="@get('{{ link.href }}')"{% endif %}>
+                  <span class="okmate-rel-title">{{ link.title }}</span>
+                  <span class="okmate-rel-type">
+                    <span class="okmate-rel-dot" style="background: {{ link.type_color }}"></span>
+                    {{ link.concept_type }}
+                  </span>
+                </a>
+              {% endfor %}
+            </div>
+          </div>
+        {% endif %}
+        {% if !meta.linked_from.is_empty() %}
+          <div class="okmate-rel-group">
+            <p class="okmate-rel-label">Incoming</p>
+            <div class="okmate-rellist">
+              {% for link in meta.linked_from %}
+                <a href="{{ link.href }}"{% if link.broken %} class="is-broken"{% endif %}{% if !link.broken %} data-on:click__prevent="@get('{{ link.href }}')"{% endif %}>
+                  <span class="okmate-rel-title">{{ link.title }}</span>
+                  <span class="okmate-rel-type">
+                    <span class="okmate-rel-dot" style="background: {{ link.type_color }}"></span>
+                    {{ link.concept_type }}
+                  </span>
+                </a>
+              {% endfor %}
+            </div>
+          </div>
+        {% endif %}
+      </details>
     {% endif %}
     {% if !meta.drift_sources.is_empty() %}
       <ul class="okmate-provenance">

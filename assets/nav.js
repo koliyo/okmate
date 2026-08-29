@@ -310,6 +310,9 @@
     if (window.__okmateTables && typeof window.__okmateTables.enhance === "function") {
       window.__okmateTables.enhance();
     }
+    if (window.__okmateMeta && typeof window.__okmateMeta.enhance === "function") {
+      window.__okmateMeta.enhance();
+    }
   }
 
   function observeMain() {

@@ -1,6 +1,8 @@
+use std::collections::BTreeMap;
+
 use okf::{Bundle, Concept, Diagnostic, Severity, TrustTier};
 
-use crate::workspace::Workspace;
+use crate::workspace::{Workspace, WorkspaceMember};
 
 #[derive(Clone, Debug, Default)]
 pub struct StatCard {
@@ -38,22 +40,35 @@ pub struct DiagnosticRow {
 }
 
 #[derive(Clone, Debug, Default)]
-pub struct ProvenanceItem {
-    pub label: String,
-    pub value: String,
-    pub unverified: bool,
+pub struct RelatedLink {
+    pub href: String,
+    pub title: String,
+    pub concept_type: String,
+    pub type_color: String,
+    pub broken: bool,
 }
 
 #[derive(Clone, Debug, Default)]
 pub struct ConceptMeta {
     pub trust_slug: String,
     pub trust_label: String,
+    pub type_color: String,
     pub stale: bool,
     pub stale_after: String,
     pub description: String,
     pub alert: String,
-    pub provenance: Vec<ProvenanceItem>,
+    pub tags: Vec<String>,
+    pub generated_by: String,
+    pub generated_at: String,
+    pub links_to: Vec<RelatedLink>,
+    pub linked_from: Vec<RelatedLink>,
     pub drift_sources: Vec<String>,
+}
+
+impl ConceptMeta {
+    pub fn has_links(&self) -> bool {
+        !self.links_to.is_empty() || !self.linked_from.is_empty()
+    }
 }
 
 pub fn governance_stats(workspace: &Workspace) -> Vec<StatCard> {
@@ -285,71 +300,54 @@ pub fn diagnostic_rows(workspace: &Workspace) -> Vec<DiagnosticRow> {
         .collect()
 }
 
+const TYPE_PALETTE: &[&str] = &[
+    "#6E56CF", "#D97757", "#22C55E", "#3B82F6", "#EAB308", "#EC4899", "#14B8A6", "#F97316",
+    "#A855F7", "#0EA5E9", "#84CC16", "#EF4444", "#64748B",
+];
+
+pub fn type_color(kind: &str) -> String {
+    let mut hash: u32 = 0;
+    for byte in kind.as_bytes() {
+        hash = hash.wrapping_mul(31).wrapping_add(u32::from(*byte));
+    }
+    TYPE_PALETTE[hash as usize % TYPE_PALETTE.len()].to_string()
+}
+
 pub fn concept_meta(concept: &Concept, diagnostics: &[Diagnostic]) -> ConceptMeta {
+    concept_meta_with_graph(concept, diagnostics, None)
+}
+
+pub fn concept_meta_with_graph(
+    concept: &Concept,
+    diagnostics: &[Diagnostic],
+    graph: Option<(&Workspace, &WorkspaceMember)>,
+) -> ConceptMeta {
     let trust = okf::search::concept_trust_tier(&concept.metadata);
     let (trust_slug, trust_label) = match trust {
         TrustTier::HumanReviewed => ("human", "reviewed"),
-        TrustTier::Generated => ("generated", "generated"),
-        TrustTier::Unverified => ("unverified", "unverified"),
+        TrustTier::Generated | TrustTier::Unverified => ("unverified", "unverified"),
     };
     let stale = okf::search::concept_is_stale(&concept.metadata);
     let stale_after = okf::string_field(&concept.metadata, "stale_after").unwrap_or("");
     let action = okf::classify_concept_action(concept, diagnostics);
-    let owners = okf::metadata_string_array(&concept.metadata, "owners");
     let generated = concept
         .metadata
         .get("generated")
         .and_then(|value| value.as_object());
-    let mut provenance = Vec::new();
-    if !owners.is_empty() {
-        provenance.push(ProvenanceItem {
-            label: "Owners".into(),
-            value: owners.join(", "),
-            unverified: false,
-        });
-    }
-    if let Some((_, verifier)) = okf::latest_human_verification(&concept.metadata) {
-        provenance.push(ProvenanceItem {
-            label: "Verified".into(),
-            value: verifier.to_string(),
-            unverified: false,
-        });
-    } else {
-        provenance.push(ProvenanceItem {
-            label: "Verified".into(),
-            value: "Unverified".into(),
-            unverified: true,
-        });
-    }
-    if let Some(generated) = generated {
-        let by = generated
-            .get("by")
-            .and_then(|value| value.as_str())
-            .unwrap_or("");
-        let at = generated
-            .get("at")
-            .and_then(|value| value.as_str())
-            .unwrap_or("");
-        if !by.is_empty() {
-            let value = if at.len() >= 10 {
-                format!("{by} · {}", &at[..10])
-            } else {
-                by.to_string()
-            };
-            provenance.push(ProvenanceItem {
-                label: "Generated".into(),
-                value,
-                unverified: false,
-            });
-        }
-    }
-    if !stale_after.is_empty() {
-        provenance.push(ProvenanceItem {
-            label: "Stale after".into(),
-            value: stale_after.to_string(),
-            unverified: false,
-        });
-    }
+    let generated_by = generated
+        .and_then(|generated| generated.get("by"))
+        .and_then(|value| value.as_str())
+        .unwrap_or("")
+        .to_string();
+    let generated_at = generated
+        .and_then(|generated| generated.get("at"))
+        .and_then(|value| value.as_str())
+        .unwrap_or("")
+        .to_string();
+    let concept_type = okf::string_field(&concept.metadata, "type").unwrap_or("Concept");
+    let (links_to, linked_from) = graph
+        .map(|(workspace, member)| graph_neighbors(concept, workspace, member))
+        .unwrap_or_default();
     let drift_sources = diagnostics
         .iter()
         .filter(|diagnostic| diagnostic.path == concept.path && diagnostic.code == "OKF4006")
@@ -358,6 +356,7 @@ pub fn concept_meta(concept: &Concept, diagnostics: &[Diagnostic]) -> ConceptMet
     ConceptMeta {
         trust_slug: trust_slug.into(),
         trust_label: trust_label.into(),
+        type_color: type_color(concept_type),
         stale,
         stale_after: stale_after.to_string(),
         description: okf::string_field(&concept.metadata, "description")
@@ -368,9 +367,104 @@ pub fn concept_meta(concept: &Concept, diagnostics: &[Diagnostic]) -> ConceptMet
         } else {
             String::new()
         },
-        provenance,
+        tags: okf::metadata_string_array(&concept.metadata, "tags"),
+        generated_by,
+        generated_at,
+        links_to,
+        linked_from,
         drift_sources,
     }
+}
+
+fn graph_neighbors(
+    concept: &Concept,
+    workspace: &Workspace,
+    member: &WorkspaceMember,
+) -> (Vec<RelatedLink>, Vec<RelatedLink>) {
+    let mut outgoing = BTreeMap::new();
+    let mut incoming = BTreeMap::new();
+    for edge in &member.bundle.graph {
+        if edge.from == concept.id && edge.to != concept.id {
+            outgoing
+                .entry(edge.to.clone())
+                .or_insert_with(|| related_link(workspace, member, &edge.to, edge.broken));
+        }
+        if edge.to == concept.id && edge.from != concept.id {
+            incoming
+                .entry(edge.from.clone())
+                .or_insert_with(|| related_link(workspace, member, &edge.from, edge.broken));
+        }
+    }
+    (
+        outgoing.into_values().collect(),
+        incoming.into_values().collect(),
+    )
+}
+
+fn related_link(
+    workspace: &Workspace,
+    member: &WorkspaceMember,
+    target: &str,
+    broken: bool,
+) -> RelatedLink {
+    let normalized = normalize_target(target);
+    if let Some(concept) = member
+        .bundle
+        .concepts
+        .iter()
+        .find(|concept| concept.id == normalized || concept.id == target)
+    {
+        let concept_type = okf::string_field(&concept.metadata, "type")
+            .unwrap_or("Concept")
+            .to_string();
+        return RelatedLink {
+            href: workspace.document_href(&member.id, &concept.id),
+            title: okf::string_field(&concept.metadata, "title")
+                .unwrap_or(&concept.id)
+                .to_string(),
+            type_color: type_color(&concept_type),
+            concept_type,
+            broken,
+        };
+    }
+    if let Some(index) = member.bundle.indexes.iter().find(|index| {
+        index.path.strip_suffix("/index.md") == Some(normalized)
+            || index.path.strip_suffix(".md") == Some(normalized)
+            || index.path.strip_suffix(".md") == Some(target)
+    }) {
+        let title = index_title(index);
+        return RelatedLink {
+            href: workspace.document_href(&member.id, normalized),
+            title,
+            concept_type: "Index".into(),
+            type_color: type_color("Index"),
+            broken,
+        };
+    }
+    RelatedLink {
+        href: workspace.document_href(&member.id, normalized),
+        title: normalized.to_string(),
+        concept_type: String::new(),
+        type_color: type_color(""),
+        broken: true,
+    }
+}
+
+fn normalize_target(target: &str) -> &str {
+    let trimmed = target.trim_end_matches('/');
+    trimmed.strip_suffix("/index").unwrap_or(trimmed)
+}
+
+fn index_title(index: &okf::Index) -> String {
+    if let Some(heading) = index.headings.iter().find(|heading| heading.level == 1) {
+        return heading.text.clone();
+    }
+    index
+        .path
+        .strip_suffix("/index.md")
+        .and_then(|collection| collection.rsplit('/').next())
+        .unwrap_or(index.path.as_str())
+        .to_string()
 }
 
 fn generated_at(concept: &Concept) -> &str {
@@ -401,7 +495,37 @@ fn is_collection_id(bundle: &Bundle, id: &str) -> bool {
 
 #[cfg(test)]
 mod tests {
-    use super::{LogDay, LogEntry, parse_log_markdown, take_log_entries};
+    use std::collections::BTreeMap;
+    use std::path::PathBuf;
+
+    use okf::{Bundle, Concept, Edge, Span};
+
+    use super::{LogDay, LogEntry, concept_meta_with_graph, parse_log_markdown, take_log_entries};
+    use crate::workspace::Workspace;
+
+    fn stub_concept(id: &str, title: &str, kind: &str) -> Concept {
+        let mut metadata = BTreeMap::new();
+        metadata.insert("title".into(), serde_json::json!(title));
+        metadata.insert("type".into(), serde_json::json!(kind));
+        Concept {
+            id: id.into(),
+            path: format!("{id}.md"),
+            metadata,
+            body_span: Span::new(0, 0),
+            body_location: okf::SourceLocation {
+                start: 0,
+                end: 0,
+                line: 1,
+                column: 1,
+            },
+            headings: Vec::new(),
+            heading_sections: Vec::new(),
+            links: Vec::new(),
+            source_ids: Default::default(),
+            footnote_ids: Default::default(),
+            article_html: String::new(),
+        }
+    }
 
     #[test]
     fn parse_log_markdown_collects_dated_bullets() {
@@ -446,5 +570,39 @@ mod tests {
         let split = take_log_entries(&days, 3);
         assert_eq!(split.len(), 2);
         assert_eq!(split[1].entries[0].text, "Older");
+    }
+
+    #[test]
+    fn concept_meta_lists_intra_bundle_neighbors() {
+        let source = stub_concept("plans/a", "Alpha", "Implementation Plan");
+        let target = stub_concept("decisions/b", "Bravo", "Decision");
+        let bundle = Bundle {
+            root: PathBuf::new(),
+            version: None,
+            concepts: vec![source.clone(), target],
+            indexes: Vec::new(),
+            logs: Vec::new(),
+            graph: vec![Edge {
+                from: "plans/a".into(),
+                to: "decisions/b".into(),
+                raw: "../decisions/b.md".into(),
+                broken: false,
+            }],
+            diagnostics: Vec::new(),
+        };
+        let workspace = Workspace::from_loaded("root", PathBuf::new(), bundle);
+        let member = workspace.primary().expect("member");
+        let meta =
+            concept_meta_with_graph(&member.bundle.concepts[0], &[], Some((&workspace, member)));
+        assert_eq!(meta.links_to.len(), 1);
+        assert_eq!(meta.links_to[0].title, "Bravo");
+        assert_eq!(meta.links_to[0].concept_type, "Decision");
+        assert_eq!(meta.links_to[0].href, "/decisions/b/");
+        assert!(meta.linked_from.is_empty());
+        let back =
+            concept_meta_with_graph(&member.bundle.concepts[1], &[], Some((&workspace, member)));
+        assert_eq!(back.linked_from.len(), 1);
+        assert_eq!(back.linked_from[0].title, "Alpha");
+        assert_eq!(back.linked_from[0].concept_type, "Implementation Plan");
     }
 }

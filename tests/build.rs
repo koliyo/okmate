@@ -14,7 +14,7 @@ fn build_writes_engine_catalog_html_landmarks_and_pages_json() {
         valid_strict_concept(
             "Hello",
             "",
-            "Intro paragraph.\n\n## Details\n\nMore about the concept.\n\n| Lane | Job |\n| --- | --- |\n| Home | Cards |\n",
+            "Intro paragraph. See [Stale](stale.md).\n\n## Details\n\nMore about the concept.\n\n| Lane | Job |\n| --- | --- |\n| Home | Cards |\n",
         ),
     )
     .unwrap();
@@ -79,16 +79,28 @@ fn build_writes_engine_catalog_html_landmarks_and_pages_json() {
         "{concept}"
     );
     assert!(concept.contains("okmate-breadcrumbs"), "{concept}");
-    assert!(concept.contains("generated"), "{concept}");
+    assert!(concept.contains("Architecture"), "{concept}");
+    assert!(concept.contains("unverified"), "{concept}");
+    assert!(
+        concept.contains("datetime=\"2026-08-17T00:00:00Z\""),
+        "{concept}"
+    );
+    assert!(concept.contains("by process:test"), "{concept}");
+    assert!(concept.contains("domain/okf"), "{concept}");
+    assert!(concept.contains("okmate-tag"), "{concept}");
+    assert!(concept.contains("id=\"okmate-rel\""), "{concept}");
+    assert!(concept.contains("Outgoing"), "{concept}");
     assert!(concept.contains("Test concept Hello"), "{concept}");
-    assert!(concept.contains("Owners"), "{concept}");
+    assert!(!concept.contains("Owners"), "{concept}");
+    assert!(!concept.contains("okmate-trust-generated"), "{concept}");
     assert!(concept.contains("okmate-md-table"), "{concept}");
     assert!(concept.contains("<table>"), "{concept}");
 
     let stale = fs::read_to_string(output.join("stale").join("index.html")).unwrap();
     assert!(stale.contains("okmate-badge-stale"), "{stale}");
     assert!(stale.contains("Review Action Required"), "{stale}");
-    assert!(stale.contains("stale_after"), "{stale}");
+    assert!(stale.contains("stale by 2000-01-01"), "{stale}");
+    assert!(stale.contains("Incoming"), "{stale}");
 
     let review = fs::read_to_string(output.join("review").join("index.html")).unwrap();
     assert!(review.contains("id=\"okmate-queue\""));
@@ -127,15 +139,26 @@ fn build_writes_engine_catalog_html_landmarks_and_pages_json() {
     assert!(css.contains(".okmate-md-table"), "{css}");
     assert!(css.contains("grid-template-columns"), "{css}");
     assert!(css.contains(".okmate-table-resizer"), "{css}");
+    assert!(css.contains("border-radius: 0.4rem"), "{css}");
+    assert!(css.contains(".okmate-rel"), "{css}");
+    assert!(css.contains(".okmate-tag"), "{css}");
+    assert!(css.contains(".okmate-summary"), "{css}");
     assert!(css.contains(".okmate-toc-link.is-current"), "{css}");
     assert!(css.contains(".okmate-recents-list"), "{css}");
     assert!(css.contains("flex-direction: column"), "{css}");
     assert!(output.join("__okmate").join("resize.js").is_file());
     assert!(output.join("__okmate").join("tables.js").is_file());
+    let tables = fs::read_to_string(output.join("__okmate").join("tables.js")).unwrap();
+    assert!(tables.contains("contentAwareCols"), "{tables}");
+    assert!(output.join("__okmate").join("meta.js").is_file());
+    let meta = fs::read_to_string(output.join("__okmate").join("meta.js")).unwrap();
+    assert!(meta.contains("okmate-rel-open"), "{meta}");
+    assert!(meta.contains("toLocaleString"), "{meta}");
     assert!(output.join("__okmate").join("reading.js").is_file());
     assert!(output.join("__okmate").join("toc.js").is_file());
     assert!(home.contains("/__okmate/resize.js"), "{home}");
     assert!(home.contains("/__okmate/tables.js"), "{home}");
+    assert!(home.contains("/__okmate/meta.js"), "{home}");
     assert!(home.contains("/__okmate/reading.js"), "{home}");
     assert!(!home.contains("font-size: 110%"), "{home}");
     assert!(!home.contains("data-okmate-wrap=\"off\""), "{home}");

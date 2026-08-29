@@ -30,13 +30,39 @@
     });
   }
 
-  function defaultCols(count) {
+  function defaultCols(table) {
+    var count = headerCells(table).length;
+    if (!count) {
+      return "";
+    }
     if (wrapOff()) {
       return Array(count)
         .fill("max-content")
         .join(" ");
     }
-    return "repeat(" + count + ", minmax(0, 1fr))";
+    return contentAwareCols(table, count);
+  }
+
+  function contentAwareCols(table, count) {
+    applyCols(table, Array(count).fill("max-content").join(" "));
+    var widths = snapshotWidths(table);
+    var flex = widths.length - 1;
+    var max = widths[flex] || 0;
+    for (var i = 0; i < widths.length - 1; i++) {
+      if (widths[i] > max) {
+        max = widths[i];
+        flex = i;
+      }
+    }
+    return widths
+      .map(function (width, index) {
+        var px = Math.max(minCol(), width);
+        if (index === flex) {
+          return "minmax(" + px + "px, 1fr)";
+        }
+        return "minmax(" + MIN_REM + "rem, " + px + "px)";
+      })
+      .join(" ");
   }
 
   function colsFromWidths(widths) {
@@ -73,7 +99,7 @@
   }
 
   function resetTable(table) {
-    applyCols(table, defaultCols(headerCells(table).length));
+    applyCols(table, defaultCols(table));
     placeHandles(table);
   }
 
@@ -172,7 +198,7 @@
       return;
     }
     if (!table.style.getPropertyValue("--okmate-cols")) {
-      applyCols(table, defaultCols(cells.length));
+      applyCols(table, defaultCols(table));
     }
     if (table.__okmateCols) {
       placeHandles(table);
