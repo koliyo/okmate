@@ -1,3 +1,5 @@
+use serde::Deserialize;
+
 use super::{Document, LogDay, LogEntry, ReviewRow};
 
 pub const REVIEW_WINDOW: usize = 40;
@@ -19,53 +21,20 @@ pub struct ListWindow {
     pub next_start: usize,
 }
 
-#[derive(Clone, Debug, Default)]
+#[derive(Clone, Debug, Default, Deserialize)]
 pub struct WindowQuery {
+    #[serde(default, alias = "window")]
     pub start: usize,
+    #[serde(default)]
     pub filter: String,
-    pub query: String,
+    #[serde(default)]
+    pub q: String,
 }
 
 impl WindowQuery {
     pub fn from_raw(raw: Option<&str>) -> Self {
-        let mut query = Self::default();
-        for part in raw.unwrap_or("").split('&') {
-            let Some((key, value)) = part.split_once('=') else {
-                continue;
-            };
-            let value = percent_decode(value);
-            match key {
-                "start" | "window" => query.start = value.parse().unwrap_or(0),
-                "filter" => query.filter = value,
-                "q" => query.query = value,
-                _ => {}
-            }
-        }
-        query
+        serde_urlencoded::from_str(raw.unwrap_or("")).unwrap_or_default()
     }
-}
-
-fn percent_decode(value: &str) -> String {
-    let mut out = String::new();
-    let bytes = value.as_bytes();
-    let mut i = 0;
-    while i < bytes.len() {
-        if bytes[i] == b'%' && i + 2 < bytes.len() {
-            let hex = &value[i + 1..i + 3];
-            if let Ok(byte) = u8::from_str_radix(hex, 16) {
-                out.push(byte as char);
-                i += 3;
-                continue;
-            }
-        }
-        if bytes[i] == b'+' {
-            out.push(' ');
-        } else {
-            out.push(bytes[i] as char);
-        }
-        i += 1;
-    }
-    out
 }
 
 pub fn apply_review_window(document: &mut Document, query: &WindowQuery) {
@@ -121,7 +90,7 @@ fn matches_review(row: &ReviewRow, query: &WindowQuery) -> bool {
         "stable" => row.status == "stable",
         _ => true,
     };
-    let needle = query.query.to_ascii_lowercase();
+    let needle = query.q.to_ascii_lowercase();
     filter_ok && (needle.is_empty() || row.search.contains(&needle))
 }
 
@@ -145,7 +114,7 @@ fn slice_window(
             before: from,
             after: total.saturating_sub(to),
             filter: query.filter.clone(),
-            query: query.query.clone(),
+            query: query.q.clone(),
             prev_start: from.saturating_sub(window),
             next_start: (from + len).min(total),
         },

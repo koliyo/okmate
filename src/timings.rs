@@ -311,7 +311,7 @@ fn measure_page(workspace: &Workspace, route: &str) -> Result<PageTiming> {
     let document = site::page_for_route(workspace, route)
         .with_context(|| format!("no page for route {route}"))?;
     let page_for_route_ms = millis(started.elapsed());
-    let kind = document.page_kind.clone();
+    let kind = document.page_kind.as_str().to_string();
     let article_bytes = document.article_html.len();
     let review_row_count = document.review_rows.len();
     let log_entry_count = document.log_days.iter().map(|day| day.entries.len()).sum();

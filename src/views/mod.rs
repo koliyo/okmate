@@ -14,6 +14,28 @@ pub use window::{
     apply_review_window,
 };
 
+#[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
+pub enum PageKind {
+    Home,
+    Review,
+    Log,
+    Settings,
+    #[default]
+    Page,
+}
+
+impl PageKind {
+    pub fn as_str(self) -> &'static str {
+        match self {
+            Self::Home => "home",
+            Self::Review => "review",
+            Self::Log => "log",
+            Self::Settings => "settings",
+            Self::Page => "page",
+        }
+    }
+}
+
 #[derive(Clone, Debug, Default)]
 pub struct NavNode {
     pub href: String,
@@ -43,7 +65,7 @@ pub struct Crumb {
     pub current: bool,
 }
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, Default)]
 pub struct SettingsRoot {
     pub id: String,
     pub kind: String,
@@ -118,7 +140,7 @@ macro_rules! document_template {
             fn from(document: Document) -> Self {
                 Self {
                     title: document.title,
-                    page_kind: document.page_kind,
+                    page_kind: document.page_kind.as_str().to_string(),
                     nav: document.nav,
                     toc: document.toc,
                     article_html: document.article_html,
@@ -165,9 +187,10 @@ document_template!(SettingsFragmentTemplate, "fragments/settings.html");
 document_template!(MainFragmentTemplate, "fragments/main.html");
 document_template!(QueueFragmentTemplate, "fragments/queue.html");
 
+#[derive(Default)]
 pub struct Document {
     pub title: String,
-    pub page_kind: String,
+    pub page_kind: PageKind,
     pub nav: Vec<NavNode>,
     pub toc: Vec<TocEntry>,
     pub article_html: String,
@@ -232,6 +255,25 @@ impl Document {
 
     pub fn render_queue_fragment(self) -> askama::Result<String> {
         QueueFragmentTemplate::from(self).render()
+    }
+
+    pub fn for_settings_host() -> Self {
+        Self {
+            title: "Knowledge roots".into(),
+            page_kind: PageKind::Settings,
+            nav: vec![NavNode {
+                href: "/settings/".into(),
+                title: "Settings".into(),
+                current: true,
+                ..NavNode::default()
+            }],
+            reading_wrap: true,
+            reading_nav: true,
+            reading_toc: true,
+            reading_font: 100,
+            reading_width: 66,
+            ..Self::default()
+        }
     }
 }
 
@@ -357,7 +399,7 @@ mod tests {
     fn sample_document(toc: Vec<TocEntry>) -> Document {
         Document {
             title: "Hello".into(),
-            page_kind: "page".into(),
+            page_kind: PageKind::Page,
             nav: vec![
                 NavNode {
                     href: "/".into(),
@@ -493,7 +535,7 @@ mod tests {
     #[test]
     fn review_template_contains_queue_region() {
         let mut document = sample_document(Vec::new());
-        document.page_kind = "review".into();
+        document.page_kind = PageKind::Review;
         document.review_rows = vec![ReviewRow {
             href: "/hello/".into(),
             title: "Hello".into(),
@@ -526,7 +568,7 @@ mod tests {
     #[test]
     fn queue_fragment_is_the_review_region() {
         let mut document = sample_document(Vec::new());
-        document.page_kind = "review".into();
+        document.page_kind = PageKind::Review;
         document.review_rows = vec![ReviewRow {
             href: "/hello/".into(),
             title: "Hello".into(),
@@ -642,7 +684,7 @@ mod tests {
     #[test]
     fn dashboard_lists_ten_recent_leaf_documents() {
         let mut document = sample_document(Vec::new());
-        document.page_kind = "home".into();
+        document.page_kind = PageKind::Home;
         document.recents = recent_leaf_documents(
             &as_workspace(test_bundle(
                 (0..12)

@@ -108,7 +108,7 @@ pub fn page_for_route_nav(
     match route.as_str() {
         "/" => Some(
             document(workspace, "/", "Knowledge", Vec::new(), nav_mode)
-                .with_kind("home")
+                .with_kind(crate::views::PageKind::Home)
                 .with_home(workspace),
         ),
         "/review/" => Some(
@@ -119,12 +119,12 @@ pub fn page_for_route_nav(
                 Vec::new(),
                 nav_mode,
             )
-            .with_kind("review")
+            .with_kind(crate::views::PageKind::Review)
             .with_review(workspace),
         ),
         "/log/" => Some(
             document(workspace, "/log/", "Log", Vec::new(), nav_mode)
-                .with_kind("log")
+                .with_kind(crate::views::PageKind::Log)
                 .with_log(workspace),
         ),
         "/settings/" => Some(settings_document(workspace, nav_mode)),
@@ -141,7 +141,7 @@ pub fn page_for_route_nav(
                         toc_from_headings(&concept.headings),
                         nav_mode,
                     )
-                    .with_kind("page")
+                    .with_kind(crate::views::PageKind::Page)
                     .with_article(&workspace.rewrite_article(&member.id, &concept.article_html))
                     .with_meta(workspace, member, concept),
                 )
@@ -164,7 +164,7 @@ pub fn page_for_route_nav(
                             toc_from_headings(&index.headings),
                             nav_mode,
                         )
-                        .with_kind("page")
+                        .with_kind(crate::views::PageKind::Page)
                         .with_article(&workspace.rewrite_article(&member.id, &index.article_html)),
                     )
                 }
@@ -176,12 +176,12 @@ pub fn page_for_route_nav(
 }
 
 pub(crate) fn render_document(document: Document) -> Result<String> {
-    match document.page_kind.as_str() {
-        "home" => document.render_home(),
-        "log" => document.render_log(),
-        "review" => document.render_review(),
-        "settings" => document.render_settings(),
-        _ => document.render_page(),
+    match document.page_kind {
+        crate::views::PageKind::Home => document.render_home(),
+        crate::views::PageKind::Log => document.render_log(),
+        crate::views::PageKind::Review => document.render_review(),
+        crate::views::PageKind::Settings => document.render_settings(),
+        crate::views::PageKind::Page => document.render_page(),
     }
     .map_err(|error| anyhow::anyhow!(error))
 }
@@ -195,7 +195,7 @@ fn document(
 ) -> Document {
     Document {
         title: title.to_string(),
-        page_kind: "page".into(),
+        page_kind: crate::views::PageKind::Page,
         nav: nav_tree(workspace, route, nav_mode),
         toc,
         article_html: String::new(),
@@ -337,12 +337,12 @@ fn settings_document(workspace: &Workspace, nav_mode: NavMode) -> Document {
     );
     document.config_path = crate::config::config_path().display().to_string();
     document.settings_roots = crate::http::settings_roots(&config);
-    document.with_kind("settings")
+    document.with_kind(crate::views::PageKind::Settings)
 }
 
 impl Document {
-    fn with_kind(mut self, kind: &str) -> Self {
-        self.page_kind = kind.to_string();
+    fn with_kind(mut self, kind: crate::views::PageKind) -> Self {
+        self.page_kind = kind;
         self
     }
 
@@ -607,6 +607,6 @@ fn merged_collection_document(
     let owners = collection_owners(workspace, path);
     let (title, toc, html) = merge_collection_indexes(workspace, path, &owners);
     document(workspace, route, &title, toc, nav_mode)
-        .with_kind("page")
+        .with_kind(crate::views::PageKind::Page)
         .with_article(&html)
 }

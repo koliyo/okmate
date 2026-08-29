@@ -17,7 +17,7 @@ use crate::config::{
 };
 use crate::http::AppState;
 use crate::site;
-use crate::views::{Document, NavNode, SettingsRoot};
+use crate::views::{Document, SettingsRoot};
 
 pub async fn post(
     ConnectInfo(addr): ConnectInfo<SocketAddr>,
@@ -123,53 +123,7 @@ fn settings_document(
     let mut document = if let Some(bundle) = bundle {
         site::settings_shell(bundle)
     } else {
-        Document {
-            title: "Knowledge roots".into(),
-            page_kind: "settings".into(),
-            nav: vec![NavNode {
-                href: "/settings/".into(),
-                title: "Settings".into(),
-                current: true,
-                open: false,
-                children: Vec::new(),
-                section_key: String::new(),
-                root: String::new(),
-                summary: String::new(),
-                attention: false,
-                type_color: String::new(),
-                collection: String::new(),
-            }],
-            toc: Vec::new(),
-            article_html: String::new(),
-            concept_type: String::new(),
-            status: String::new(),
-            authority: String::new(),
-            review_rows: Vec::new(),
-            action_rows: Vec::new(),
-            stats: Vec::new(),
-            recents: Vec::new(),
-            log_days: Vec::new(),
-            show_root: false,
-            nav_mode: "separated".into(),
-            show_nav_mode: false,
-            crumbs: Vec::new(),
-            diagnostics: Vec::new(),
-            meta: crate::views::ConceptMeta::default(),
-            message: String::new(),
-            config_path: String::new(),
-            settings_roots: Vec::new(),
-            review_window: crate::views::ListWindow::default(),
-            log_window: crate::views::ListWindow::default(),
-            html_style: String::new(),
-            reading_wrap: true,
-            reading_full: false,
-            reading_nav: true,
-            reading_toc: true,
-            reading_font: 100,
-            reading_width: 66,
-            main_scroll: 0,
-            nav_scroll: 0,
-        }
+        Document::for_settings_host()
     };
     document.message = message.unwrap_or("").to_string();
     document.config_path = config_file.display().to_string();

@@ -1,7 +1,7 @@
 use std::fs;
 use std::path::Path;
 
-use okmate::views::{ConceptMeta, Document, NavNode, ReviewRow, TocEntry};
+use okmate::views::{ConceptMeta, Document, NavNode, PageKind, ReviewRow, TocEntry};
 
 fn golden(name: &str) -> String {
     fs::read_to_string(
@@ -28,7 +28,7 @@ fn assert_contains_golden(html: &str, fixture: &str) {
 fn sample() -> Document {
     Document {
         title: "Hello".into(),
-        page_kind: "page".into(),
+        page_kind: PageKind::Page,
         nav: vec![NavNode {
             href: "/".into(),
             title: "Dashboard".into(),
@@ -95,7 +95,7 @@ fn shell_landmarks_match_golden() {
 #[test]
 fn settings_patch_matches_golden() {
     let mut document = sample();
-    document.page_kind = "settings".into();
+    document.page_kind = PageKind::Settings;
     let html = document.render_settings_fragment().unwrap();
     assert_contains_golden(&html, "settings-patch.txt");
     assert!(!html.to_ascii_lowercase().contains("<html"));
@@ -104,7 +104,7 @@ fn settings_patch_matches_golden() {
 #[test]
 fn queue_region_matches_golden() {
     let mut document = sample();
-    document.page_kind = "review".into();
+    document.page_kind = PageKind::Review;
     let html = document.render_queue_fragment().unwrap();
     assert_contains_golden(&html, "queue-region.txt");
     assert!(!html.to_ascii_lowercase().contains("<html"));

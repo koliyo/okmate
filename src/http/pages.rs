@@ -64,7 +64,7 @@ fn render_main_fragment(
     query: Option<&str>,
 ) -> Option<(String, f64, f64)> {
     let started = Instant::now();
-    let document = live_document(state, path, query)?;
+    let document = live_document(state, path, crate::views::WindowQuery::from_raw(query))?;
     let fragment = document.render_main_fragment().ok()?;
     Some((fragment, 0.0, started.elapsed().as_secs_f64() * 1000.0))
 }
@@ -75,7 +75,7 @@ fn render_full_page(
     query: Option<&str>,
 ) -> Option<(String, f64, f64)> {
     let started = Instant::now();
-    let document = live_document(state, path, query)?;
+    let document = live_document(state, path, crate::views::WindowQuery::from_raw(query))?;
     let html = site::render_document(document).ok()?;
     Some((html, 0.0, started.elapsed().as_secs_f64() * 1000.0))
 }
@@ -83,7 +83,7 @@ fn render_full_page(
 pub fn live_document(
     state: &AppState,
     path: &str,
-    query: Option<&str>,
+    query: crate::views::WindowQuery,
 ) -> Option<crate::views::Document> {
     let workspace = state.workspace.read().ok()?;
     if workspace.is_empty() {
@@ -96,34 +96,25 @@ pub fn live_document(
         document.main_scroll = session.main_scroll.unwrap_or(0);
     }
     crate::preview::persist_open_path_to(&state.session_path, path);
-    if document.page_kind == "settings" {
+    if document.page_kind == crate::views::PageKind::Settings {
         let config = crate::config::load_or_default(&state.config_path);
         document.config_path = state.config_path.display().to_string();
         document.settings_roots = crate::http::settings_roots(&config);
     }
-    let window = crate::views::WindowQuery::from_raw(query);
-    if document.page_kind == "review" {
-        crate::views::apply_review_window(&mut document, &window);
+    if document.page_kind == crate::views::PageKind::Review {
+        crate::views::apply_review_window(&mut document, &query);
     }
-    if document.page_kind == "log" {
-        crate::views::apply_log_window(&mut document, &window);
+    if document.page_kind == crate::views::PageKind::Log {
+        crate::views::apply_log_window(&mut document, &query);
     }
     Some(document)
 }
 
-#[derive(serde::Deserialize, Default)]
-pub struct WindowParams {
-    pub start: Option<usize>,
-    pub filter: Option<String>,
-    pub q: Option<String>,
-}
-
 pub async fn review_window(
     State(state): State<AppState>,
-    axum::extract::Query(params): axum::extract::Query<WindowParams>,
+    axum::extract::Query(params): axum::extract::Query<crate::views::WindowQuery>,
 ) -> Response {
-    let query = window_query(&params);
-    let Some(document) = live_document(&state, "/review/", Some(&query)) else {
+    let Some(document) = live_document(&state, "/review/", params) else {
         return axum::http::StatusCode::NOT_FOUND.into_response();
     };
     match document.render_queue_fragment() {
@@ -134,23 +125,13 @@ pub async fn review_window(
 
 pub async fn log_window(
     State(state): State<AppState>,
-    axum::extract::Query(params): axum::extract::Query<WindowParams>,
+    axum::extract::Query(params): axum::extract::Query<crate::views::WindowQuery>,
 ) -> Response {
-    let query = window_query(&params);
-    let Some(document) = live_document(&state, "/log/", Some(&query)) else {
+    let Some(document) = live_document(&state, "/log/", params) else {
         return axum::http::StatusCode::NOT_FOUND.into_response();
     };
     match document.render_main_fragment() {
         Ok(html) => Html(html).into_response(),
         Err(_) => axum::http::StatusCode::INTERNAL_SERVER_ERROR.into_response(),
     }
-}
-
-fn window_query(params: &WindowParams) -> String {
-    format!(
-        "start={}&filter={}&q={}",
-        params.start.unwrap_or(0),
-        params.filter.as_deref().unwrap_or(""),
-        params.q.as_deref().unwrap_or("")
-    )
 }
