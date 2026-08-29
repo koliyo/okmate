@@ -154,7 +154,10 @@ fn build_writes_engine_catalog_html_landmarks_and_pages_json() {
         css.contains("--rd-code-inline-background: var(--rd-bg-subtle)"),
         "{css}"
     );
-    assert!(!css.contains("--rd-code-block-background: #2c313c"), "{css}");
+    assert!(
+        !css.contains("--rd-code-block-background: #2c313c"),
+        "{css}"
+    );
     assert!(css.contains(".okmate-rel"), "{css}");
     assert!(css.contains(".okmate-tag"), "{css}");
     assert!(css.contains(".okmate-summary"), "{css}");
