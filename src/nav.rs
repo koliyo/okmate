@@ -155,65 +155,63 @@ fn nav_forest(workspace: &Workspace, current: &str, kind: ForestKind<'_>) -> Vec
         ForestKind::Merged => "",
     };
 
-    fn take_node(
-        path: &str,
-        current: &str,
-        workspace: &Workspace,
+    struct ForestBuild<'a> {
+        current: &'a str,
+        workspace: &'a Workspace,
         merged: bool,
-        section_prefix: &str,
-        by_path: &mut BTreeMap<String, NavNode>,
-        children_of: &BTreeMap<String, Vec<String>>,
-        owners: &BTreeMap<String, Vec<String>>,
-    ) -> NavNode {
-        let mut node = by_path.remove(path).expect("nav node");
-        if let Some(child_paths) = children_of.get(path) {
-            for child in child_paths {
-                node.children.push(take_node(
-                    child,
-                    current,
-                    workspace,
-                    merged,
-                    section_prefix,
-                    by_path,
-                    children_of,
-                    owners,
-                ));
+        section_prefix: &'a str,
+        by_path: &'a mut BTreeMap<String, NavNode>,
+        children_of: &'a BTreeMap<String, Vec<String>>,
+        owners: &'a BTreeMap<String, Vec<String>>,
+    }
+
+    fn take_node(path: &str, ctx: &mut ForestBuild<'_>) -> NavNode {
+        let mut node = ctx.by_path.remove(path).expect("nav node");
+        if let Some(child_paths) = ctx.children_of.get(path) {
+            for child in child_paths.clone() {
+                node.children.push(take_node(&child, ctx));
             }
         }
-        if merged {
+        if ctx.merged {
             let empty = Vec::new();
             finalize_merged_collection(
-                workspace,
+                ctx.workspace,
                 path,
-                owners.get(path).unwrap_or(&empty),
+                ctx.owners.get(path).unwrap_or(&empty),
                 node,
-                current,
+                ctx.current,
             )
         } else {
-            let root_id = owners
+            let root_id = ctx
+                .owners
                 .get(path)
                 .and_then(|ids| ids.first())
                 .map(String::as_str)
                 .unwrap_or("");
-            finalize_collection(workspace, root_id, section_prefix, path, node, current)
+            finalize_collection(
+                ctx.workspace,
+                root_id,
+                ctx.section_prefix,
+                path,
+                node,
+                ctx.current,
+            )
         }
     }
 
     roots.sort();
+    let mut ctx = ForestBuild {
+        current,
+        workspace,
+        merged,
+        section_prefix,
+        by_path: &mut by_path,
+        children_of: &children_of,
+        owners: &owners,
+    };
     roots
         .into_iter()
-        .map(|path| {
-            take_node(
-                &path,
-                current,
-                workspace,
-                merged,
-                section_prefix,
-                &mut by_path,
-                &children_of,
-                &owners,
-            )
-        })
+        .map(|path| take_node(&path, &mut ctx))
         .collect()
 }
 
