@@ -11,8 +11,8 @@
   --rd-green: #98c379;
   --rd-orange: #d19a66;
   --rd-red: #e06c75;
-  --rd-code-block-background: #2c313c;
-  --rd-code-inline-background: color-mix(in srgb, var(--rd-bg-subtle) 55%, #3e4451);
+  --rd-code-block-background: var(--rd-bg-subtle);
+  --rd-code-inline-background: var(--rd-bg-subtle);
   --syntax-keyword: #c678dd;
   --syntax-string: #98c379;
   --syntax-comment: #7f848e;
@@ -508,11 +508,10 @@ html[data-okmate-wrap="off"] #okmate-main pre {
   line-height: 1.55;
 }
 #okmate-main :not(pre) > code {
-  padding: 0.12em 0.42em;
-  border: 1px solid var(--rd-border);
-  border-radius: 0.4rem;
+  padding: 1px 5px;
+  border-radius: 5px;
   background: var(--rd-code-inline-background);
-  font-size: 0.88em;
+  font-size: 0.85em;
   overflow-wrap: break-word;
 }
 #okmate-main .tok-keyword { color: var(--syntax-keyword); }

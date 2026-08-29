@@ -142,6 +142,19 @@ fn build_writes_engine_catalog_html_landmarks_and_pages_json() {
     assert!(css.contains("grid-template-columns"), "{css}");
     assert!(css.contains(".okmate-table-resizer"), "{css}");
     assert!(css.contains("border-radius: 0.4rem"), "{css}");
+    assert!(css.contains("#okmate-main :not(pre) > code"), "{css}");
+    assert!(css.contains("padding: 1px 5px"), "{css}");
+    assert!(css.contains("font-size: 0.85em"), "{css}");
+    assert!(!css.contains("padding: 0.12em 0.42em"), "{css}");
+    assert!(
+        css.contains("--rd-code-block-background: var(--rd-bg-subtle)"),
+        "{css}"
+    );
+    assert!(
+        css.contains("--rd-code-inline-background: var(--rd-bg-subtle)"),
+        "{css}"
+    );
+    assert!(!css.contains("--rd-code-block-background: #2c313c"), "{css}");
     assert!(css.contains(".okmate-rel"), "{css}");
     assert!(css.contains(".okmate-tag"), "{css}");
     assert!(css.contains(".okmate-summary"), "{css}");
