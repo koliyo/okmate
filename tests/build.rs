@@ -137,6 +137,8 @@ fn build_writes_engine_catalog_html_landmarks_and_pages_json() {
     assert!(css.contains("66ch"), "{css}");
     assert!(css.contains(".okmate-col-resizer"), "{css}");
     assert!(css.contains(".okmate-md-table"), "{css}");
+    assert!(css.contains("border-collapse: collapse"), "{css}");
+    assert!(css.contains("table-layout: auto"), "{css}");
     assert!(css.contains("grid-template-columns"), "{css}");
     assert!(css.contains(".okmate-table-resizer"), "{css}");
     assert!(css.contains("border-radius: 0.4rem"), "{css}");
@@ -149,7 +151,8 @@ fn build_writes_engine_catalog_html_landmarks_and_pages_json() {
     assert!(output.join("__okmate").join("resize.js").is_file());
     assert!(output.join("__okmate").join("tables.js").is_file());
     let tables = fs::read_to_string(output.join("__okmate").join("tables.js")).unwrap();
-    assert!(tables.contains("contentAwareCols"), "{tables}");
+    assert!(tables.contains("tableLayout"), "{tables}");
+    assert!(tables.contains("clearWidths"), "{tables}");
     assert!(output.join("__okmate").join("meta.js").is_file());
     let meta = fs::read_to_string(output.join("__okmate").join("meta.js")).unwrap();
     assert!(meta.contains("okmate-rel-open"), "{meta}");

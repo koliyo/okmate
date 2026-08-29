@@ -540,26 +540,17 @@ html[data-okmate-wrap="off"] #okmate-main pre {
   overflow-x: auto;
 }
 #okmate-main .okmate-md-table table {
-  display: grid;
-  grid-template-columns: var(--okmate-cols, minmax(0, 1fr));
   width: 100%;
-  column-gap: 0;
-  row-gap: 0;
-}
-#okmate-main .okmate-md-table thead,
-#okmate-main .okmate-md-table tbody,
-#okmate-main .okmate-md-table tfoot,
-#okmate-main .okmate-md-table tr {
-  display: contents;
+  border-collapse: collapse;
+  table-layout: auto;
 }
 #okmate-main .okmate-md-table th,
 #okmate-main .okmate-md-table td {
   vertical-align: top;
   text-align: left;
-  min-width: 0;
-  padding: 0.45rem 0.65rem;
+  padding: 0.4rem 0.65rem;
   border: 1px solid var(--rd-border);
-  overflow-wrap: anywhere;
+  overflow-wrap: break-word;
   word-break: normal;
   white-space: normal;
 }

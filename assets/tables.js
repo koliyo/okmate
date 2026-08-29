@@ -15,10 +15,6 @@
     return Math.round(MIN_REM * remPx());
   }
 
-  function wrapOff() {
-    return document.documentElement.getAttribute("data-okmate-wrap") === "off";
-  }
-
   function headerCells(table) {
     var row = table.querySelector("tr");
     return row ? Array.prototype.slice.call(row.children) : [];
@@ -30,58 +26,21 @@
     });
   }
 
-  function defaultCols(table) {
-    var count = headerCells(table).length;
-    if (!count) {
-      return "";
-    }
-    if (wrapOff()) {
-      return Array(count)
-        .fill("max-content")
-        .join(" ");
-    }
-    return contentAwareCols(table, count);
+  function applyWidths(table, widths) {
+    var cells = headerCells(table);
+    table.style.tableLayout = "fixed";
+    table.style.width = "100%";
+    cells.forEach(function (cell, index) {
+      cell.style.width = (widths[index] || minCol()) + "px";
+    });
   }
 
-  function contentAwareCols(table, count) {
-    applyCols(table, Array(count).fill("max-content").join(" "));
-    var widths = snapshotWidths(table);
-    var flex = widths.length - 1;
-    var max = widths[flex] || 0;
-    for (var i = 0; i < widths.length - 1; i++) {
-      if (widths[i] > max) {
-        max = widths[i];
-        flex = i;
-      }
-    }
-    return widths
-      .map(function (width, index) {
-        var px = Math.max(minCol(), width);
-        if (index === flex) {
-          return "minmax(" + px + "px, 1fr)";
-        }
-        return "minmax(" + MIN_REM + "rem, " + px + "px)";
-      })
-      .join(" ");
-  }
-
-  function colsFromWidths(widths) {
-    if (wrapOff()) {
-      return widths
-        .map(function (width) {
-          return Math.max(minCol(), width) + "px";
-        })
-        .join(" ");
-    }
-    return widths
-      .map(function (width) {
-        return "minmax(" + MIN_REM + "rem, " + Math.max(1, width) + "fr)";
-      })
-      .join(" ");
-  }
-
-  function applyCols(table, value) {
-    table.style.setProperty("--okmate-cols", value);
+  function clearWidths(table) {
+    table.style.removeProperty("table-layout");
+    table.style.removeProperty("width");
+    headerCells(table).forEach(function (cell) {
+      cell.style.removeProperty("width");
+    });
   }
 
   function resizeFrom(start, index, delta) {
@@ -99,7 +58,7 @@
   }
 
   function resetTable(table) {
-    applyCols(table, defaultCols(table));
+    clearWidths(table);
     placeHandles(table);
   }
 
@@ -143,7 +102,7 @@
       event.preventDefault();
       handle.setPointerCapture(event.pointerId);
       var widths = snapshotWidths(table);
-      applyCols(table, colsFromWidths(widths));
+      applyWidths(table, widths);
       dragging = {
         table: table,
         index: index,
@@ -157,7 +116,7 @@
       if (!dragging || dragging.table !== table || dragging.index !== index) {
         return;
       }
-      applyCols(table, colsFromWidths(resizeFrom(dragging.widths, index, event.clientX - dragging.startX)));
+      applyWidths(table, resizeFrom(dragging.widths, index, event.clientX - dragging.startX));
       placeHandles(table);
     });
     handle.addEventListener("pointerup", function (event) {
@@ -182,7 +141,7 @@
         event.preventDefault();
         var widths = snapshotWidths(table);
         var delta = event.key === "ArrowRight" ? step : -step;
-        applyCols(table, colsFromWidths(resizeFrom(widths, index, delta)));
+        applyWidths(table, resizeFrom(widths, index, delta));
         placeHandles(table);
       } else if (event.key === "Home") {
         event.preventDefault();
@@ -194,14 +153,10 @@
   function mount(table) {
     var wrapper = wrapperOf(table);
     var cells = headerCells(table);
-    if (!wrapper || !cells.length) {
-      return;
-    }
-    if (!table.style.getPropertyValue("--okmate-cols")) {
-      applyCols(table, defaultCols(table));
-    }
-    if (table.__okmateCols) {
-      placeHandles(table);
+    if (!wrapper || !cells.length || table.__okmateCols) {
+      if (table.__okmateCols) {
+        placeHandles(table);
+      }
       return;
     }
     if (cells.length < 2) {
