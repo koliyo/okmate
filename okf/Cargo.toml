@@ -15,7 +15,6 @@ comrak = { version = "0.54", default-features = false }
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
 sha2 = "0.11"
-thiserror = "2.0"
 toml = "1.1"
 yaml-rust = "0.4"
 syntect = { version = "5.3", default-features = false, features = ["parsing", "default-syntaxes", "plist-load", "yaml-load", "regex-onig"] }

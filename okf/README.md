@@ -14,7 +14,17 @@ Dependencies:
 - `yaml-rust`: YAML frontmatter extraction with lossless preservation of custom keys.
 - `serde`, `serde_json`, `toml`: Data serialization and benchmark parsing.
 - `sha2`: Cryptographic digest calculations.
-- `thiserror`, `anyhow`: Standard error handling.
+- `anyhow`: Operation-level I/O and usage errors (`not a directory`, missing inspect id). Diagnostic structs stay separate.
+
+## Public surface
+
+Operations: `load`, `load_timed`, `load_with_cache`, `check`, `inspect`, `inspect_filtered`, `search`, `build`, `build_artifacts`, `benchmark_retrieval`.
+
+AST and reports: `Bundle`, `Concept`, `Index`, `Log`, `Edge`, `Heading`, `HeadingSection`, `Link`, `Span`, `Profile`, `LoadOptions`, `LoadResult`, `LoadTimings`, `InspectKind`, `KnowledgeFilter`, `TrustTier`, `CheckReport`, `BuildSummary`, `Diagnostic`, `Severity`, `SourceLocation`, retrieval report types.
+
+Helpers callers already need: `string_field`, `metadata_string_array`, `latest_human_verification`, `classify_concept_action`, `ActionKind`, `ConceptAction`, `ParseCache`, `PARSE_CACHE_VERSION`, `published_href`, `resolve_preview_path`, `PreviewTarget`, `concept_trust_tier`, `concept_is_stale`.
+
+Parse, git, and civil-date internals stay crate-private.
 
 ## Core Features
 

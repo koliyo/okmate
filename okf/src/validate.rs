@@ -833,7 +833,7 @@ pub fn parse_timestamp(value: &str) -> Option<i64> {
     Some(days_from_civil(year, month, day) * 86_400 + hour * 3_600 + minute * 60 + second - offset)
 }
 
-pub fn days_from_civil(mut year: i64, month: i64, day: i64) -> i64 {
+pub(crate) fn days_from_civil(mut year: i64, month: i64, day: i64) -> i64 {
     year -= i64::from(month <= 2);
     let era = if year >= 0 { year } else { year - 399 } / 400;
     let year_of_era = year - era * 400;

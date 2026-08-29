@@ -83,7 +83,7 @@ pub fn governance_stats(workspace: &Workspace) -> Vec<StatCard> {
         for concept in &member.bundle.concepts {
             total += 1;
             let status = okf::string_field(&concept.metadata, "status").unwrap_or("draft");
-            if okf::search::concept_is_stale(&concept.metadata) {
+            if okf::concept_is_stale(&concept.metadata) {
                 stale += 1;
             }
             if status == "stable" {
@@ -322,12 +322,12 @@ pub fn concept_meta_with_graph(
     diagnostics: &[Diagnostic],
     graph: Option<(&Workspace, &WorkspaceMember)>,
 ) -> ConceptMeta {
-    let trust = okf::search::concept_trust_tier(&concept.metadata);
+    let trust = okf::concept_trust_tier(&concept.metadata);
     let (trust_slug, trust_label) = match trust {
         TrustTier::HumanReviewed => ("human", "reviewed"),
         TrustTier::Generated | TrustTier::Unverified => ("unverified", "unverified"),
     };
-    let stale = okf::search::concept_is_stale(&concept.metadata);
+    let stale = okf::concept_is_stale(&concept.metadata);
     let stale_after = okf::string_field(&concept.metadata, "stale_after").unwrap_or("");
     let action = okf::classify_concept_action(concept, diagnostics);
     let generated = concept

@@ -50,7 +50,7 @@ impl LineIndex {
     }
 }
 
-pub fn lines_with_offsets(source: &str) -> Vec<(usize, &str)> {
+pub(crate) fn lines_with_offsets(source: &str) -> Vec<(usize, &str)> {
     let mut out = Vec::new();
     let mut offset = 0;
     for line in source.split_inclusive('\n') {

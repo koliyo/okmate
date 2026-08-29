@@ -272,7 +272,7 @@ fn review_row(bundle: &Bundle, concept: &okf::Concept) -> ReviewRow {
     let authority = okf::string_field(&concept.metadata, "authority").unwrap_or("descriptive");
     let concept_type =
         compact_type_label(okf::string_field(&concept.metadata, "type").unwrap_or("Concept"));
-    let trust = okf::search::concept_trust_tier(&concept.metadata);
+    let trust = okf::concept_trust_tier(&concept.metadata);
     let (trust_slug, trust_label) = match trust {
         okf::TrustTier::HumanReviewed => ("human", "reviewed"),
         okf::TrustTier::Generated => ("generated", "generated"),

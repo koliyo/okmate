@@ -1,18 +1,18 @@
 //! Portable Open Knowledge Format (OKF) parsing, validation, search, graph, and artifact engine.
 
-pub mod artifact;
-pub mod ast;
-pub mod benchmark;
-pub mod diagnostic;
-pub mod frontmatter;
-pub mod graph;
+pub(crate) mod artifact;
+pub(crate) mod ast;
+pub(crate) mod benchmark;
+pub(crate) mod diagnostic;
+pub(crate) mod frontmatter;
+pub(crate) mod graph;
 mod highlight;
-pub mod markdown;
-pub mod parse_cache;
-pub mod preview;
-pub mod review;
-pub mod search;
-pub mod validate;
+pub(crate) mod markdown;
+pub(crate) mod parse_cache;
+pub(crate) mod preview;
+pub(crate) mod review;
+pub(crate) mod search;
+pub(crate) mod validate;
 
 use std::collections::{BTreeMap, BTreeSet};
 use std::fs;
@@ -22,36 +22,33 @@ use std::time::{Duration, Instant};
 use anyhow::{Context, Result, bail};
 use serde_json::Value;
 
-pub use artifact::{
-    ConceptInspect, absolute, build_artifacts, commit_output, llms_text, unique_temp,
+use artifact::{ConceptInspect, absolute};
+use benchmark::run_benchmark;
+use frontmatter::{lines_with_offsets, location, parse_yaml_mapping, split_frontmatter};
+use graph::resolve_graph;
+use markdown::{MarkdownOutput, parse_markdown_body};
+use search::search as search_chunks;
+use validate::{
+    collect_source_ids, is_date, validate_index_membership, validate_lifecycle_and_sources,
+    validate_lifecycle_and_sources_with, validate_metadata, validate_route_collisions,
+    validate_unique_ids,
 };
+
+pub use artifact::build_artifacts;
 pub use ast::{
     BuildSummary, Bundle, CheckReport, Concept, Edge, Heading, HeadingSection, Index, InspectKind,
     KnowledgeFilter, Link, LoadOptions, Log, Profile, Span, TrustTier,
 };
 pub use benchmark::{
-    RetrievalBenchmark, RetrievalQuestion, RetrievalQuestionResult, RetrievalReport, run_benchmark,
+    RetrievalBenchmark, RetrievalQuestion, RetrievalQuestionResult, RetrievalReport,
 };
 pub use diagnostic::{Diagnostic, Severity, SourceLocation};
-pub use frontmatter::{
-    Frontmatter, lines_with_offsets, location, parse_yaml_mapping, split_frontmatter,
-};
-pub use graph::{published_href, resolve_bundle_path, resolve_graph, split_fragment};
-pub use markdown::{
-    MarkdownOutput, footnote_labels, parse_markdown_body, reject_declarations, slugify,
-};
+pub use graph::published_href;
 pub use parse_cache::{PARSE_CACHE_VERSION, ParseCache};
 pub use preview::{PreviewTarget, resolve_preview_path};
 pub use review::{ActionKind, ConceptAction, classify_concept_action};
-pub use search::{SearchChunk, matching_search_chunks, normalize_search_text, search_index};
-pub use validate::{
-    PROFILE_TYPES, STANDARD_FIELDS, collect_source_ids, current_utc_date, external_url,
-    filesystem_modified_at, git_last_modified, git_path_dirty, git_repository_root, is_date,
-    latest_human_verification, metadata_string_array, parse_timestamp, repository_source_path,
-    string_field, validate_index_membership, validate_lifecycle_and_sources,
-    validate_lifecycle_and_sources_with, validate_metadata, validate_optional_string,
-    validate_route_collisions, validate_unique_ids,
-};
+pub use search::{concept_is_stale, concept_trust_tier};
+pub use validate::{latest_human_verification, metadata_string_array, string_field};
 
 #[derive(Clone, Debug, Default, PartialEq, Eq)]
 pub struct LoadTimings {
@@ -168,7 +165,7 @@ pub fn load_with_cache(
 
     let provenance = if options.provenance {
         let provenance_started = Instant::now();
-        validate_lifecycle_and_sources_with(&root, &concepts, &mut diagnostics, true);
+        validate_lifecycle_and_sources(&root, &concepts, &mut diagnostics);
         Some(provenance_started.elapsed())
     } else if options.profile == Profile::Strict {
         validate_lifecycle_and_sources_with(&root, &concepts, &mut diagnostics, false);
@@ -257,7 +254,7 @@ pub fn search(
     filter: &KnowledgeFilter,
 ) -> Result<String> {
     let bundle = load(root, profile)?;
-    Ok(serde_json::to_string_pretty(&matching_search_chunks(
+    Ok(serde_json::to_string_pretty(&search_chunks(
         &bundle, query, filter,
     ))?)
 }
@@ -659,5 +656,16 @@ fn find_concept<'a>(concepts: &'a [Concept], id: &str) -> Result<&'a Concept> {
             "ambiguous concept stem `{id}`; use a full id such as `{}`",
             matches[0].id
         ),
+    }
+}
+
+#[cfg(test)]
+mod public_surface {
+    #[test]
+    fn parse_helpers_are_crate_visible() {
+        let _ = crate::validate::days_from_civil;
+        let _ = crate::frontmatter::lines_with_offsets;
+        let _ = crate::validate::git_last_modified;
+        let _ = crate::validate::git_path_dirty;
     }
 }
