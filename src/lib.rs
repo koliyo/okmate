@@ -5,6 +5,7 @@ pub mod cli;
 pub mod config;
 #[cfg(feature = "desktop")]
 pub mod desktop;
+pub mod goto_match;
 pub mod http;
 pub mod port;
 pub mod preview;
