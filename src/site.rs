@@ -246,10 +246,10 @@ fn apply_nav_sections(
         return;
     }
     for node in nodes {
-        if !node.section_key.is_empty() {
-            if let Some(open) = saved.get(&node.section_key) {
-                node.open = *open;
-            }
+        if !node.section_key.is_empty()
+            && let Some(open) = saved.get(&node.section_key)
+        {
+            node.open = *open;
         }
         apply_nav_sections(&mut node.children, saved);
     }
