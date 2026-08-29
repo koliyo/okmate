@@ -40,6 +40,7 @@ fn sample() -> Document {
             summary: String::new(),
             attention: false,
             type_color: String::new(),
+            collection: String::new(),
         }],
         toc: vec![TocEntry {
             id: "section".into(),

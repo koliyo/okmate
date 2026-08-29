@@ -26,7 +26,11 @@ async fn body_text(response: axum::http::Response<Body>) -> String {
 fn write_workspace_bundle(root: &std::path::Path, shared_title: &str, unique: bool) {
     write_index(root);
     fs::create_dir_all(root.join("plans")).unwrap();
-    fs::write(root.join("plans").join("index.md"), "# Plans\n").unwrap();
+    fs::write(
+        root.join("plans").join("index.md"),
+        format!("# Plans\n\n{shared_title} collection.\n"),
+    )
+    .unwrap();
     fs::write(
         root.join("plans").join("shared.md"),
         valid_strict_concept(shared_title, "", "Shared body.\n"),
@@ -196,6 +200,19 @@ fn workspace_merged_nav_unions_plans_with_distinct_leaves() {
     );
     assert!(html.contains("href=\"/@a/plans/shared/\""), "{html}");
     assert!(html.contains("href=\"/@b/plans/shared/\""), "{html}");
+    assert_eq!(
+        html.matches("okmate-nav-label\">Overview<").count(),
+        2,
+        "one Overview per nav copy: {html}"
+    );
+    let overview = fs::read_to_string(output.join("@a").join("plans").join("index.html")).unwrap();
+    assert!(overview.contains("okmate-merged-root\">@a<"), "{overview}");
+    assert!(overview.contains("okmate-merged-root\">@b<"), "{overview}");
+    assert!(overview.contains("Alpha Shared collection."), "{overview}");
+    assert!(overview.contains("Beta Shared collection."), "{overview}");
+    assert!(!overview.contains("<h1>Plans</h1>"), "{overview}");
+    let from_b = fs::read_to_string(output.join("@b").join("plans").join("index.html")).unwrap();
+    assert!(from_b.contains("Alpha Shared collection."), "{from_b}");
     let shared = fs::read_to_string(
         output
             .join("@a")
@@ -217,6 +234,75 @@ fn workspace_merged_nav_unions_plans_with_distinct_leaves() {
     assert!(plans.contains("href=\"/@b/plans/shared/\""), "{plans}");
     assert!(html.contains("id=\"okmate-nav-mode\""), "{html}");
     assert!(html.contains("/__okmate/nav-mode?mode=merged"), "{html}");
+}
+
+#[test]
+fn merged_subindex_selects_nested_overview() {
+    let (a, b, _, output) = two_bundles();
+    for root in [&a, &b] {
+        fs::create_dir_all(root.join("plans").join("okf")).unwrap();
+        fs::write(
+            root.join("plans").join("okf").join("index.md"),
+            "# OKF\n\nNested collection.\n",
+        )
+        .unwrap();
+        fs::write(
+            root.join("plans").join("index.md"),
+            "# Plans\n\n- [OKF](okf/)\n",
+        )
+        .unwrap();
+    }
+    let workspace =
+        Workspace::load_members(vec![("a".into(), a), ("b".into(), b)], Profile::Strict).unwrap();
+    okmate::site::build_workspace(&workspace, &output).unwrap();
+    okmate::site::write_html_pages(&workspace, &output, okmate::preview::NavMode::Merged).unwrap();
+
+    let plans = fs::read_to_string(output.join("@a").join("plans").join("index.html")).unwrap();
+    assert!(
+        plans.contains("data-okmate-collection=\"plans\""),
+        "{plans}"
+    );
+    assert!(plans.contains("href=\"/@a/plans/okf/\""), "{plans}");
+    assert!(
+        !plans.contains("href=\"/@b/plans/okf/\""),
+        "subindex links use the canonical collection href: {plans}"
+    );
+
+    let nested = fs::read_to_string(
+        output
+            .join("@a")
+            .join("plans")
+            .join("okf")
+            .join("index.html"),
+    )
+    .unwrap();
+    assert!(
+        nested.contains("data-okmate-collection=\"plans/okf\""),
+        "{nested}"
+    );
+    assert!(
+        nested
+            .contains("class=\"nav-link is-current\" data-nav-depth=\"2\" href=\"/@a/plans/okf/\""),
+        "{nested}"
+    );
+    assert!(
+        !nested.contains("class=\"nav-link is-current\" data-nav-depth=\"1\" href=\"/@a/plans/\""),
+        "parent overview stays unselected: {nested}"
+    );
+
+    let from_b = fs::read_to_string(
+        output
+            .join("@b")
+            .join("plans")
+            .join("okf")
+            .join("index.html"),
+    )
+    .unwrap();
+    assert!(
+        from_b
+            .contains("class=\"nav-link is-current\" data-nav-depth=\"2\" href=\"/@a/plans/okf/\""),
+        "{from_b}"
+    );
 }
 
 #[tokio::test]

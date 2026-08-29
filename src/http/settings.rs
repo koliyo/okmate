@@ -137,6 +137,7 @@ fn settings_document(
                 summary: String::new(),
                 attention: false,
                 type_color: String::new(),
+                collection: String::new(),
             }],
             toc: Vec::new(),
             article_html: String::new(),

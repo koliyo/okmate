@@ -90,6 +90,17 @@
     });
   }
 
+  function markCurrent(link) {
+    link.classList.add("is-current");
+    link.setAttribute("aria-current", "page");
+  }
+
+  function collectionPath(route) {
+    var match = route.match(/^\/@[^/]+\/(.*)$/);
+    var inner = match ? match[1] : route.replace(/^\/+/, "");
+    return inner.replace(/\/+$/g, "");
+  }
+
   function syncNav(route, expandCurrent) {
     var nav = navRoot();
     if (!nav) {
@@ -105,10 +116,11 @@
     nav.querySelectorAll('[aria-current="page"]').forEach(function (el) {
       el.removeAttribute("aria-current");
     });
-    nav.querySelectorAll('a[href="' + route + '"]').forEach(function (link) {
-      link.classList.add("is-current");
-      link.setAttribute("aria-current", "page");
-    });
+    nav.querySelectorAll('a[href="' + route + '"]').forEach(markCurrent);
+    var collection = collectionPath(route);
+    if (collection) {
+      nav.querySelectorAll('a[data-okmate-collection="' + collection + '"]').forEach(markCurrent);
+    }
     nav.querySelectorAll("details[data-okmate-nav-section]").forEach(function (section) {
       var key = section.getAttribute("data-okmate-nav-section") || "";
       if (sectionMatches(route, key)) {

@@ -26,6 +26,7 @@ pub struct NavNode {
     pub summary: String,
     pub attention: bool,
     pub type_color: String,
+    pub collection: String,
 }
 
 #[derive(Clone, Debug)]
@@ -369,6 +370,7 @@ mod tests {
                     summary: String::new(),
                     attention: false,
                     type_color: String::new(),
+                    collection: String::new(),
                 },
                 NavNode {
                     href: "/review/".into(),
@@ -381,6 +383,7 @@ mod tests {
                     summary: String::new(),
                     attention: false,
                     type_color: String::new(),
+                    collection: String::new(),
                 },
             ],
             toc,

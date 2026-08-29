@@ -1156,6 +1156,14 @@ html[data-okmate-wrap="off"] #okmate-main .okmate-md-table td {
   color: var(--rd-fg);
   font-weight: 680;
 }
+.okmate-article .okmate-merged-root {
+  margin-top: 1.75rem;
+  font-size: 0.95rem;
+  font-weight: 680;
+}
+.okmate-article .okmate-merged-root:first-child {
+  margin-top: 0;
+}
 .okmate-crumb-current {
   color: var(--rd-fg);
   font-weight: 650;

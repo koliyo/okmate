@@ -8,7 +8,7 @@ use serde::Serialize;
 
 use crate::preview::NavMode;
 use crate::views::{
-    Crumb, DASHBOARD_LOG_LIMIT, Document, NavNode, action_rows, concept_meta_with_graph,
+    Crumb, DASHBOARD_LOG_LIMIT, Document, NavNode, TocEntry, action_rows, concept_meta_with_graph,
     diagnostic_rows, governance_stats, merged_log, recent_leaf_documents, review_needs_attention,
     review_rows, take_log_entries, toc_from_headings, type_color,
 };
@@ -141,12 +141,18 @@ pub fn page_for_route_nav(
                     .with_article(&workspace.rewrite_article(&member.id, &concept.article_html))
                     .with_meta(workspace, member, concept),
                 )
-            } else {
-                bundle
-                    .indexes
-                    .iter()
-                    .find(|index| index.path.strip_suffix("/index.md") == Some(id.as_str()))
-                    .map(|index| {
+            } else if let Some(index) = bundle
+                .indexes
+                .iter()
+                .find(|index| index.path.strip_suffix("/index.md") == Some(id.as_str()))
+            {
+                if nav_mode == NavMode::Merged
+                    && workspace.is_multi()
+                    && collection_owners(workspace, &id).len() > 1
+                {
+                    Some(merged_collection_document(workspace, other, &id, nav_mode))
+                } else {
+                    Some(
                         document(
                             workspace,
                             other,
@@ -155,8 +161,11 @@ pub fn page_for_route_nav(
                             nav_mode,
                         )
                         .with_kind("page")
-                        .with_article(&workspace.rewrite_article(&member.id, &index.article_html))
-                    })
+                        .with_article(&workspace.rewrite_article(&member.id, &index.article_html)),
+                    )
+                }
+            } else {
+                None
             }
         }
     }
@@ -269,7 +278,14 @@ fn breadcrumbs(workspace: &Workspace, route: &str, title: &str, nav_mode: NavMod
             acc.push('/');
         }
         acc.push_str(segment);
-        let href = workspace.document_href(&member.id, &acc);
+        let href = if workspace.is_multi()
+            && nav_mode == NavMode::Merged
+            && !collection_owners(workspace, &acc).is_empty()
+        {
+            canonical_collection_href(workspace, &acc)
+        } else {
+            workspace.document_href(&member.id, &acc)
+        };
         let last = index + 1 == parts.len();
         let crumb_title = if last {
             title.to_string()
@@ -537,6 +553,105 @@ fn collection_title(index: &okf::Index) -> String {
         .to_string()
 }
 
+fn collection_owners(workspace: &Workspace, path: &str) -> Vec<String> {
+    workspace
+        .members()
+        .iter()
+        .filter(|member| {
+            member
+                .bundle
+                .indexes
+                .iter()
+                .any(|index| index.path.strip_suffix("/index.md") == Some(path))
+        })
+        .map(|member| member.id.clone())
+        .collect()
+}
+
+fn canonical_collection_href(workspace: &Workspace, path: &str) -> String {
+    workspace
+        .first_collection_owner(path)
+        .map(|id| workspace.collection_href(id, path))
+        .unwrap_or_else(|| format!("/{path}/"))
+}
+
+fn strip_leading_h1(html: &str) -> String {
+    let trimmed = html.trim_start();
+    let Some(after_open) = trimmed.strip_prefix("<h1") else {
+        return html.to_string();
+    };
+    let Some(end) = after_open.find("</h1>") else {
+        return html.to_string();
+    };
+    after_open[end + 5..].trim_start().to_string()
+}
+
+fn merge_collection_indexes(
+    workspace: &Workspace,
+    path: &str,
+    owners: &[String],
+) -> (String, Vec<TocEntry>, String) {
+    let mut title = String::new();
+    let mut toc = Vec::new();
+    let mut html = String::new();
+    let headed = owners.len() > 1;
+    for root_id in owners {
+        let Some(member) = workspace
+            .members()
+            .iter()
+            .find(|member| member.id == *root_id)
+        else {
+            continue;
+        };
+        let Some(index) = member
+            .bundle
+            .indexes
+            .iter()
+            .find(|index| index.path.strip_suffix("/index.md") == Some(path))
+        else {
+            continue;
+        };
+        if title.is_empty() {
+            title = collection_title(index);
+        }
+        let source = if headed {
+            strip_leading_h1(&index.article_html)
+        } else {
+            index.article_html.clone()
+        };
+        if headed {
+            let hid = format!("bundle-{root_id}");
+            html.push_str(&format!(
+                "<h2 id=\"{hid}\" class=\"okmate-merged-root\">@{root_id}</h2>"
+            ));
+            toc.push(TocEntry {
+                id: hid,
+                text: format!("@{root_id}"),
+                level: 2,
+            });
+        }
+        html.push_str(&workspace.rewrite_merged_article(root_id, &source));
+        toc.extend(toc_from_headings(&index.headings));
+    }
+    if title.is_empty() {
+        title = path.rsplit('/').next().unwrap_or(path).to_string();
+    }
+    (title, toc, html)
+}
+
+fn merged_collection_document(
+    workspace: &Workspace,
+    route: &str,
+    path: &str,
+    nav_mode: NavMode,
+) -> Document {
+    let owners = collection_owners(workspace, path);
+    let (title, toc, html) = merge_collection_indexes(workspace, path, &owners);
+    document(workspace, route, &title, toc, nav_mode)
+        .with_kind("page")
+        .with_article(&html)
+}
+
 fn nav_tree(workspace: &Workspace, current: &str, nav_mode: NavMode) -> Vec<NavNode> {
     let current = normalize_route(current);
     let mut review = leaf("/review/", "Review queue", &current);
@@ -565,6 +680,7 @@ fn nav_tree(workspace: &Workspace, current: &str, nav_mode: NavMode) -> Vec<NavN
                         summary: String::new(),
                         attention: false,
                         type_color: String::new(),
+                        collection: String::new(),
                     });
                 }
             }
@@ -591,6 +707,7 @@ fn colored_leaf(href: &str, title: &str, current: &str, type_color: String) -> N
         summary: String::new(),
         attention: false,
         type_color,
+        collection: String::new(),
     }
 }
 
@@ -633,6 +750,7 @@ fn nav_forest(
                 summary: first_prose_paragraph(&index.article_html),
                 attention: false,
                 type_color: String::new(),
+                collection: String::new(),
             },
         );
     }
@@ -756,7 +874,9 @@ fn finalize_collection(
             .cmp(&right.title)
             .then(left.href.cmp(&right.href))
     });
-    let mut children = vec![leaf(&href, "Overview", current)];
+    let mut overview = leaf(&href, "Overview", current);
+    overview.collection = path.to_string();
+    let mut children = vec![overview];
     children.extend(nested);
     children.extend(leaves);
     node.children = children;
@@ -772,6 +892,13 @@ fn collection_is_current(workspace: &Workspace, path: &str, current: &str) -> bo
         let href = workspace.collection_href(&member.id, path);
         current == href || current.starts_with(&href)
     })
+}
+
+fn collection_page_is_current(workspace: &Workspace, path: &str, current: &str) -> bool {
+    workspace
+        .members()
+        .iter()
+        .any(|member| workspace.collection_href(&member.id, path) == current)
 }
 
 fn nav_forest_merged(workspace: &Workspace, current: &str) -> Vec<NavNode> {
@@ -798,6 +925,7 @@ fn nav_forest_merged(workspace: &Workspace, current: &str) -> Vec<NavNode> {
                 summary: String::new(),
                 attention: false,
                 type_color: String::new(),
+                collection: String::new(),
             });
         }
     }
@@ -918,25 +1046,16 @@ fn finalize_merged_collection(
             .then(left.root.cmp(&right.root))
             .then(left.href.cmp(&right.href))
     });
-    let mut overviews: Vec<NavNode> = owners
-        .iter()
-        .map(|root_id| {
-            let href = workspace.collection_href(root_id, path);
-            let mut item = leaf(&href, "Overview", current);
-            item.root = root_id.clone();
-            item
-        })
-        .collect();
-    overviews.sort_by(|left, right| left.root.cmp(&right.root));
-    let mut children = overviews;
+    let href = canonical_collection_href(workspace, path);
+    let mut overview = leaf(&href, "Overview", current);
+    overview.collection = path.to_string();
+    overview.current = collection_page_is_current(workspace, path, current);
+    let mut children = vec![overview];
     children.extend(nested);
     children.extend(leaves);
     node.children = children;
     node.section_key = path.to_string();
-    node.href = owners
-        .first()
-        .map(|root_id| workspace.collection_href(root_id, path))
-        .unwrap_or_default();
+    node.href = href;
     node.current = collection_is_current(workspace, path, current);
     node.open = node.current;
     if owners.len() == 1 {

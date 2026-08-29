@@ -276,10 +276,64 @@ impl Workspace {
     }
 
     pub fn rewrite_article(&self, owner_id: &str, html: &str) -> String {
+        self.rewrite_article_inner(owner_id, html, false)
+    }
+
+    pub fn rewrite_merged_article(&self, owner_id: &str, html: &str) -> String {
+        self.rewrite_article_inner(owner_id, html, true)
+    }
+
+    pub fn has_collection(&self, path: &str) -> bool {
+        self.members().iter().any(|member| {
+            member
+                .bundle
+                .indexes
+                .iter()
+                .any(|index| index.path.strip_suffix("/index.md") == Some(path))
+        })
+    }
+
+    pub fn first_collection_owner(&self, path: &str) -> Option<&str> {
+        self.members()
+            .iter()
+            .find(|member| {
+                member
+                    .bundle
+                    .indexes
+                    .iter()
+                    .any(|index| index.path.strip_suffix("/index.md") == Some(path))
+            })
+            .map(|member| member.id.as_str())
+    }
+
+    fn rewrite_article_inner(
+        &self,
+        owner_id: &str,
+        html: &str,
+        canonical_collections: bool,
+    ) -> String {
         if !self.is_multi() {
             return html.to_string();
         }
-        rewrite_hrefs(html, |href| self.rewrite_href(owner_id, href))
+        rewrite_hrefs(html, |href| {
+            let rewritten = self.rewrite_href(owner_id, href);
+            if canonical_collections {
+                self.canonicalize_collection_href(&rewritten)
+            } else {
+                rewritten
+            }
+        })
+    }
+
+    fn canonicalize_collection_href(&self, href: &str) -> String {
+        let (path, fragment) = split_fragment(href);
+        let Some((_, id)) = self.parse_document_route(path) else {
+            return href.to_string();
+        };
+        let Some(owner) = self.first_collection_owner(&id) else {
+            return href.to_string();
+        };
+        with_fragment(&self.collection_href(owner, &id), fragment)
     }
 
     fn rewrite_href(&self, owner_id: &str, href: &str) -> String {
@@ -496,6 +550,17 @@ mod tests {
         assert!(html.contains("href=\"/@b/plans/shared/#goal\""), "{html}");
         assert!(html.contains("href=\"okf:missing/x.md\""), "{html}");
         assert!(html.contains("href=\"/review/\""), "{html}");
+    }
+
+    #[test]
+    fn rewrite_merged_article_canonicalizes_collection_hrefs() {
+        let (_a, _b, workspace) = two_bundles();
+        let html = workspace.rewrite_merged_article(
+            "b",
+            r#"<p><a href="/plans/">plans</a> <a href="/plans/shared/">leaf</a></p>"#,
+        );
+        assert!(html.contains("href=\"/@a/plans/\""), "{html}");
+        assert!(html.contains("href=\"/@b/plans/shared/\""), "{html}");
     }
 
     #[test]
