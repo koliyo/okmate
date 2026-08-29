@@ -7,6 +7,7 @@ the same change.
 
 ## 2026-08-29
 
+- Pointed the Sparkle feed at a stable `sparkle` branch `appcast.xml` instead of `releases/latest/download`. Exploratory; do not log complete until hosted CI succeeds.
 - Drafted paired audit and plan for implementation structure (crate split holds; shrink okf `pub use`, split load/session/nav, typed `PageKind`, persist off Datastar GET). Exploratory; do not log complete until hosted CI succeeds.
 - Surveyed knowledge systems built on OKF across a 128-repository GitHub topic census plus untagged systems, distinguishing canonical bundles, database-backed projections, consumers, and profiles. Exploratory; do not log complete until hosted CI succeeds.
 - Drafted research comparing OKMate and okf-gem knowledge-bundle modelling (type-first work archive versus domain-first product map; Overview, Constraint-versus-Decision, isolate hygiene). Exploratory; do not log complete until hosted CI succeeds.

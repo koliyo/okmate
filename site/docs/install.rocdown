@@ -81,12 +81,11 @@ or the Homebrew cask if you want the published, updating app.
 
 ## Autoupdate
 
-The `.app` uses Sparkle. **Check for Updates…** and
-`brew upgrade --cask okmate` both follow GitHub `releases/latest` (the same
-channel as
-[appcast.xml](https://github.com/koliyo/okmate/releases/latest/download/appcast.xml)).
-The cask is marked `auto_updates` so Homebrew does not fight Sparkle. Neither
-path rewrites `~/.okmate/` config, cache, or session.
+The `.app` uses Sparkle. **Check for Updates…** reads
+[appcast.xml](https://raw.githubusercontent.com/koliyo/okmate/sparkle/appcast.xml)
+on the `sparkle` branch. `brew upgrade --cask okmate` follows GitHub
+`releases/latest`. The cask is marked `auto_updates` so Homebrew does not
+fight Sparkle. Neither path rewrites `~/.okmate/` config, cache, or session.
 
 After the second launch, Sparkle may ask to check automatically. An update
 shows release notes and Install / Remind Me Later / Skip.

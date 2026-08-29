@@ -5,6 +5,7 @@ import platform
 import shlex
 import shutil
 import subprocess
+import tempfile
 import time
 from pathlib import Path
 
@@ -17,18 +18,21 @@ APP_NAME = "OKMate"
 BUNDLE_IDENTIFIER = "com.koliyo.okmate"
 APP_ICON = "assets/brand/okmate.icns"
 INFO_PLIST = "packaging/macos/Info.plist"
+SPARKLE_FEED_BRANCH = "sparkle"
+DEFAULT_SPARKLE_FEED_REMOTE = "https://github.com/koliyo/okmate.git"
 DEFAULT_SU_FEED_URL = (
-    "https://github.com/koliyo/okmate/releases/latest/download/appcast.xml"
+    "https://raw.githubusercontent.com/koliyo/okmate/sparkle/appcast.xml"
 )
 DEFAULT_SU_PUBLIC_ED_KEY = "lSXTvcKDK7P4DEjd+o/k2BM6OPTNGyYdvhIk2DxJyao="
 
 BUILD_USAGE = "usage: okmate-ops build"
 INSTALL_USAGE = "usage: okmate-ops install cli"
-PACKAGE_USAGE = "usage: okmate-ops package <desktop|sign|appcast>"
+PACKAGE_USAGE = "usage: okmate-ops package <desktop|sign|appcast|publish-feed>"
 PACKAGE_SIGN_USAGE = "usage: okmate-ops package sign [App.app]"
 PACKAGE_APPCAST_USAGE = (
     "usage: okmate-ops package appcast <inbox-dir> <download-url-prefix>"
 )
+PACKAGE_PUBLISH_FEED_USAGE = "usage: okmate-ops package publish-feed <appcast.xml>"
 
 
 def run(
@@ -146,6 +150,68 @@ def package_appcast(argv: list[str]) -> int:
     return 0
 
 
+def write_sparkle_feed(dest: Path, appcast: Path) -> bool:
+    dest.mkdir(parents=True, exist_ok=True)
+    target = dest / "appcast.xml"
+    text = appcast.read_text(encoding="utf-8")
+    if target.is_file() and target.read_text(encoding="utf-8") == text:
+        return False
+    target.write_text(text, encoding="utf-8")
+    return True
+
+
+def checkout_sparkle_feed_branch(dest: Path, remote: str, branch: str) -> bool:
+    cloned = subprocess.run(
+        ["git", "clone", "--depth", "1", "--branch", branch, remote, str(dest)],
+        text=True,
+        capture_output=True,
+    )
+    if cloned.returncode == 0:
+        return True
+    if dest.exists():
+        shutil.rmtree(dest)
+    dest.mkdir(parents=True)
+    run(["git", "init", "-b", branch], cwd=dest)
+    run(["git", "remote", "add", "origin", remote], cwd=dest)
+    return False
+
+
+def commit_and_push_sparkle_feed(dest: Path, branch: str) -> None:
+    run(
+        ["git", "config", "user.email", "41898282+github-actions[bot]@users.noreply.github.com"],
+        cwd=dest,
+    )
+    run(["git", "config", "user.name", "github-actions[bot]"], cwd=dest)
+    run(["git", "add", "appcast.xml"], cwd=dest)
+    run(["git", "commit", "-m", "Publish Sparkle appcast"], cwd=dest)
+    run(["git", "push", "-u", "origin", f"HEAD:{branch}"], cwd=dest)
+
+
+def publish_sparkle_feed(appcast: Path, dest: Path, *, remote: str, branch: str) -> None:
+    cloned = checkout_sparkle_feed_branch(dest, remote, branch)
+    if not write_sparkle_feed(dest, appcast) and cloned:
+        return
+    commit_and_push_sparkle_feed(dest, branch)
+
+
+def package_publish_feed(argv: list[str]) -> int:
+    if len(argv) != 1 or argv[0] in ("-h", "--help"):
+        raise SystemExit(PACKAGE_PUBLISH_FEED_USAGE)
+    root = repo_root()
+    appcast = resolve_repo_path(root, Path(argv[0]))
+    if not appcast.is_file():
+        raise SystemExit(f"okmate-ops package publish-feed: missing {appcast}")
+    remote = os.environ.get("SPARKLE_FEED_REMOTE") or DEFAULT_SPARKLE_FEED_REMOTE
+    branch = os.environ.get("SPARKLE_FEED_BRANCH") or SPARKLE_FEED_BRANCH
+    parent = Path(tempfile.mkdtemp(prefix="okmate-sparkle-feed-"))
+    dest = parent / "feed"
+    try:
+        publish_sparkle_feed(appcast, dest, remote=remote, branch=branch)
+    finally:
+        shutil.rmtree(parent, ignore_errors=True)
+    return 0
+
+
 def package_command(argv: list[str]) -> int:
     if not argv or argv[0] in ("-h", "--help"):
         raise SystemExit(PACKAGE_USAGE)
@@ -158,6 +224,8 @@ def package_command(argv: list[str]) -> int:
         return package_sign(rest)
     if sub == "appcast":
         return package_appcast(rest)
+    if sub == "publish-feed":
+        return package_publish_feed(rest)
     raise SystemExit(PACKAGE_USAGE)
 
 

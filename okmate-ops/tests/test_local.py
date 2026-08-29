@@ -8,6 +8,7 @@ from okmate_ops.local import (
     DEFAULT_SU_PUBLIC_ED_KEY,
     INSTALL_USAGE,
     PACKAGE_APPCAST_USAGE,
+    PACKAGE_PUBLISH_FEED_USAGE,
     PACKAGE_SIGN_USAGE,
     PACKAGE_USAGE,
     app_bundle_dir,
@@ -16,6 +17,9 @@ from okmate_ops.local import (
     install_command,
     package_appcast,
     package_command,
+    package_publish_feed,
+    publish_sparkle_feed,
+    write_sparkle_feed,
     package_desktop,
     package_sign,
     release_binary,
@@ -226,5 +230,72 @@ def test_package_appcast_usage() -> None:
         package_appcast(["only-inbox"])
     except SystemExit as exc:
         assert str(exc) == PACKAGE_APPCAST_USAGE
+    else:
+        raise AssertionError("expected SystemExit")
+
+
+def test_write_sparkle_feed_skips_identical_file(tmp_path) -> None:
+    dest = tmp_path / "feed"
+    dest.mkdir()
+    (dest / "appcast.xml").write_text("<rss/>\n", encoding="utf-8")
+    source = tmp_path / "appcast.xml"
+    source.write_text("<rss/>\n", encoding="utf-8")
+    assert write_sparkle_feed(dest, source) is False
+
+
+def test_publish_sparkle_feed_pushes_when_changed(tmp_path, monkeypatch) -> None:
+    dest = tmp_path / "feed"
+    dest.mkdir()
+    (dest / "appcast.xml").write_text("old\n", encoding="utf-8")
+    source = tmp_path / "appcast.xml"
+    source.write_text("new\n", encoding="utf-8")
+    calls: list[list[str]] = []
+    monkeypatch.setattr(
+        "okmate_ops.local.checkout_sparkle_feed_branch",
+        lambda dest_path, remote, branch: True,
+    )
+    monkeypatch.setattr(
+        "okmate_ops.local.run",
+        lambda argv, cwd=None, env=None, capture=False: calls.append(list(argv)) or "",
+    )
+    publish_sparkle_feed(
+        source,
+        dest,
+        remote="https://example.test/okmate.git",
+        branch="sparkle",
+    )
+    assert (dest / "appcast.xml").read_text(encoding="utf-8") == "new\n"
+    assert ["git", "push", "-u", "origin", "HEAD:sparkle"] in calls
+
+
+def test_publish_sparkle_feed_skips_push_when_unchanged(tmp_path, monkeypatch) -> None:
+    dest = tmp_path / "feed"
+    dest.mkdir()
+    (dest / "appcast.xml").write_text("<rss/>\n", encoding="utf-8")
+    source = tmp_path / "appcast.xml"
+    source.write_text("<rss/>\n", encoding="utf-8")
+    calls: list[list[str]] = []
+    monkeypatch.setattr(
+        "okmate_ops.local.checkout_sparkle_feed_branch",
+        lambda dest_path, remote, branch: True,
+    )
+    monkeypatch.setattr(
+        "okmate_ops.local.run",
+        lambda argv, cwd=None, env=None, capture=False: calls.append(list(argv)) or "",
+    )
+    publish_sparkle_feed(
+        source,
+        dest,
+        remote="https://example.test/okmate.git",
+        branch="sparkle",
+    )
+    assert calls == []
+
+
+def test_package_publish_feed_usage() -> None:
+    try:
+        package_publish_feed(["appcast.xml", "extra"])
+    except SystemExit as exc:
+        assert str(exc) == PACKAGE_PUBLISH_FEED_USAGE
     else:
         raise AssertionError("expected SystemExit")

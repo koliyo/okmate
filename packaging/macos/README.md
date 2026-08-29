@@ -9,7 +9,12 @@ attach an unsigned production archive.
 
 The `.github/workflows/release.yml` workflow signs, zips that
 bundle, and runs `okmate-ops package appcast` on a `v*` or `dev` tag
-push, or on `workflow_dispatch` *from that tag* (rebuild). The job
+push, or on `workflow_dispatch` *from that tag* (rebuild). Versioned
+cuts then run `package publish-feed`, which commits `appcast.xml` to
+the `sparkle` branch. That file is `SUFeedURL`
+(`https://raw.githubusercontent.com/koliyo/okmate/sparkle/appcast.xml`);
+enclosures still point at the versioned `OKMate.zip`. `dev` does not
+update the feed. The job
 uses the GitHub Actions environment `release`, so secrets scoped to
 that environment are the ones `package sign` and `package appcast`
 see. Dispatching **Release** from `main` is rejected by environment

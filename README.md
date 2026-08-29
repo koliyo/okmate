@@ -136,8 +136,9 @@ Silicon, `/opt/homebrew/bin/okmate`) is a symlink to
 `OKMate.app/Contents/MacOS/okmate`. That is the same crate binary: Finder
 / no-args launch opens the window, `okmate check` and the other
 subcommands stay CLI, and Sparkle still runs only for the desktop window.
-**Check for Updates…** and `brew upgrade --cask okmate` both follow
-GitHub `releases/latest` (the same channel as `appcast.xml`). The cask is
+**Check for Updates…** reads the Sparkle feed on the `sparkle` branch
+(`https://raw.githubusercontent.com/koliyo/okmate/sparkle/appcast.xml`).
+`brew upgrade --cask okmate` follows GitHub `releases/latest`. The cask is
 marked `auto_updates` so Homebrew does not fight Sparkle. Neither path
 rewrites `~/.okmate/` config, cache, or session.
 
@@ -171,8 +172,9 @@ Do not treat this README as an architecture decision.
    How to mint those values is at the bottom of
    [`packaging/macos/README.md`](packaging/macos/README.md).
 3. Confirm
-   `https://github.com/koliyo/okmate/releases/latest/download/appcast.xml`
-   serves the new item.
+   `https://raw.githubusercontent.com/koliyo/okmate/sparkle/appcast.xml`
+   serves the new item. Enclosures still download `OKMate.zip` from that
+   `v*` release.
 
 The same cut can run from **Actions → Cut release** (`workflow_dispatch`).
 That job calls `okmate-ops release` on Ubuntu, waits for hosted **Test**,

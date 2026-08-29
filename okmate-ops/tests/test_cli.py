@@ -4,7 +4,7 @@ from okmate_ops.cli import USAGE, main
 def test_usage_lists_build_install_and_package() -> None:
     assert "build         cargo release build of okmate" in USAGE
     assert "install       cli" in USAGE
-    assert "package       desktop, sign, appcast" in USAGE
+    assert "package       desktop, sign, appcast, publish-feed" in USAGE
     assert "release       patch, minor, major, v*, or dev" in USAGE
 
 

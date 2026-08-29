@@ -4,7 +4,7 @@ title: Standalone Okmate self-update
 description: Ship Okmate.app with Sparkle 2 so macOS users check, consent, replace, and relaunch the way common Mac apps do, using GitHub Releases as the artifact store.
 tags: [domain/okmate, domain/ops, concern/tooling, concern/architecture]
 status: draft
-generated: { by: process:cursor, at: 2026-08-27T06:05:00Z }
+generated: { by: process:cursor, at: 2026-08-29T14:30:00Z }
 stale_after: 2026-11-26
 authority: exploratory
 owners: [human:nils]
@@ -171,13 +171,13 @@ launch and do not silently install.[^sparkle][^sparkle-custom]
 | Executable | `Contents/MacOS/okmate` (same crate binary) |
 | Marketing version | `CFBundleShortVersionString` = Cargo `package.version` / git tag without `v` |
 | Sparkle compare | incrementing `CFBundleVersion` (dotted numeric; every `v*` release must increase it) |
-| Feed | `https://github.com/koliyo/okmate/releases/latest/download/appcast.xml` |
+| Feed | `https://raw.githubusercontent.com/koliyo/okmate/sparkle/appcast.xml` |
 | Archive | notarized zip or dmg of `Okmate.app` attached to that `v*` release |
 | Settings | Sparkle’s own permission and “automatically download” checkbox; do not add an HTML settings store for the updater |
 
-`releases/latest/download/…` is GitHub’s stable pointer at the newest
-release asset, so `SUFeedURL` does not move per tag and does not need a
-Pages site.[^gh-latest][^sparkle-publish]
+The `sparkle` branch holds one `appcast.xml` at a URL that does not 302.
+Enclosures stay on the versioned GitHub Release zip. `dev` is not this
+feed.[^sparkle-publish]
 
 ### Mac-like UX
 
@@ -338,7 +338,7 @@ lists the secrets and the staple verify commands.
 `/Applications`), how updates appear, that CLI-only installs do not
 self-update. Operator notes: `okmate-ops release` writes crate
 and Homebrew cask versions and pushes that commit before tagging; wait
-for the release workflow, confirm `releases/latest/download/appcast.xml`
+for the release workflow, confirm the `sparkle` branch `appcast.xml`
 serves the new item. Point at this plan; do not rewrite
 [system overview](/architecture/system-overview.md) until the behavior ships.
 
