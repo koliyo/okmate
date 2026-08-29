@@ -98,7 +98,7 @@ async fn set_nav_mode(
             .workspace
             .read()
             .unwrap_or_else(PoisonError::into_inner);
-        let _ = crate::site::build_workspace_nav(&workspace, &state.output, mode);
+        let _ = crate::site::build_workspace_nav(&workspace, &state.output);
     }
     redirect_back(&headers)
 }

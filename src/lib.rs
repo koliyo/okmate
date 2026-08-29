@@ -6,7 +6,9 @@ pub mod config;
 #[cfg(feature = "desktop")]
 pub mod desktop;
 pub mod goto_match;
+mod html_util;
 pub mod http;
+mod nav;
 mod paths;
 pub mod port;
 pub mod preview;

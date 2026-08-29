@@ -146,7 +146,6 @@ async fn prepare(options: ViewOptions) -> Result<PreparedView> {
     };
     persist_workspace(&target.workspace);
     let session = load_session();
-    let nav_mode = session.nav_mode;
     let (open_path, open_hash, _) = restored_view_location(
         &target.workspace,
         &session,
@@ -160,7 +159,7 @@ async fn prepare(options: ViewOptions) -> Result<PreparedView> {
         .map(Path::to_path_buf)
         .unwrap_or_else(|| PathBuf::from("workspace"));
     let output = output_path(options.output.as_deref(), &root);
-    site::build_workspace_nav(&target.workspace, &output, nav_mode)?;
+    site::build_workspace_nav(&target.workspace, &output)?;
 
     let addr = bind_addr(options.public, options.port);
     let listener = tokio::net::TcpListener::bind(addr)
@@ -305,8 +304,7 @@ async fn watch_rebuild(
             .clone();
         match snapshot.reload_with(options, Some(&cache_parent)) {
             Ok(reloaded) => {
-                let nav_mode = load_session().nav_mode;
-                if let Err(error) = site::build_workspace_nav(&reloaded, &output, nav_mode) {
+                if let Err(error) = site::build_workspace_nav(&reloaded, &output) {
                     eprintln!("okmate: rebuild failed: {error:#}");
                 }
                 *workspace.write().unwrap_or_else(PoisonError::into_inner) = reloaded;
