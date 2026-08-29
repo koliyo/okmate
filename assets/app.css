@@ -104,12 +104,22 @@ body.is-col-resizing {
   padding: 2.15rem 1.2rem 2rem 1.5rem;
   overflow-x: hidden;
   overflow-y: auto;
+  -webkit-user-select: none;
   user-select: none;
 }
 
 #okmate-nav.okmate-chrome {
   padding-left: 0;
   padding-right: 0;
+}
+#okmate-nav,
+#okmate-nav *,
+.okmate-toc,
+.okmate-toc *,
+.okmate-outline-menu,
+.okmate-outline-menu * {
+  -webkit-user-select: none;
+  user-select: none;
 }
 .okmate-nav-fixed {
   --nav-gutter: 0.7rem;
@@ -602,6 +612,8 @@ html[data-okmate-wrap="off"] #okmate-main .okmate-md-table td {
   padding: 2.15rem 1.2rem 2rem 0;
   overflow-x: hidden;
   overflow-y: auto;
+  -webkit-user-select: none;
+  user-select: none;
 }
 .okmate-toc-label {
   margin: 0 0 0.65rem;
@@ -1167,7 +1179,11 @@ html[data-okmate-wrap="off"] #okmate-main .okmate-md-table td {
   color: var(--rd-fg);
   font-weight: 650;
 }
-.okmate-outline-menu { display: none; }
+.okmate-outline-menu {
+  display: none;
+  -webkit-user-select: none;
+  user-select: none;
+}
 .okmate-outline-link {
   margin-left: -1px;
   padding-left: 0.8rem;
