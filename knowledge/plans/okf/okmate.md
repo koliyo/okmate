@@ -251,7 +251,7 @@ Folder pick is the same UX [settings UX](settings-ux.md) specified
 **CLI.** clap derive, same verbs as today’s knowledge tool where they
 are engine-shaped: `check`, `inspect`, `search`, `benchmark`, `build`,
 `view`, `roots`, `sync`. Drop `--host` / `ROCCI_REQUIRE_ROC`.
-`--profile rocci` remains an **engine** profile, not a UI
+`--profile strict` remains an **engine** profile, not a UI
 stack.[^okf-lib][^rocci-okf-main]
 
 ## Viewer contract (okmate IDs)
@@ -338,7 +338,7 @@ no `rocci-*` deps.
 
 **Out of bound:** HTML, Datastar, desktop, config registry.
 
-**Tests:** `okmate check knowledge --profile rocci --format json` matches
+**Tests:** `okmate check knowledge --profile strict --format json` matches
 `okf::check` error/ok; `uv run` workspace-deps (or the lint job’s
 checker) accepts the new class.
 

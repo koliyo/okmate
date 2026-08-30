@@ -5,6 +5,10 @@ Independent bullets under the same `## YYYY-MM-DD` heading combine instead of
 conflicting. Add a new list item; do not reword another session's bullet in
 the same change.
 
+## 2026-08-30
+
+- Replaced leftover `--profile rocci` wording with `--profile strict` (owners-and-evidence) and documented that Rocci checks with `--profile base`. Exploratory; do not log complete until hosted CI succeeds.
+
 ## 2026-08-29
 
 - Pointed the Sparkle feed at a stable `sparkle` branch `appcast.xml` instead of `releases/latest/download`. Exploratory; do not log complete until hosted CI succeeds.

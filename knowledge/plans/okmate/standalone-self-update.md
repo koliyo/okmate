@@ -347,7 +347,7 @@ release.
 
 **Exit:** `cargo test -p okmate --no-default-features`,
 `cargo fmt --all -- --check`, and
-`okmate check knowledge --profile rocci --format terminal`.
+`okmate check knowledge --profile strict --format terminal`.
 
 **Owner:** `README.md`, `packaging/macos/`, this record’s status line.
 

@@ -39,7 +39,7 @@ move engine/app discussions out of Rocci with pointer stubs.[^agents][^overview]
 
 - No `rocci-*` crate dependency
 - Records stay inert Markdown
-- `--profile rocci` remains the strict owners-and-evidence profile name
+- `--profile strict` remains the strict owners-and-evidence profile name
 
 ## Phases
 
@@ -59,19 +59,19 @@ move engine/app discussions out of Rocci with pointer stubs.[^agents][^overview]
 
 **Bound:** Minimal `knowledge/` plus system overview and area decision.
 
-**Exit:** `okmate check knowledge --profile rocci --format terminal`
+**Exit:** `okmate check knowledge --profile strict --format terminal`
 
 ### Phase 4 — Move discussions
 
 **Bound:** Copy listed Rocci OKF/okmate records into this bundle and rewrite sources.
 
-**Exit:** `okmate check knowledge --profile rocci --format terminal`
+**Exit:** `okmate check knowledge --profile strict --format terminal`
 
 ### Phase 5 — Rocci stubs
 
 **Bound:** Pointer stubs in Rocci at the same paths.
 
-**Exit:** `okmate check knowledge --profile rocci --format terminal` from Rocci.
+**Exit:** `okmate check knowledge --profile base --format terminal` from Rocci.
 
 [^agents]: Repository agent instructions and owning-layer table.
 [^overview]: Engine versus application versus knowledge ownership.

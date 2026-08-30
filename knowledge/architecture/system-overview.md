@@ -4,7 +4,7 @@ title: OKMate system overview
 description: OKMate is a standalone OKF application; the portable engine lives in okf/ and the okmate binary owns CLI, HTML, and desktop preview.
 tags: [domain/okmate, domain/okf, concern/architecture]
 status: draft
-generated: { by: process:cursor, at: 2026-08-27T08:35:00Z }
+generated: { by: process:cursor, at: 2026-08-30T09:40:00Z }
 stale_after: 2026-11-26
 authority: descriptive
 owners: [human:nils]
@@ -40,8 +40,8 @@ Settings live under `~/.okmate/` (`OKMATE_CONFIG`, `OKMATE_CACHE`,
 
 This repository's `knowledge/` bundle is the canonical OKMate discussion
 database. Rocci keeps its own inert `knowledge/` and checks it with this
-binary (`okmate check knowledge --profile rocci`). The `rocci` profile name
-means strict owners and evidence, not that this repository is Rocci.[^readme]
+binary (`okmate check knowledge --profile base`). This repository uses
+`--profile strict` for owners and evidence.[^readme]
 
 ## Boundaries
 

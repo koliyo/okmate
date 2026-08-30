@@ -96,7 +96,7 @@ Default local preview is now sub-second on a release first open. Debug
 milliseconds here when `comrak` and `okf` are opt-level 3 in the dev profile.
 A second `run` process reuses the on-disk parse cache. A debug watch rebuild
 after one Markdown content change reuses unchanged parses in memory.
-`check --profile rocci` remains whole-bundle, still runs git provenance, and
+`check --profile strict` remains whole-bundle, still runs git provenance, and
 does not read the parse-cache directory.[^okf-readme][^okf-validate][^okf-dev]
 [^workspace-cargo]
 
@@ -104,7 +104,7 @@ does not read the parse-cache directory.[^okf-readme][^okf-validate][^okf-dev]
 
 `rocci-okf run` defaults to the Rocci schema with git provenance off. Pass
 `--provenance` to turn OKF4006/4007/4008 back on during preview.
-`rocci-okf check --profile rocci` still runs full provenance. `--profile base`
+`rocci-okf check --profile strict` still runs full provenance. `--profile base`
 is portable OKF, not the fast Rocci preview path.[^okf-main][^okf-readme]
 [^okf-options]
 
@@ -120,14 +120,14 @@ Cached-renderer `run` numbers use `--no-window --profile-report json`. Isolated
 
 | Path | Before | After Phases 1–4 + debug parse follow-on |
 | --- | --- | --- |
-| Debug cached `run` concept path, `--profile rocci` | load 9593ms / total 9750ms | superseded by default `run` (no git provenance) |
+| Debug cached `run` concept path, `--profile strict` | load 9593ms / total 9750ms | superseded by default `run` (no git provenance) |
 | Release first-open `run` (default, no `--provenance`) | not measured in this form | load 290ms / total 357ms; parse 289ms (`cache_hit=0 miss=53`); provenance 0ms |
 | Debug first-open `run` concept path, empty parse cache | parse ~7100ms (`cache_hit=0 miss=58`) | parse 414ms (`cache_hit=0 miss=58`); load 415ms |
 | Debug second `run` process, same bundle | full reparse | parse 1ms (`cache_hit=58 miss=0`); load 2ms; total 203ms with cached renderer |
 | Debug watch rebuild after one Markdown content change | full reparse (~6s parse class) | parse 4ms (`cache_hit=52 miss=1`); load 5ms; total 177ms |
-| Release `check --profile rocci` | 4.77s | 0.40s |
+| Release `check --profile strict` | 4.77s | 0.40s |
 | Release `check --profile base` | 0.24s | 0.27s |
-| Debug `provenance` span, `--profile rocci` | ~4065ms | 0ms on default `run`; still present on `check --profile rocci` after batching |
+| Debug `provenance` span, `--profile strict` | ~4065ms | 0ms on default `run`; still present on `check --profile strict` after batching |
 
 The Rocci-versus-base gap on the original debug split was the `provenance`
 span. Debug first-open parse is no longer in the multi-second bucket once
@@ -178,13 +178,13 @@ These numbers are not logged as CI-complete. Required GitHub workflows have
 not been recorded as green on this revision.[^plan]
 
 [^plan]: Phases 1–4 implemented; Phase 4 follow-on covers debug parse and cross-process cache; Phase 5 skipped after a 290ms release first-open load; Phase 6 records the post-change baseline.
-[^preview-audit]: Cached concept-path run spent 9593ms of 9750ms in load; release check was 4.77s rocci versus 0.24s base; post-change release first-open load is 290ms and watch parse is 4ms.
-[^headless-audit]: Headless profile-report made load-dominated rebuilds observable; post-change check is 0.40s rocci versus 0.27s base; provenance is batched.
+[^preview-audit]: Cached concept-path run spent 9593ms of 9750ms in load; release check was 4.77s strict versus 0.24s base; post-change release first-open load is 290ms and watch parse is 4ms.
+[^headless-audit]: Headless profile-report made load-dominated rebuilds observable; post-change check is 0.40s strict versus 0.27s base; provenance is batched.
 [^okf-load]: `load_timed` returns discover/parse/graph/provenance durations; `load_with_cache` parses misses in parallel; whole-bundle parse still runs on first open when the directory cache is empty.
 [^okf-options]: `LoadOptions` selects profile independently of whether provenance runs.
 [^okf-validate]: `validate_lifecycle_and_sources_with(..., check_git)` batches rev-parse, status, and log over unique paths.
 [^okf-dev]: `rebuild_site` maps load sub-spans onto the CLI profile snapshot, holds ParseCache across watch ticks, and saves it under ROCCI_CACHE for the next process.
-[^okf-main]: `run` accepts `--provenance`; the flag is off by default; `check --profile rocci` still runs git provenance.
+[^okf-main]: `run` accepts `--provenance`; the flag is off by default; `check --profile strict` still runs git provenance.
 [^okf-readme]: Documents default run as Rocci schema without git provenance, `--provenance` to turn it on, check as the strict review path, and run-only parse-cache persistence.
 [^engine-readme]: `okf` remains UI-neutral; load timings and ParseCache live in the portable engine, not in CLI snapshot types.
 [^parse-cache]: `ParseCache::load_dir` / `save_dir` persist entries beside a version stamp; unknown diagnostic codes drop the entry rather than leaking strings.

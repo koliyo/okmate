@@ -173,7 +173,7 @@ Watch rebuilds still repeat that work on every file change.[^okf-load][^okf-dev]
 | `okf` portable | No `rocci-cli` or desktop dependency; no Roc in the engine |
 | Knowledge is inert Markdown | No Rocdown or executable content in `knowledge/**/*.md` |
 | Diagnostic codes | OKF4004–OKF4008 stay the same; only the lookup implementation changes |
-| `check --profile rocci` | CI and review keep full schema plus provenance |
+| `check --profile strict` | CI and review keep full schema plus provenance |
 | Three-CLI split | Load work stays in `okf` / `rocci-okf`, not `rocci` or `rocdown` |
 | Cached Roc host | Do not spend phases on renderer compile unless load falls below it |
 
@@ -193,7 +193,7 @@ the three-CLI preview ownership already recorded for OKF review.[^engine-readme]
 
 ## Success targets (local, not a contract)
 
-After Phase 2, release `check knowledge --profile rocci` should be in the same
+After Phase 2, release `check knowledge --profile strict` should be in the same
 order of magnitude as `--profile base` on this repository (sub-second to low
 hundreds of milliseconds, not multiple seconds of git).[^headless-audit]
 
@@ -210,7 +210,7 @@ Each phase is one mergeable change. Measure with:
 ```text
 cargo run -q -p rocci-okf -- run knowledge/plans/okf/okf-load-performance.md \
   --no-window --port auto --profile-report json
-time cargo run -q -p rocci-okf -- check knowledge --profile rocci --format terminal
+time cargo run -q -p rocci-okf -- check knowledge --profile strict --format terminal
 time cargo run -q -p rocci-okf -- check knowledge --profile base --format terminal
 ```
 
@@ -255,12 +255,12 @@ paths still skip git.[^okf-validate]
 **Owner:** `crates/okf/src/validate.rs`. Tests belong here, using a temporary
 git repository fixture; they must not require `rocci-okf` or a desktop host.
 
-**Out of bound:** Skipping provenance on `check --profile rocci`. Changing
+**Out of bound:** Skipping provenance on `check --profile strict`. Changing
 preview CLI defaults.
 
-**Exit:** Release `check knowledge --profile rocci` on this repo is no longer
+**Exit:** Release `check knowledge --profile strict` on this repo is no longer
 dominated by hundreds of git processes. Diagnostic output on a known dirty
-source still matches pre-change codes. Headless `run --profile rocci` `load`
+source still matches pre-change codes. Headless `run --profile strict` `load`
 drops by roughly the previously measured Rocci-versus-base provenance gap.
 
 ### Phase 3 — Preview can skip provenance without dropping Rocci schema (implemented)
@@ -271,7 +271,7 @@ footnote/source pairing still follow the selected profile.[^okf-load]
 
 CLI policy:
 
-- `rocci-okf check --profile rocci` remains full provenance.
+- `rocci-okf check --profile strict` remains full provenance.
 - `rocci-okf run` defaults to Rocci schema **without** git provenance, and
   accepts `--provenance` (name flexible) to turn it back on.
 - `--profile base` still means portable OKF, not “fast Rocci”.
@@ -286,7 +286,7 @@ base` as the supported fast-preview workflow once this flag exists.[^okf-readme]
 
 **Exit:** `run knowledge/plans/okf/okf-load-performance.md --profile-report json`
 without `--provenance` has a near-zero provenance span and still rejects Rocci
-schema errors. `check --profile rocci` still emits OKF4006/4008 on a
+schema errors. `check --profile strict` still emits OKF4006/4008 on a
 constructed dirty tracked source.
 
 ### Phase 4 — Incremental parse cache on watch rebuilds (implemented)
