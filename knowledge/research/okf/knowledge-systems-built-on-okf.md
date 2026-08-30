@@ -4,7 +4,7 @@ title: Knowledge systems built on Open Knowledge Format
 description: A 2026 ecosystem census distinguishes OKF-canonical knowledge systems from database-backed projections, bundle consumers, operational profiles, and supporting tools.
 tags: [domain/okf, concern/agents, concern/ecosystem, concern/governance, concern/retrieval]
 status: draft
-generated: { by: process:codex, at: 2026-08-29T09:55:11Z }
+generated: { by: process:cursor, at: 2026-08-30T10:20:00Z }
 stale_after: 2026-11-29
 authority: exploratory
 owners: [human:nils]
@@ -386,7 +386,9 @@ For Class B systems the material questions are:
 
 Memanto documents unknown-field preservation and an `x_memanto` extension,
 which is stronger than a shallow export, but the canonical-storage claim still
-needs an executable recovery and conflict test.[^memanto-docs]
+needs an executable recovery and conflict test.[^memanto-docs] Local on-prem
+setup and the `migrate okf` versus `memory sync --okf` split are recorded in
+[Memanto integration](/research/okmate/memanto-integration.md).
 
 ### Version and profile fragmentation
 

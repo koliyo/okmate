@@ -7,6 +7,7 @@ the same change.
 
 ## 2026-08-30
 
+- Drafted research on Memanto on-prem setup and OKF usage (`migrate okf` versus `memory sync --okf`; host Ollama on Apple Silicon). Exploratory; do not log complete until hosted CI succeeds.
 - Replaced leftover `--profile rocci` wording with `--profile strict` (owners-and-evidence) and documented that Rocci checks with `--profile base`. Exploratory; do not log complete until hosted CI succeeds.
 
 ## 2026-08-29
