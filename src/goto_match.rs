@@ -22,20 +22,156 @@ struct Field {
     is_stem: bool,
 }
 
-pub fn rank_pages<'a>(pages: &'a [GotoPage], query: &str) -> Vec<&'a GotoPage> {
-    let tokens: Vec<String> = query
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct ParsedQuery {
+    pub roots: Vec<String>,
+    pub text: String,
+    pub completing: Option<String>,
+    pub unmatched_root: bool,
+}
+
+pub fn catalog_roots(pages: &[GotoPage]) -> Vec<String> {
+    let mut roots: Vec<String> = pages
+        .iter()
+        .map(|page| page.root.as_str())
+        .filter(|root| !root.is_empty())
+        .map(str::to_string)
+        .collect();
+    roots.sort();
+    roots.dedup();
+    roots
+}
+
+pub fn parse_query(query: &str, roots: &[String]) -> ParsedQuery {
+    let raw: Vec<&str> = query
         .split_whitespace()
-        .map(|token| token.to_lowercase())
+        .filter(|token| !token.is_empty())
+        .collect();
+    let trailing_ws = query.ends_with(char::is_whitespace);
+    let completing = match raw.last() {
+        Some(token) => token.strip_prefix('@').and_then(|prefix| {
+            if prefix.is_empty() || (!trailing_ws && exact_root(prefix, roots).is_none()) {
+                Some(prefix.to_string())
+            } else {
+                None
+            }
+        }),
+        None => None,
+    };
+
+    let mut selected = Vec::new();
+    let mut unmatched_root = false;
+    let mut text_parts = Vec::new();
+    for (index, token) in raw.iter().enumerate() {
+        let is_last = index + 1 == raw.len();
+        if let Some(prefix) = token.strip_prefix('@') {
+            if completing.is_some() && is_last {
+                continue;
+            }
+            if let Some(root) = exact_root(prefix, roots) {
+                push_unique(&mut selected, root);
+            } else {
+                unmatched_root = true;
+            }
+        } else {
+            text_parts.push((*token).to_lowercase());
+        }
+    }
+    ParsedQuery {
+        roots: selected,
+        text: text_parts.join(" "),
+        completing,
+        unmatched_root,
+    }
+}
+
+pub fn matching_roots<'a>(prefix: &str, roots: &'a [String]) -> Vec<&'a str> {
+    let needle = prefix.to_lowercase();
+    roots
+        .iter()
+        .filter(|root| root.to_lowercase().starts_with(&needle))
+        .map(String::as_str)
+        .collect()
+}
+
+pub fn complete_root(prefix: &str, roots: &[String]) -> Option<String> {
+    let matches = matching_roots(prefix, roots);
+    match matches.as_slice() {
+        [only] => Some((*only).to_string()),
+        [] => None,
+        many => {
+            let common = common_prefix(many);
+            if common.len() > prefix.len() {
+                Some(common)
+            } else {
+                None
+            }
+        }
+    }
+}
+
+fn exact_root(prefix: &str, roots: &[String]) -> Option<String> {
+    let needle = prefix.to_lowercase();
+    roots
+        .iter()
+        .find(|root| root.to_lowercase() == needle)
+        .cloned()
+}
+
+fn push_unique(roots: &mut Vec<String>, root: String) {
+    if !roots.iter().any(|existing| existing == &root) {
+        roots.push(root);
+    }
+}
+
+fn common_prefix(roots: &[&str]) -> String {
+    let Some(first) = roots.first() else {
+        return String::new();
+    };
+    let mut end = first.len();
+    for root in roots.iter().skip(1) {
+        end = first
+            .chars()
+            .zip(root.chars())
+            .take_while(|(left, right)| left.to_lowercase().eq(right.to_lowercase()))
+            .count()
+            .min(end);
+    }
+    first.chars().take(end).collect()
+}
+
+fn root_allowed(page: &GotoPage, roots: &[String]) -> bool {
+    roots.is_empty() || roots.iter().any(|root| root == &page.root)
+}
+
+pub fn rank_pages<'a>(pages: &'a [GotoPage], query: &str) -> Vec<&'a GotoPage> {
+    let roots = catalog_roots(pages);
+    let parsed = parse_query(query, &roots);
+    if parsed.unmatched_root {
+        return Vec::new();
+    }
+    let catalog: Vec<(usize, &GotoPage)> = pages
+        .iter()
+        .enumerate()
+        .filter(|(_, page)| root_allowed(page, &parsed.roots))
+        .collect();
+    let tokens: Vec<String> = parsed
+        .text
+        .split_whitespace()
+        .map(str::to_string)
         .filter(|token| !token.is_empty())
         .collect();
     if tokens.is_empty() {
-        return pages.iter().take(LIMIT).collect();
+        return catalog
+            .into_iter()
+            .take(LIMIT)
+            .map(|(_, page)| page)
+            .collect();
     }
 
-    let mut scored: Vec<(Score, usize)> = pages
+    let mut scored: Vec<(Score, usize)> = catalog
         .iter()
-        .enumerate()
-        .filter_map(|(index, page)| score_page(page, &tokens).map(|score| (score, index)))
+        .filter_map(|(index, page)| score_page(page, &tokens).map(|score| (score, *index)))
         .collect();
     scored.sort_by(|left, right| {
         right
@@ -234,14 +370,54 @@ mod tests {
     use super::*;
 
     fn page(title: &str, route: &str, path: &str) -> GotoPage {
+        page_in(title, route, path, "")
+    }
+
+    fn page_in(title: &str, route: &str, path: &str, root: &str) -> GotoPage {
         GotoPage {
             title: title.into(),
             route: route.into(),
             path: path.into(),
             description: String::new(),
             collection: String::new(),
-            root: String::new(),
+            root: root.into(),
         }
+    }
+
+    fn workspace() -> Vec<GotoPage> {
+        vec![
+            page("Dashboard", "/", "index.md"),
+            page_in(
+                "Shared plan",
+                "/@okmate/plans/shared/",
+                "plans/shared.md",
+                "okmate",
+            ),
+            page_in(
+                "Bundle modelling",
+                "/@okmate/research/okmate/bundle-modelling/",
+                "research/okmate/bundle-modelling.md",
+                "okmate",
+            ),
+            page_in(
+                "Shared plan",
+                "/@rocci/plans/shared/",
+                "plans/shared.md",
+                "rocci",
+            ),
+            page_in(
+                "Language notes",
+                "/@rocci/reference/language/",
+                "reference/language.md",
+                "rocci",
+            ),
+            page_in(
+                "Ops runbook",
+                "/@okmate-ops/runbook/",
+                "runbook.md",
+                "okmate-ops",
+            ),
+        ]
     }
 
     fn catalog() -> Vec<GotoPage> {
@@ -344,5 +520,51 @@ mod tests {
     fn camel_case_splits_okmate() {
         assert_eq!(words("OKMate"), ["ok", "mate"]);
         assert_eq!(words("bundle-modelling.md"), ["bundle", "modelling", "md"]);
+    }
+
+    #[test]
+    fn at_bundle_filters_pages() {
+        let pages = workspace();
+        let ranked = rank_pages(&pages, "@okmate shared");
+        assert_eq!(
+            ranked
+                .iter()
+                .map(|page| page.route.as_str())
+                .collect::<Vec<_>>(),
+            vec!["/@okmate/plans/shared/"]
+        );
+    }
+
+    #[test]
+    fn at_bundle_without_text_keeps_that_root() {
+        let pages = workspace();
+        let ranked = rank_pages(&pages, "@rocci");
+        assert!(ranked.iter().all(|page| page.root == "rocci"), "{ranked:?}");
+        assert_eq!(ranked.len(), 2);
+    }
+
+    #[test]
+    fn unknown_bundle_matches_nothing() {
+        let pages = workspace();
+        assert!(rank_pages(&pages, "@missing shared").is_empty());
+    }
+
+    #[test]
+    fn incomplete_at_token_is_not_a_text_query() {
+        let pages = workspace();
+        let roots = catalog_roots(&pages);
+        let parsed = parse_query("@okm", &roots);
+        assert_eq!(parsed.completing.as_deref(), Some("okm"));
+        assert!(parsed.roots.is_empty());
+        assert!(parsed.text.is_empty());
+    }
+
+    #[test]
+    fn tab_completes_unique_and_common_prefix() {
+        let roots = catalog_roots(&workspace());
+        assert_eq!(complete_root("ro", &roots).as_deref(), Some("rocci"));
+        assert_eq!(complete_root("okmate", &roots), None);
+        assert_eq!(complete_root("okm", &roots).as_deref(), Some("okmate"));
+        assert_eq!(matching_roots("okm", &roots), ["okmate", "okmate-ops"]);
     }
 }

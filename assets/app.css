@@ -659,15 +659,36 @@ html[data-okmate-wrap="off"] #okmate-main .okmate-md-table td {
   color: var(--rd-fg);
 }
 .okmate-goto::backdrop { background: rgb(0 0 0 / 0.45); }
-.okmate-goto input {
+.okmate-goto-query {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.35rem;
   box-sizing: border-box;
   width: 100%;
-  font: inherit;
-  color: var(--rd-fg);
   background: var(--rd-bg);
   border: 1px solid var(--rd-border);
   border-radius: 0.4rem;
-  padding: 0.45rem 0.6rem;
+  padding: 0.3rem 0.45rem;
+}
+.okmate-goto-chips {
+  display: contents;
+}
+.okmate-goto-chip {
+  cursor: default;
+}
+.okmate-goto-query input {
+  box-sizing: border-box;
+  flex: 1 1 8rem;
+  min-width: 6rem;
+  width: auto;
+  font: inherit;
+  color: var(--rd-fg);
+  background: transparent;
+  border: 0;
+  border-radius: 0;
+  padding: 0.2rem 0.15rem;
+  outline: none;
 }
 .okmate-goto ul {
   list-style: none;
@@ -687,6 +708,9 @@ html[data-okmate-wrap="off"] #okmate-main .okmate-md-table td {
 .okmate-goto li.is-active,
 .okmate-goto li:hover { background: color-mix(in srgb, var(--rd-primary) 16%, transparent); }
 .okmate-goto li span { color: var(--rd-muted); font-size: 0.8rem; }
+.okmate-goto-bundle {
+  justify-content: flex-start;
+}
 
 .okmate-meta { display: flex; flex-wrap: wrap; gap: 0.4rem; margin: 0 0 1.25rem; }
 .okmate-badge {
