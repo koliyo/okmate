@@ -29,7 +29,10 @@
     </div>
     {% include "toolbar.html" %}
     <dialog id="okmate-goto" class="okmate-goto" aria-label="Go to page">
-      <input id="okmate-goto-input" type="search" placeholder="Go to page" autocomplete="off">
+      <div class="okmate-goto-query">
+        <div id="okmate-goto-chips" class="okmate-goto-chips"></div>
+        <input id="okmate-goto-input" type="search" placeholder="Go to page or @bundle" autocomplete="off">
+      </div>
       <ul id="okmate-goto-list"></ul>
     </dialog>
   </body>

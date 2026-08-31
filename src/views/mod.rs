@@ -479,6 +479,8 @@ mod tests {
         assert!(html.contains("/__okmate/app.css"));
         assert!(html.contains("data-on:click__prevent"), "{html}");
         assert!(html.contains("/__okmate/goto.js"), "{html}");
+        assert!(html.contains("id=\"okmate-goto-chips\""), "{html}");
+        assert!(html.contains("id=\"okmate-goto-input\""), "{html}");
         assert!(html.contains("/__okmate/nav.js"), "{html}");
         assert!(html.contains("/__okmate/resize.js"), "{html}");
         assert!(html.contains("/__okmate/tables.js"), "{html}");
