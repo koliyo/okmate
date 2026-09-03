@@ -2378,7 +2378,7 @@ dependencies = [
 
 [[package]]
 name = "okf"
-version = "0.3.3"
+version = "0.3.4"
 dependencies = [
  "anyhow",
  "comrak",
@@ -2392,7 +2392,7 @@ dependencies = [
 
 [[package]]
 name = "okmate"
-version = "0.3.3"
+version = "0.3.4"
 dependencies = [
  "anyhow",
  "askama",
