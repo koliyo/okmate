@@ -438,12 +438,15 @@
   }
 
   async function openPalette() {
-    if (!pages.length) {
-      const response = await fetch("/pages.json");
+    try {
+      const response = await fetch("/pages.json", { cache: "no-store" });
       if (response.ok) {
-        pages = await response.json();
+        const next = await response.json();
+        if (Array.isArray(next)) {
+          pages = next;
+        }
       }
-    }
+    } catch (_error) {}
     chips = [];
     input.value = "";
     active = 0;
