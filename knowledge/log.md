@@ -5,6 +5,10 @@ Independent bullets under the same `## YYYY-MM-DD` heading combine instead of
 conflicting. Add a new list item; do not reword another session's bullet in
 the same change.
 
+## 2026-09-04
+
+- Release attaches a Linux CLI-only binary (`okmate-x86_64-unknown-linux-gnu`, `--no-default-features`) alongside `OKMate.zip`. Jobs upload with `--clobber` instead of deleting the GitHub release. Exploratory; do not log complete until hosted CI succeeds.
+
 ## 2026-08-30
 
 - Drafted research on Memanto on-prem setup and OKF usage (`migrate okf` versus `memory sync --okf`; host Ollama on Apple Silicon). Exploratory; do not log complete until hosted CI succeeds.

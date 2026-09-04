@@ -147,6 +147,19 @@ Double-click opens the knowledge window (`view`) and restores
 to check automatically. An update shows release notes and Install /
 Remind Me Later / Skip.
 
+## Install the Linux CLI
+
+Versioned GitHub Releases also attach `okmate-x86_64-unknown-linux-gnu`, a
+CLI-only binary (`--no-default-features`, no desktop). Download it next to
+`OKMate.zip`:
+
+```sh
+gh release download v0.3.4 --repo koliyo/okmate \
+  --pattern 'okmate-x86_64-unknown-linux-gnu'
+chmod +x okmate-x86_64-unknown-linux-gnu
+sudo mv okmate-x86_64-unknown-linux-gnu /usr/local/bin/okmate
+```
+
 A `cargo install` or copied `okmate` binary on `PATH` does not self-update.
 Use a new install, or the `.app`, for updates.
 

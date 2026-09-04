@@ -23,6 +23,44 @@ env:
   RELEASE_TAG: ${{ inputs.tag || github.ref_name }}
 
 jobs:
+  linux-cli:
+    name: Linux CLI
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: ${{ inputs.tag || github.ref }}
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
+      - name: Build CLI
+        run: cargo build --release --no-default-features -p okmate
+      - name: Stage binary
+        run: |
+          set -euo pipefail
+          mkdir -p dist
+          install -m 0755 target/release/okmate dist/okmate-x86_64-unknown-linux-gnu
+      - name: Attach CLI
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          tag=$RELEASE_TAG
+          asset=dist/okmate-x86_64-unknown-linux-gnu
+          if gh release view "$tag" >/dev/null 2>&1; then
+            gh release upload "$tag" "$asset" --clobber
+          elif [[ "$tag" == "dev" ]]; then
+            gh release create "$tag" "$asset" \
+              --verify-tag \
+              --title "$tag" \
+              --notes "OKMate $tag" \
+              --prerelease
+          else
+            gh release create "$tag" "$asset" \
+              --verify-tag \
+              --title "$tag" \
+              --notes "OKMate $tag"
+          fi
+
   macos:
     name: macOS appcast
     runs-on: macos-latest
@@ -65,17 +103,17 @@ jobs:
         run: |
           set -euo pipefail
           tag=$RELEASE_TAG
+          assets=(dist/inbox/OKMate.zip dist/inbox/appcast.xml)
           if gh release view "$tag" >/dev/null 2>&1; then
-            gh release delete "$tag" --yes
-          fi
-          if [[ "$tag" == "dev" ]]; then
-            gh release create "$tag" dist/inbox/OKMate.zip dist/inbox/appcast.xml \
+            gh release upload "$tag" "${assets[@]}" --clobber
+          elif [[ "$tag" == "dev" ]]; then
+            gh release create "$tag" "${assets[@]}" \
               --verify-tag \
               --title "$tag" \
               --notes "OKMate $tag" \
               --prerelease
           else
-            gh release create "$tag" dist/inbox/OKMate.zip dist/inbox/appcast.xml \
+            gh release create "$tag" "${assets[@]}" \
               --verify-tag \
               --title "$tag" \
               --notes "OKMate $tag"

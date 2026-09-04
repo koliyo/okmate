@@ -10,6 +10,9 @@ fn release_workflow_filters_v_star_tags() {
     assert!(workflow.contains("--prerelease"));
     assert!(!workflow.contains("extra[@]"));
     assert!(workflow.contains("macos-latest"));
+    assert!(workflow.contains("ubuntu-latest"));
+    assert!(workflow.contains("okmate-x86_64-unknown-linux-gnu"));
+    assert!(workflow.contains("cargo build --release --no-default-features -p okmate"));
     assert!(workflow.contains("SPARKLE_EDDSA_PRIVATE_KEY"));
     assert!(workflow.contains("APPLE_CERTIFICATE_P12"));
     assert!(workflow.contains("APPLE_CERTIFICATE_PASSWORD"));
@@ -17,7 +20,8 @@ fn release_workflow_filters_v_star_tags() {
     assert!(workflow.contains("h35-desktop"));
     assert!(workflow.contains("dist/OKMate.app"));
     assert!(workflow.contains("dist/inbox/OKMate.zip"));
-    assert!(workflow.contains("gh release delete"));
+    assert!(!workflow.contains("gh release delete"));
+    assert!(workflow.contains("gh release upload"));
     assert!(workflow.contains("gh release create"));
     assert!(workflow.contains("--notes \"OKMate $tag\""));
 }

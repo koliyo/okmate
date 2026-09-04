@@ -32,7 +32,11 @@ commands.
      environment; `main` is not allowed to deploy there.
    - `.github/workflows/release.yml` — tag push (`v*`, `dev`) or
      `workflow_dispatch` *from that tag* (rebuild/notarize retry).
-     Dispatching from `main` is rejected by environment protection.
+     Jobs: `linux-cli` on `ubuntu-latest` (CLI-only
+     `okmate-x86_64-unknown-linux-gnu`, no `release` environment) and
+     `macos` appcast (needs `release` environment). Both upload with
+     `--clobber`; they do not delete the GitHub release. Dispatching
+     `macos` from `main` is rejected by environment protection.
 
 ## Rolling `dev` tag
 
