@@ -32,8 +32,8 @@ fn no_subcommand_prints_help() {
         String::from_utf8_lossy(&output.stderr)
     );
     assert!(
-        text.contains("Usage:") && text.contains("check"),
-        "expected help mentioning check, got: {text}"
+        text.contains("Usage:") && text.contains("check") && text.contains("init"),
+        "expected help mentioning check and init, got: {text}"
     );
 }
 

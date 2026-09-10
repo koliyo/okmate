@@ -32,7 +32,7 @@ enum Commands {
         #[arg(long, value_enum, default_value_t = CheckFormat::Terminal)]
         format: CheckFormat,
     },
-    /// Print a create-only plan for a new OKF bundle (pass `--apply` to write).
+    /// Scaffold a new OKF bundle: print a create-only plan, or write it with `--apply`.
     Init {
         #[arg(default_value = "knowledge")]
         path: PathBuf,

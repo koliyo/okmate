@@ -28,6 +28,7 @@ Settings live under `~/.okmate/` (`OKMATE_CONFIG`, `OKMATE_CACHE`,
 
 | Command | Purpose |
 | --- | --- |
+| `okmate init [path]` | Scaffold a new OKF bundle (dry-run plan; `--apply` writes; `--register` / `--agents` optional) |
 | `okmate check [root]` | Validate a bundle (`--format terminal\|json`, `--profile`) |
 | `okmate inspect catalog\|concept\|graph` | Engine JSON inspect |
 | `okmate search <query> [root]` | Metadata and heading search JSON |
@@ -39,6 +40,10 @@ Settings live under `~/.okmate/` (`OKMATE_CONFIG`, `OKMATE_CACHE`,
 | `okmate sync [id]` | Fetch configured git roots |
 
 ```sh
+okmate init
+okmate init --apply
+okmate init . --bare --apply
+okmate init --apply --register --id my-bundle
 okmate check knowledge --profile strict --format json
 okmate inspect catalog knowledge
 okmate inspect concept architecture/system-overview knowledge
