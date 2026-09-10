@@ -143,18 +143,8 @@ fn apply_action(path: &Path, fields: &BTreeMap<String, String>) -> Result<String
     let message = match action {
         "add_directory" => {
             let id = required(fields, "id")?;
-            if !valid_id(id) {
-                bail!("invalid root id `{id}`");
-            }
-            if config.roots.iter().any(|root| root.id() == id) {
-                bail!("duplicate root id `{id}`");
-            }
             let folder = required(fields, "path")?;
-            config.roots.push(RootConfig::Directory(DirectoryRoot {
-                id: id.to_string(),
-                path: folder.to_string(),
-                incoming: Incoming::Allow,
-            }));
+            crate::config::push_directory_root(&mut config, id, folder)?;
             format!("added directory root `{id}`")
         }
         "add_git" => {

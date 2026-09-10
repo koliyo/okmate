@@ -45,6 +45,15 @@ enum Commands {
         /// Write the planned files. Default is a dry-run.
         #[arg(long)]
         apply: bool,
+        /// Append this bundle as a directory root in config.toml.
+        #[arg(long)]
+        register: bool,
+        /// Root id for `--register` (default: kebab-case of the bundle directory name).
+        #[arg(long)]
+        id: Option<String>,
+        /// Write create-only agent routing files at the git toplevel.
+        #[arg(long)]
+        agents: bool,
         #[arg(long, value_enum, default_value_t = CheckFormat::Terminal)]
         format: CheckFormat,
     },
@@ -261,6 +270,9 @@ pub fn run() -> Result<()> {
             title,
             bare,
             apply,
+            register,
+            id,
+            agents,
             format,
         } => crate::init::run(crate::init::InitOptions {
             path,
@@ -268,6 +280,9 @@ pub fn run() -> Result<()> {
             bare,
             apply,
             format,
+            register,
+            id,
+            agents,
         }),
         Commands::Inspect { target, profile } => {
             let json = match target {

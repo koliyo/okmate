@@ -33,6 +33,9 @@ fn init_help_lists_flags() {
     assert!(text.contains("--bare"), "{text}");
     assert!(text.contains("--title"), "{text}");
     assert!(text.contains("--format"), "{text}");
+    assert!(text.contains("--register"), "{text}");
+    assert!(text.contains("--agents"), "{text}");
+    assert!(text.contains("--id"), "{text}");
 }
 
 #[test]
@@ -244,4 +247,138 @@ fn apply_refuses_existing_okf_version() {
     assert!(!output.status.success());
     assert_eq!(fs::read(root.join("index.md")).unwrap(), before);
     assert!(!root.join("log.md").exists());
+}
+
+#[test]
+fn register_apply_adds_directory_root() {
+    let parent = temp_dir("init-register");
+    let target = parent.join("knowledge");
+    let config = parent.join("config.toml");
+    let output = Command::new(okmate_bin())
+        .arg("init")
+        .arg(&target)
+        .arg("--apply")
+        .arg("--register")
+        .arg("--id")
+        .arg("my-bundle")
+        .env("OKMATE_CONFIG", &config)
+        .output()
+        .unwrap();
+    assert!(
+        output.status.success(),
+        "{}",
+        String::from_utf8_lossy(&output.stderr)
+    );
+    let saved = fs::read_to_string(&config).unwrap();
+    assert!(saved.contains("id = \"my-bundle\""), "{saved}");
+    assert!(saved.contains("kind = \"directory\""), "{saved}");
+    assert!(saved.contains("incoming = \"allow\""), "{saved}");
+    let canonical = target.canonicalize().unwrap();
+    assert!(saved.contains(&canonical.display().to_string()), "{saved}");
+}
+
+#[test]
+fn register_duplicate_id_fails() {
+    let parent = temp_dir("init-dup");
+    let target = parent.join("knowledge");
+    let config = parent.join("config.toml");
+    fs::write(
+        &config,
+        "poll = \"5m\"\n[[roots]]\nid = \"my-bundle\"\nkind = \"directory\"\npath = \"/tmp/other\"\n",
+    )
+    .unwrap();
+    let output = Command::new(okmate_bin())
+        .arg("init")
+        .arg(&target)
+        .arg("--apply")
+        .arg("--register")
+        .arg("--id")
+        .arg("my-bundle")
+        .env("OKMATE_CONFIG", &config)
+        .output()
+        .unwrap();
+    assert!(!output.status.success());
+    let text = format!(
+        "{}{}",
+        String::from_utf8_lossy(&output.stdout),
+        String::from_utf8_lossy(&output.stderr)
+    );
+    assert!(text.contains("duplicate root id"), "{text}");
+    assert!(!target.join("index.md").exists());
+    let saved = fs::read_to_string(&config).unwrap();
+    assert_eq!(saved.matches("id = \"my-bundle\"").count(), 1, "{saved}");
+}
+
+#[test]
+fn agents_apply_writes_and_skips_existing() {
+    let repo = temp_dir("init-agents");
+    git_init(&repo);
+    let target = repo.join("knowledge");
+    fs::write(repo.join("AGENTS.md"), "keep me\n").unwrap();
+    let output = Command::new(okmate_bin())
+        .arg("init")
+        .arg(&target)
+        .arg("--apply")
+        .arg("--agents")
+        .output()
+        .unwrap();
+    assert!(
+        output.status.success(),
+        "{}",
+        String::from_utf8_lossy(&output.stderr)
+    );
+    assert_eq!(
+        fs::read_to_string(repo.join("AGENTS.md")).unwrap(),
+        "keep me\n"
+    );
+    assert!(
+        repo.join(".cursor/rules/write-knowledge.mdc").is_file(),
+        "missing write-knowledge.mdc"
+    );
+    assert!(
+        repo.join(".agents/skills/manage-knowledge/SKILL.md")
+            .is_file(),
+        "missing manage-knowledge skill"
+    );
+    let attrs = fs::read_to_string(repo.join(".gitattributes")).unwrap();
+    assert!(attrs.contains("knowledge/log.md merge=union"), "{attrs}");
+    let stdout = String::from_utf8_lossy(&output.stdout);
+    assert!(
+        stdout.contains("skipped  AGENTS.md") || stdout.contains("skip"),
+        "{stdout}"
+    );
+}
+
+#[test]
+fn agents_without_git_errors() {
+    let parent = temp_dir("init-nogit");
+    let target = parent.join("knowledge");
+    let output = Command::new(okmate_bin())
+        .arg("init")
+        .arg(&target)
+        .arg("--agents")
+        .output()
+        .unwrap();
+    assert!(!output.status.success());
+    let text = format!(
+        "{}{}",
+        String::from_utf8_lossy(&output.stdout),
+        String::from_utf8_lossy(&output.stderr)
+    );
+    assert!(text.contains("--agents") && text.contains("git"), "{text}");
+    assert!(!target.join("index.md").exists());
+}
+
+fn git_init(dir: &std::path::Path) {
+    let output = Command::new("git")
+        .arg("-C")
+        .arg(dir)
+        .args(["init", "-b", "main"])
+        .output()
+        .unwrap();
+    assert!(
+        output.status.success(),
+        "git init failed: {}",
+        String::from_utf8_lossy(&output.stderr)
+    );
 }

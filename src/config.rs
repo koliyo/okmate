@@ -240,6 +240,21 @@ pub fn to_toml(config: &UserConfig) -> Result<String> {
     toml::to_string_pretty(&to_table(config)).context("failed to encode okmate config")
 }
 
+pub fn push_directory_root(config: &mut UserConfig, id: &str, path: &str) -> Result<()> {
+    if !valid_id(id) {
+        bail!("invalid root id `{id}`");
+    }
+    if config.roots.iter().any(|root| root.id() == id) {
+        bail!("duplicate root id `{id}`");
+    }
+    config.roots.push(RootConfig::Directory(DirectoryRoot {
+        id: id.to_string(),
+        path: path.to_string(),
+        incoming: Incoming::Allow,
+    }));
+    Ok(())
+}
+
 pub fn valid_id(id: &str) -> bool {
     let mut chars = id.chars();
     let Some(first) = chars.next() else {
