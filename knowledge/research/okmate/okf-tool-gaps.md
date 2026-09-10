@@ -4,8 +4,8 @@ title: OKMate feature gaps versus the OKF tool ecosystem
 description: A August 2026 survey of OKF CLIs, viewers, MCP servers, and editor tools finds OKMate strong on review HTML, strict evidence, multi-root git, and retrieval benchmarks, and thin on MCP, scaffolding, lint-versus-validate, ranked search, SARIF, and graph navigation verbs.
 tags: [domain/okmate, domain/okf, concern/agents, concern/review, concern/retrieval, concern/tooling]
 status: draft
-generated: { by: process:cursor, at: 2026-08-28T15:30:00Z }
-stale_after: 2026-11-28
+generated: { by: process:cursor, at: 2026-09-10T19:40:00Z }
+stale_after: 2026-12-10
 authority: exploratory
 owners: [human:nils]
 sources:
@@ -54,6 +54,11 @@ sources:
     title: Okmate extractable Rust OKF mate
     author: process:cursor
     last_modified: 2026-08-26
+  - id: init-plan
+    resource: ../../plans/okmate/init-bundle.md
+    title: Initialize a new OKF bundle from the okmate CLI
+    author: process:cursor
+    last_modified: 2026-09-10
   - id: okf-app
     resource: ../../plans/okf/rocci-okf-app.md
     title: Standalone Rocci OKF review and query application
@@ -405,7 +410,9 @@ knowledge) rather than by how flashy the peer is.
 
 7. **`init` / `new`** with templates and collision-safe creates. Workbench's
    plan-then-`--apply` is the right safety model for a tool that otherwise
-   refuses to own the files.[^workbench][^akdira][^w4g1]
+   refuses to own the files. The `init` half is planned in
+   [Initialize a new OKF bundle](/plans/okmate/init-bundle.md); `new`
+   stays a later command.[^workbench][^akdira][^w4g1][^init-plan]
 8. **Managed `index.md` regeneration** (fenced or marked region), matching
    what okq/W4G1/workbench do, so agents stop hand-editing listings that
    Strict already validates.[^okq][^w4g1][^workbench]
@@ -498,3 +505,4 @@ in git as the system of record.[^landscape][^okfgem-mcp][^extract]
 [^iwe-okf]: `iwe init --okf`, schema validate, frontmatter find; LSP/MCP product.
 [^harness]: Ingest/evidence/check/graph workspace for LLM wikis.
 [^xsavik]: Connector skills exposed through a generic `okf-mcp` host.
+[^init-plan]: `okmate init` plan-then-apply; `new` remains out of bound there.
