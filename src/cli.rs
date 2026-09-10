@@ -32,6 +32,22 @@ enum Commands {
         #[arg(long, value_enum, default_value_t = CheckFormat::Terminal)]
         format: CheckFormat,
     },
+    /// Print a create-only plan for a new OKF bundle (pass `--apply` to write).
+    Init {
+        #[arg(default_value = "knowledge")]
+        path: PathBuf,
+        /// Heading for the root index (`# Title`).
+        #[arg(long, default_value = "Knowledge")]
+        title: String,
+        /// Only `index.md` and `log.md`; omit collection indexes.
+        #[arg(long)]
+        bare: bool,
+        /// Write the planned files. Default is a dry-run.
+        #[arg(long)]
+        apply: bool,
+        #[arg(long, value_enum, default_value_t = CheckFormat::Terminal)]
+        format: CheckFormat,
+    },
     /// Print normalized concepts or the bundle graph as JSON.
     Inspect {
         #[command(subcommand)]
@@ -240,6 +256,19 @@ pub fn run() -> Result<()> {
             }
             Ok(())
         }
+        Commands::Init {
+            path,
+            title,
+            bare,
+            apply,
+            format,
+        } => crate::init::run(crate::init::InitOptions {
+            path,
+            title,
+            bare,
+            apply,
+            format,
+        }),
         Commands::Inspect { target, profile } => {
             let json = match target {
                 InspectTarget::Catalog { root, filters } => inspect(

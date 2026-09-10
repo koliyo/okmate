@@ -8,6 +8,7 @@ pub mod desktop;
 pub mod goto_match;
 mod html_util;
 pub mod http;
+pub mod init;
 mod nav;
 mod paths;
 pub mod port;
