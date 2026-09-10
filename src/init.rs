@@ -1,8 +1,10 @@
-use std::fs;
+use std::fs::{self, OpenOptions};
+use std::io::Write;
 use std::path::PathBuf;
 use std::time::{SystemTime, UNIX_EPOCH};
 
 use anyhow::{Context, Result, bail};
+use okf::Profile;
 use serde::Serialize;
 
 use crate::CheckFormat;
@@ -68,9 +70,50 @@ const COLLECTIONS: &[(&str, &str, &str)] = &[
 
 pub fn run(opts: InitOptions) -> Result<()> {
     let plan = plan_bundle(&opts)?;
+    if opts.apply {
+        apply_plan(&plan)?;
+        let report = crate::check(&plan.root, Profile::Strict)?;
+        if report.has_errors() {
+            let formatted = report.terminal();
+            if !formatted.is_empty() {
+                eprintln!("{formatted}");
+            }
+            bail!("initialized bundle failed strict check");
+        }
+    }
     match opts.format {
         CheckFormat::Json => println!("{}", serde_json::to_string_pretty(&plan)?),
         CheckFormat::Terminal => print_terminal(&plan, opts.apply),
+    }
+    Ok(())
+}
+
+pub fn apply_plan(plan: &InitPlan) -> Result<()> {
+    for file in &plan.files {
+        if file.op != InitOp::Create {
+            continue;
+        }
+        let dest = plan.root.join(&file.relative);
+        if dest.exists() {
+            bail!("{} already exists; refusing to overwrite", dest.display());
+        }
+    }
+    for file in &plan.files {
+        if file.op != InitOp::Create {
+            continue;
+        }
+        let dest = plan.root.join(&file.relative);
+        if let Some(parent) = dest.parent() {
+            fs::create_dir_all(parent)
+                .with_context(|| format!("failed to create {}", parent.display()))?;
+        }
+        let mut out = OpenOptions::new()
+            .write(true)
+            .create_new(true)
+            .open(&dest)
+            .with_context(|| format!("failed to create {}", dest.display()))?;
+        out.write_all(file.contents.as_bytes())
+            .with_context(|| format!("failed to write {}", dest.display()))?;
     }
     Ok(())
 }
@@ -104,7 +147,23 @@ pub fn plan_bundle(opts: &InitOptions) -> Result<InitPlan> {
     Ok(InitPlan { root, files })
 }
 
-fn print_terminal(plan: &InitPlan, apply: bool) {
+fn print_terminal(plan: &InitPlan, applied: bool) {
+    if applied {
+        println!(
+            "Created {} files under {}",
+            plan.files.len(),
+            plan.root.display()
+        );
+        for file in &plan.files {
+            println!("  wrote  {}", file.relative.display());
+        }
+        println!(
+            "Next: `okmate check {}` then `okmate view {}`",
+            plan.root.display(),
+            plan.root.display()
+        );
+        return;
+    }
     println!(
         "Would create {} files under {}",
         plan.files.len(),
@@ -117,9 +176,7 @@ fn print_terminal(plan: &InitPlan, apply: bool) {
             file.bytes_hint
         );
     }
-    if !apply {
-        println!("Dry run; pass --apply to write.");
-    }
+    println!("Dry run; pass --apply to write.");
 }
 
 fn create_file(relative: &str, contents: String) -> InitFile {

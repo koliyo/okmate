@@ -138,3 +138,110 @@ fn bare_omits_architecture_index() {
         "{value}"
     );
 }
+
+fn check_json(root: &std::path::Path) -> (bool, String) {
+    let output = Command::new(okmate_bin())
+        .arg("check")
+        .arg(root)
+        .arg("--profile")
+        .arg("strict")
+        .arg("--format")
+        .arg("json")
+        .output()
+        .unwrap();
+    (
+        output.status.success(),
+        String::from_utf8_lossy(&output.stdout).into_owned(),
+    )
+}
+
+#[test]
+fn apply_creates_check_clean_knowledge_child() {
+    let parent = temp_dir("init-apply");
+    let target = parent.join("knowledge");
+    let output = Command::new(okmate_bin())
+        .arg("init")
+        .arg(&target)
+        .arg("--apply")
+        .output()
+        .unwrap();
+    assert!(
+        output.status.success(),
+        "{}",
+        String::from_utf8_lossy(&output.stderr)
+    );
+    assert!(target.join("index.md").is_file());
+    assert!(target.join("architecture/index.md").is_file());
+    let stdout = String::from_utf8_lossy(&output.stdout);
+    assert!(stdout.contains("wrote  index.md"), "{stdout}");
+    assert!(stdout.contains("okmate check"), "{stdout}");
+    let (ok, json) = check_json(&target);
+    assert!(ok, "{json}");
+}
+
+#[test]
+fn second_apply_fails_without_mutating() {
+    let parent = temp_dir("init-reapply");
+    let target = parent.join("knowledge");
+    let first = Command::new(okmate_bin())
+        .arg("init")
+        .arg(&target)
+        .arg("--apply")
+        .output()
+        .unwrap();
+    assert!(
+        first.status.success(),
+        "{}",
+        String::from_utf8_lossy(&first.stderr)
+    );
+    let before = fs::read(target.join("index.md")).unwrap();
+    let second = Command::new(okmate_bin())
+        .arg("init")
+        .arg(&target)
+        .arg("--apply")
+        .output()
+        .unwrap();
+    assert!(!second.status.success());
+    let after = fs::read(target.join("index.md")).unwrap();
+    assert_eq!(before, after);
+    assert!(!target.join("architecture/index.md.bak").exists());
+}
+
+#[test]
+fn bare_apply_is_check_clean() {
+    let parent = temp_dir("init-bare-apply");
+    let target = parent.join("knowledge");
+    let output = Command::new(okmate_bin())
+        .arg("init")
+        .arg(&target)
+        .arg("--bare")
+        .arg("--apply")
+        .output()
+        .unwrap();
+    assert!(
+        output.status.success(),
+        "{}",
+        String::from_utf8_lossy(&output.stderr)
+    );
+    assert!(target.join("index.md").is_file());
+    assert!(target.join("log.md").is_file());
+    assert!(!target.join("architecture/index.md").exists());
+    let (ok, json) = check_json(&target);
+    assert!(ok, "{json}");
+}
+
+#[test]
+fn apply_refuses_existing_okf_version() {
+    let root = temp_dir("init-apply-occupied");
+    write_index(&root);
+    let before = fs::read(root.join("index.md")).unwrap();
+    let output = Command::new(okmate_bin())
+        .arg("init")
+        .arg(&root)
+        .arg("--apply")
+        .output()
+        .unwrap();
+    assert!(!output.status.success());
+    assert_eq!(fs::read(root.join("index.md")).unwrap(), before);
+    assert!(!root.join("log.md").exists());
+}
