@@ -260,8 +260,14 @@ async fn two_tab_session_renders_strip_and_keeps_hash() {
     )
     .await;
     assert!(html.contains("id=\"okmate-tabs\""), "{html}");
+    assert!(html.contains("id=\"okmate-tab-template\""), "{html}");
     assert!(html.contains("Hello"), "{html}");
     assert!(html.contains("data-okmate-tab-hash=\"s21\""), "{html}");
+    let tabs_js = include_str!(concat!(env!("CARGO_MANIFEST_DIR"), "/assets/tabs.js"));
+    assert!(
+        !tabs_js.contains("replaceChildren"),
+        "Askama owns tab HTML; tabs.js must not rebuild the strip: {tabs_js}"
+    );
     let stored = okmate::preview::load_session_from(&session);
     assert_eq!(stored.open_path.as_deref(), Some("/register/"));
     assert_eq!(stored.open_hash.as_deref(), Some("s21"));

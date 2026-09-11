@@ -6,6 +6,7 @@
   var tabs = [];
   var active = "";
   var closed = [];
+  var bound = false;
 
   function normalizeRoute(path) {
     var route = (path || "/").split(/[?#]/)[0];
@@ -13,6 +14,10 @@
       return "/";
     }
     return "/" + route.replace(/^\/+|\/+$/g, "") + "/";
+  }
+
+  function hrefFor(tab) {
+    return tab.hash ? tab.path + "#" + tab.hash : tab.path;
   }
 
   function titleFor(tab) {
@@ -36,8 +41,12 @@
     });
   }
 
+  function stripEl() {
+    return document.getElementById("okmate-tabs");
+  }
+
   function ensureStrip() {
-    var el = document.getElementById("okmate-tabs");
+    var el = stripEl();
     if (el) {
       return el;
     }
@@ -54,42 +63,79 @@
     return el;
   }
 
-  function render() {
-    var el = ensureStrip();
+  function fillTabNode(node, tab, isCurrent) {
+    node.classList.toggle("is-current", !!isCurrent);
+    node.setAttribute("role", "tab");
+    node.setAttribute("aria-selected", isCurrent ? "true" : "false");
+    node.setAttribute("data-okmate-tab-path", tab.path);
+    node.setAttribute("data-okmate-tab-hash", tab.hash || "");
+    node.setAttribute("data-okmate-tab-href", hrefFor(tab));
+    var open = node.querySelector(".okmate-tab-open");
+    if (open) {
+      open.textContent = titleFor(tab);
+    }
+  }
+
+  function cloneTab(tab, isCurrent) {
+    var tpl = document.getElementById("okmate-tab-template");
+    var source = tpl && tpl.content && tpl.content.firstElementChild;
+    if (!source) {
+      return null;
+    }
+    var node = source.cloneNode(true);
+    fillTabNode(node, tab, isCurrent);
+    return node;
+  }
+
+  function findNode(el, path) {
+    return el.querySelector('[data-okmate-tab-path="' + path + '"]');
+  }
+
+  function syncVisibility(el) {
     if (!el) {
       return;
     }
-    if (tabs.length < 2) {
-      el.hidden = true;
-      el.replaceChildren();
+    el.hidden = tabs.length < 2;
+  }
+
+  function insertTabNode(tab, isCurrent) {
+    var el = ensureStrip();
+    if (!el || findNode(el, tab.path)) {
       return;
     }
-    el.hidden = false;
-    el.replaceChildren();
-    tabs.forEach(function (tab) {
-      var node = document.createElement("div");
-      node.className = "okmate-tab" + (tab.path === active ? " is-current" : "");
-      node.setAttribute("role", "tab");
-      node.setAttribute("aria-selected", tab.path === active ? "true" : "false");
-      node.setAttribute("data-okmate-tab-path", tab.path);
-      node.setAttribute("data-okmate-tab-hash", tab.hash || "");
-      var open = document.createElement("button");
-      open.type = "button";
-      open.className = "okmate-tab-open";
-      open.textContent = titleFor(tab);
-      var close = document.createElement("button");
-      close.type = "button";
-      close.className = "okmate-tab-close";
-      close.setAttribute("aria-label", "Close");
-      close.textContent = "×";
-      node.appendChild(open);
-      node.appendChild(close);
+    var node = cloneTab(tab, isCurrent);
+    if (node) {
       el.appendChild(node);
+    }
+  }
+
+  function syncStrip() {
+    var el = tabs.length >= 2 ? ensureStrip() : stripEl();
+    if (!el) {
+      return;
+    }
+    tabs.forEach(function (tab) {
+      var node = findNode(el, tab.path);
+      if (node) {
+        fillTabNode(node, tab, tab.path === active);
+      } else {
+        insertTabNode(tab, tab.path === active);
+      }
     });
+    el.querySelectorAll("[data-okmate-tab-path]").forEach(function (node) {
+      var path = normalizeRoute(node.getAttribute("data-okmate-tab-path") || "");
+      var keep = tabs.some(function (tab) {
+        return tab.path === path;
+      });
+      if (!keep) {
+        node.remove();
+      }
+    });
+    syncVisibility(el);
   }
 
   function readDom() {
-    var el = document.getElementById("okmate-tabs");
+    var el = stripEl();
     if (!el) {
       return;
     }
@@ -143,7 +189,7 @@
     if (activateTab) {
       active = path;
     }
-    render();
+    syncStrip();
     persist();
   }
 
@@ -173,9 +219,6 @@
     upsert(path, hash, "", activateTab);
     if (activateTab) {
       activate(path, hash);
-    } else {
-      render();
-      persist();
     }
   }
 
@@ -196,12 +239,17 @@
     rememberClosed(tabs[index]);
     var closingActive = tabs[index].path === active;
     tabs.splice(index, 1);
+    var el = stripEl();
+    var node = el && findNode(el, path);
+    if (node) {
+      node.remove();
+    }
+    syncVisibility(el);
     if (closingActive) {
       var next = tabs[Math.min(index, tabs.length - 1)];
       active = next.path;
       activate(next.path, next.hash);
     } else {
-      render();
       persist();
     }
     return true;
@@ -293,12 +341,15 @@
         return;
       }
     }
-    render();
+    syncStrip();
     persist();
   }
 
   function onClick(event) {
-    var close = event.target.closest && event.target.closest(".okmate-tab-close");
+    if (!event.target.closest || !event.target.closest("#okmate-tabs")) {
+      return;
+    }
+    var close = event.target.closest(".okmate-tab-close");
     if (close) {
       event.preventDefault();
       event.stopPropagation();
@@ -308,7 +359,7 @@
       }
       return;
     }
-    var open = event.target.closest && event.target.closest(".okmate-tab-open, .okmate-tab");
+    var open = event.target.closest(".okmate-tab-open, .okmate-tab");
     if (!open) {
       return;
     }
@@ -395,12 +446,11 @@
         title: (document.title || "").trim(),
       });
     }
-    render();
-    var strip = document.getElementById("okmate-tabs");
-    if (strip && !strip.__okmateTabsBound) {
-      strip.__okmateTabsBound = true;
-      strip.addEventListener("click", onClick);
-      strip.addEventListener("auxclick", onAuxClick);
+    syncVisibility(stripEl());
+    if (!bound) {
+      bound = true;
+      document.addEventListener("click", onClick);
+      document.addEventListener("auxclick", onAuxClick);
     }
     if (!window.__okmateTabsKeysBound) {
       window.__okmateTabsKeysBound = true;

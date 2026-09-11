@@ -52,6 +52,12 @@
       </div>
       <ul id="okmate-goto-list"></ul>
     </dialog>
+    <template id="okmate-tab-template">
+      <div class="okmate-tab" role="tab" aria-selected="false" data-okmate-tab-path="" data-okmate-tab-hash="" data-okmate-tab-href="">
+        <button type="button" class="okmate-tab-open"></button>
+        <button type="button" class="okmate-tab-close" aria-label="Close">×</button>
+      </div>
+    </template>
     <dialog id="okmate-reload" class="okmate-reload" aria-label="Reload workspace">
       <p id="okmate-reload-message">Knowledge roots changed. Reload the workspace?</p>
       <form method="dialog" class="okmate-reload-actions">
