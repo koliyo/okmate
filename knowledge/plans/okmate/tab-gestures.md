@@ -1,10 +1,10 @@
 ---
 type: Implementation Plan
 title: Idiomatic document tab gestures
-description: Ordinary navigation retargets the current document tab; Cmd/Ctrl+click opens a background tab; desktop Cmd+T focuses or opens home and Cmd+W closes a tab rather than the window.
+description: Ordinary navigation retargets the current document tab; Cmd/Ctrl+click opens a background tab; desktop Cmd+T focuses or opens home and Cmd+W closes a tab rather than the window; tab labels use document titles and type-color dots.
 tags: [domain/okmate, concern/rendering, concern/tooling, concern/developer-experience]
 status: draft
-generated: { by: process:cursor, at: 2026-09-11T08:49:00Z }
+generated: { by: process:cursor, at: 2026-09-11T09:09:00Z }
 stale_after: 2026-12-11
 authority: exploratory
 owners: [human:nils]
@@ -64,6 +64,21 @@ sources:
     title: Host IPC message parse
     author: organization:koliyo
     last_modified: 2026-09-01
+  - id: peek-rs
+    resource: ../../../src/peek.rs
+    title: Peek JSON document_title and type
+    author: process:git
+    last_modified: 2026-09-11
+  - id: type-color
+    resource: ../../../src/views/governance.rs
+    title: type_color palette
+    author: process:git
+    last_modified: 2026-09-11
+  - id: base
+    resource: ../../../templates/base.html
+    title: Tab strip Askama markup
+    author: process:git
+    last_modified: 2026-09-11
 ---
 
 # Idiomatic document tab gestures
@@ -175,9 +190,33 @@ window close in `okmate view`.
 
 **Owner:** `src/desktop.rs`, `Cargo.lock`.
 
+### Phase 4 — Tab titles and type dots (implemented)
+
+**Bound:** Tab labels are document titles, never path slugs. Cmd-click seeds
+title and type-color from the trigger or nav leaf, then
+`GET /__okmate/peek?path=` fills `document_title` and `type_color`. Peek
+JSON gains `type_color` (concepts via `type_color(type)`, indexes
+`Index`, chrome omitted). Session and Askama persist `type_color`. Tab
+button is a type dot plus `.okmate-tab-label`. Chrome routes have no
+dot.[^peek-rs][^type-color][^tabs-js][^base]
+
+**Out of bound:** Empty tabs, duplicate routes, Datastar strip rewrite.
+
+**Tests:** Peek JSON for a typed concept includes `type_color` matching
+`okmate::views::type_color`; chrome peek omits it. Two-tab HTML includes
+`.okmate-type-dot` and `.okmate-tab-label`. Session prefs round-trip
+`type_color`. `tabs.js` fetches `/__okmate/peek` and uses
+`document_title`.
+
+**Exit:** `cargo test -p okmate --no-default-features` and
+`cargo fmt --all -- --check`.
+
+**Owner:** `src/peek.rs`, `src/session.rs`, `src/site.rs`, `src/views/mod.rs`,
+`templates/base.html`, `assets/tabs.js`, `assets/nav.js`, `assets/app.css`.
+
 ## Status
 
-Exploratory; no phase started. Extends
+Phases 1–4 implemented on `tab-gestures`. Extends
 [peek previews and document tabs](/plans/okmate/peek-and-tabs.md).[^peek]
 
 [^peek]: Shipped tab strip already required current-tab navigation and Cmd-click; Cmd+T was out of bound there.
@@ -191,3 +230,6 @@ Exploratory; no phase started. Extends
 [^h35-menu]: File Close Window accelerator is Cmd/Ctrl+W.
 [^h35-preview]: `is_close_key_event` exits the preview loop.
 [^h35-history]: Host IPC enum has no close-window variant.
+[^peek-rs]: Peek already returns `type` and `document_title`; tab strip used the path when those were missing.
+[^type-color]: Same hash palette as nav leaves and article meta.
+[^base]: Tab strip Askama; title currently a bare button string.

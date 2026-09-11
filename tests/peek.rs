@@ -95,6 +95,14 @@ fn hello_heading_peek_uses_details_not_intro() {
         "{details:?}"
     );
     assert!(!details.excerpt.contains("Intro paragraph"), "{details:?}");
+    assert_eq!(lead.type_color, okmate::views::type_color("Architecture"));
+    let chrome = peek(&workspace, "/review/", "").expect("chrome");
+    assert!(chrome.type_color.is_empty(), "{chrome:?}");
+    assert!(
+        !serde_json::to_string(&chrome)
+            .unwrap()
+            .contains("type_color")
+    );
 }
 
 #[test]

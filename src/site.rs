@@ -263,7 +263,7 @@ fn view_tabs(session: &crate::preview::Session, current_title: &str) -> Vec<crat
             } else if current && !current_title.is_empty() {
                 current_title.to_string()
             } else {
-                default_tab_title(&tab.path)
+                chrome_tab_title(&tab.path).unwrap_or_else(|| "…".into())
             };
             let hash = tab.hash.clone().unwrap_or_default();
             let href = if hash.is_empty() {
@@ -276,24 +276,20 @@ fn view_tabs(session: &crate::preview::Session, current_title: &str) -> Vec<crat
                 hash,
                 href,
                 title,
+                type_color: tab.type_color.clone(),
                 current,
             }
         })
         .collect()
 }
 
-fn default_tab_title(path: &str) -> String {
+fn chrome_tab_title(path: &str) -> Option<String> {
     match path {
-        "/" => "Dashboard".into(),
-        "/review/" => "Review queue".into(),
-        "/log/" => "Log".into(),
-        "/settings/" => "Settings".into(),
-        other => other
-            .trim_matches('/')
-            .rsplit('/')
-            .next()
-            .unwrap_or(other)
-            .to_string(),
+        "/" => Some("Dashboard".into()),
+        "/review/" => Some("Review queue".into()),
+        "/log/" => Some("Log".into()),
+        "/settings/" => Some("Settings".into()),
+        _ => None,
     }
 }
 

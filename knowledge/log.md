@@ -7,6 +7,7 @@ the same change.
 
 ## 2026-09-11
 
+- Added Phase 4 to the document tab gestures plan: stable document titles and OKF type-color dots, including Cmd-clicked background tabs. Exploratory; do not log complete until hosted CI succeeds.
 - Drafted a plan for idiomatic document tab gestures (retarget the current tab on ordinary navigation; desktop Cmd+T home and Cmd+W close tab). Exploratory; do not log complete until hosted CI succeeds.
 - Drafted paired research and plan for Datastar-aligned client JS (keep vanilla ES modules, no TypeScript toolchain; `actions.get` and `datastar-fetch` instead of hidden buttons and MutationObserver; enhance Askama tabs instead of rebuilding them). Exploratory; do not log complete until hosted CI succeeds.
 - Drafted a plan for live-preview hover peeks that honor heading anchors and keyed footnotes, plus a document tab strip outside the Datastar patch. Exploratory; do not log complete until hosted CI succeeds.

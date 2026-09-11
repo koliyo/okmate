@@ -1400,8 +1400,16 @@ html[data-okmate-wrap="off"] #okmate-main .okmate-md-table td {
   cursor: pointer;
 }
 .okmate-tab-open {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
   min-width: 0;
   padding: 0.28rem 0.45rem 0.32rem 0.65rem;
+  overflow: hidden;
+  white-space: nowrap;
+}
+.okmate-tab-label {
+  min-width: 0;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;

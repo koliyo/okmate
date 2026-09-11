@@ -7,6 +7,7 @@
   var active = "";
   var closed = [];
   var bound = false;
+  var inflight = {};
 
   function normalizeRoute(path) {
     var route = (path || "/").split(/[?#]/)[0];
@@ -21,7 +22,11 @@
   }
 
   function titleFor(tab) {
-    return tab.title || tab.path;
+    return tab.title || "…";
+  }
+
+  function colorFor(tab) {
+    return tab.typeColor || "";
   }
 
   function hasIpc() {
@@ -36,7 +41,12 @@
       open_path: active || window.location.pathname,
       open_hash: (window.location.hash || "").replace(/^#/, "") || null,
       tabs: tabs.map(function (tab) {
-        return { path: tab.path, hash: tab.hash || null, title: tab.title || "" };
+        return {
+          path: tab.path,
+          hash: tab.hash || null,
+          title: tab.title || "",
+          type_color: tab.typeColor || "",
+        };
       }),
     });
   }
@@ -70,9 +80,28 @@
     node.setAttribute("data-okmate-tab-path", tab.path);
     node.setAttribute("data-okmate-tab-hash", tab.hash || "");
     node.setAttribute("data-okmate-tab-href", hrefFor(tab));
+    node.setAttribute("data-okmate-tab-color", colorFor(tab));
     var open = node.querySelector(".okmate-tab-open");
-    if (open) {
-      open.textContent = titleFor(tab);
+    if (!open) {
+      return;
+    }
+    var label = open.querySelector(".okmate-tab-label");
+    if (!label) {
+      label = document.createElement("span");
+      label.className = "okmate-tab-label";
+      open.appendChild(label);
+    }
+    label.textContent = titleFor(tab);
+    var dot = open.querySelector(".okmate-type-dot");
+    if (colorFor(tab)) {
+      if (!dot) {
+        dot = document.createElement("span");
+        dot.className = "okmate-type-dot";
+        open.insertBefore(dot, label);
+      }
+      dot.style.background = colorFor(tab);
+    } else if (dot) {
+      dot.remove();
     }
   }
 
@@ -142,10 +171,12 @@
     tabs = [];
     el.querySelectorAll("[data-okmate-tab-path]").forEach(function (node) {
       var path = normalizeRoute(node.getAttribute("data-okmate-tab-path") || "");
+      var label = node.querySelector(".okmate-tab-label");
       tabs.push({
         path: path,
         hash: node.getAttribute("data-okmate-tab-hash") || "",
-        title: ((node.querySelector(".okmate-tab-open") || {}).textContent || "").trim(),
+        title: ((label || {}).textContent || "").trim(),
+        typeColor: node.getAttribute("data-okmate-tab-color") || "",
       });
       if (node.classList.contains("is-current")) {
         active = path;
@@ -167,17 +198,22 @@
     if (!tab) {
       return;
     }
-    closed.push({ path: tab.path, hash: tab.hash || "", title: tab.title || "" });
+    closed.push({
+      path: tab.path,
+      hash: tab.hash || "",
+      title: tab.title || "",
+      typeColor: tab.typeColor || "",
+    });
     if (closed.length > 16) {
       closed.shift();
     }
   }
 
-  function upsert(path, hash, title, activateTab) {
+  function upsert(path, hash, title, activateTab, typeColor) {
     path = normalizeRoute(path);
     var tab = findTab(path);
     if (!tab) {
-      tab = { path: path, hash: "", title: "" };
+      tab = { path: path, hash: "", title: "", typeColor: "" };
       tabs.push(tab);
     }
     if (hash != null && hash !== "") {
@@ -186,11 +222,53 @@
     if (title) {
       tab.title = title;
     }
+    if (typeColor) {
+      tab.typeColor = typeColor;
+    }
     if (activateTab) {
       active = path;
     }
     syncStrip();
     persist();
+  }
+
+  function fillMeta(path) {
+    path = normalizeRoute(path);
+    if (inflight[path]) {
+      return;
+    }
+    inflight[path] = true;
+    fetch("/__okmate/peek?path=" + encodeURIComponent(path) + "&hash=")
+      .then(function (response) {
+        if (!response.ok) {
+          return null;
+        }
+        return response.json();
+      })
+      .then(function (data) {
+        delete inflight[path];
+        if (!data) {
+          return;
+        }
+        var tab = findTab(path);
+        if (!tab) {
+          return;
+        }
+        if (data.document_title) {
+          tab.title = data.document_title;
+        }
+        tab.typeColor = data.type_color || "";
+        syncStrip();
+        persist();
+      })
+      .catch(function () {
+        delete inflight[path];
+      });
+  }
+
+  function metaDotColor() {
+    var dot = document.querySelector("#okmate-main .okmate-type-dot");
+    return (dot && (dot.style.backgroundColor || dot.style.background)) || "";
   }
 
   function activate(path, hash) {
@@ -216,7 +294,8 @@
     var path = normalizeRoute(dest.pathname);
     var hash = (dest.hash || "").replace(/^#/, "");
     var activateTab = !!options.activate;
-    upsert(path, hash, "", activateTab);
+    upsert(path, hash, options.title || "", activateTab, options.typeColor || "");
+    fillMeta(path);
     if (activateTab) {
       activate(path, hash);
     }
@@ -271,7 +350,7 @@
       activate("/", home.hash);
       return;
     }
-    openHref("/", { activate: true });
+    openHref("/", { activate: true, title: "Dashboard" });
   }
 
   function reopenClosed() {
@@ -283,7 +362,7 @@
       activate(tab.path, tab.hash);
       return;
     }
-    upsert(tab.path, tab.hash, tab.title, true);
+    upsert(tab.path, tab.hash, tab.title, true, tab.typeColor);
     activate(tab.path, tab.hash);
   }
 
@@ -318,6 +397,7 @@
     var path = normalizeRoute(window.location.pathname);
     var hash = (window.location.hash || "").replace(/^#/, "");
     var title = (document.title || "").trim();
+    var typeColor = metaDotColor();
     var existing = findTab(path);
     if (existing) {
       if (hash) {
@@ -326,6 +406,7 @@
       if (title) {
         existing.title = title;
       }
+      existing.typeColor = typeColor;
       active = path;
     } else {
       var current = findTab(active);
@@ -335,9 +416,11 @@
         if (title) {
           current.title = title;
         }
+        current.typeColor = typeColor;
         active = path;
       } else {
-        upsert(path, hash, title, true);
+        upsert(path, hash, title, true, typeColor);
+        fillMeta(path);
         return;
       }
     }
@@ -444,6 +527,7 @@
         path: active,
         hash: (window.location.hash || "").replace(/^#/, ""),
         title: (document.title || "").trim(),
+        typeColor: metaDotColor(),
       });
     }
     syncVisibility(stripEl());
