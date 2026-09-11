@@ -327,17 +327,49 @@ if (!window.__okmateNav) {
     }
   }
 
-  function observeMain() {
-    var main = document.getElementById("okmate-main");
-    if (!main || main.__okmateNavObserved) {
+  function isInAppDocumentFetch(el) {
+    if (!el) {
+      return false;
+    }
+    if (el.id === "okmate-ds") {
+      return true;
+    }
+    var attrs = [
+      el.getAttribute("action") || "",
+      el.getAttribute("href") || "",
+      el.getAttribute("data-on:submit") || "",
+      el.getAttribute("data-on:change") || "",
+      el.getAttribute("data-on:click") || "",
+      el.getAttribute("data-on:click__prevent") || "",
+      el.getAttribute("data-on:input__debounce.300ms") || "",
+    ].join(" ");
+    if (
+      attrs.indexOf("/__okmate/settings") !== -1 ||
+      attrs.indexOf("/__okmate/prefs") !== -1 ||
+      attrs.indexOf("@post") !== -1 ||
+      attrs.indexOf("@put") !== -1 ||
+      attrs.indexOf("@patch") !== -1 ||
+      attrs.indexOf("@delete") !== -1
+    ) {
+      return false;
+    }
+    var href = el.getAttribute("href") || "";
+    if (href && isInAppDocumentHref(href, window.location.href)) {
+      return true;
+    }
+    return attrs.indexOf("@get") !== -1;
+  }
+
+  document.addEventListener("datastar-fetch", function (event) {
+    var detail = event.detail || {};
+    if (detail.type !== "finished") {
       return;
     }
-    main.__okmateNavObserved = true;
-    // Datastar patches #okmate-main (and toc) without replacing #okmate-nav.
-    new MutationObserver(function () {
-      afterDocumentPatch();
-    }).observe(main, { childList: true });
-  }
+    if (!isInAppDocumentFetch(detail.el)) {
+      return;
+    }
+    afterDocumentPatch();
+  });
 
   document.addEventListener(
     "click",
@@ -514,7 +546,6 @@ if (!window.__okmateNav) {
   }
 
   function enhance() {
-    observeMain();
     bindBlurbs();
     syncNav(window.location.pathname);
     restoreSections();

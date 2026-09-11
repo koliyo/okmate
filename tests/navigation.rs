@@ -74,6 +74,10 @@ async fn datastar_get_concept_returns_main_fragment() {
         !body.contains("id=\"okmate-nav\""),
         "nav should stay in the DOM: {body}"
     );
+    assert!(
+        !body.contains("id=\"okmate-tabs\""),
+        "tabs should stay outside the Datastar patch: {body}"
+    );
 }
 
 #[tokio::test]
@@ -300,6 +304,11 @@ fn nav_js_keeps_register_hash_links_in_app() {
     );
     assert!(js.contains("fnref-"), "{js}");
     assert!(js.contains("stopImmediatePropagation"), "{js}");
+    assert!(js.contains("datastar-fetch"), "{js}");
+    assert!(
+        !js.contains("new MutationObserver"),
+        "nav.js must not use MutationObserver as the patch bus: {js}"
+    );
 }
 
 #[test]
