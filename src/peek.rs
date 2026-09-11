@@ -66,16 +66,7 @@ fn peek_concept(
     let (concept_type, document_title, description) = concept_fields(concept);
     let lead = clip(&first_prose_paragraph(&article));
     if let Some(label) = footnote_label(hash) {
-        if let Some(peek) = footnote_peek(
-            workspace,
-            member,
-            concept,
-            &article,
-            label,
-            &concept_type,
-            &document_title,
-            &description,
-        ) {
+        if let Some(peek) = footnote_peek(workspace, member, concept, &article, label) {
             return peek;
         }
         return document_peek(concept_type, document_title, description, lead);
@@ -169,10 +160,8 @@ fn footnote_peek(
     concept: &Concept,
     article: &str,
     label: &str,
-    concept_type: &str,
-    document_title: &str,
-    description: &str,
 ) -> Option<Peek> {
+    let (concept_type, document_title, description) = concept_fields(concept);
     let definition_html = footnote_definition_html(article, label)?;
     let mut excerpt_parts = Vec::new();
     let definition = plaintext_without_backrefs(definition_html);
@@ -209,10 +198,10 @@ fn footnote_peek(
     }
     Some(Peek {
         kind: PeekKind::Footnote,
-        concept_type: concept_type.to_string(),
-        document_title: document_title.to_string(),
+        concept_type,
+        document_title,
         title,
-        description: description.to_string(),
+        description,
         excerpt: clip(&excerpt_parts.join(" ")),
     })
 }
@@ -329,13 +318,9 @@ fn plaintext_without_backrefs(html: &str) -> String {
 fn first_hashed_in_bundle_href(html: &str) -> Option<(&str, &str)> {
     let mut rest = html;
     loop {
-        let Some(at) = rest.find("href=\"") else {
-            return None;
-        };
+        let at = rest.find("href=\"")?;
         rest = &rest[at + 6..];
-        let Some(end) = rest.find('"') else {
-            return None;
-        };
+        let end = rest.find('"')?;
         let href = &rest[..end];
         rest = &rest[end + 1..];
         if href.starts_with("http:")
@@ -369,9 +354,7 @@ fn html_heading_excerpt(html: &str, id: &str) -> Option<(String, String)> {
     let close_at = after_heading.find("</h")?;
     let close_end = after_heading[close_at..].find('>')?;
     let heading_html = &after_heading[..close_at];
-    let Some(inner_start) = heading_html.find('>') else {
-        return None;
-    };
+    let inner_start = heading_html.find('>')?;
     let heading_text = plaintext(&heading_html[inner_start + 1..]);
     let mut rest = &after_heading[close_at + close_end + 1..];
     let mut body = String::new();
@@ -395,11 +378,11 @@ fn html_heading_excerpt(html: &str, id: &str) -> Option<(String, String)> {
             continue;
         }
         if let Some(end) = rest.find('<') {
-            if end == 0 {
-                if let Some(tag_end) = rest.find('>') {
-                    rest = &rest[tag_end + 1..];
-                    continue;
-                }
+            if end == 0
+                && let Some(tag_end) = rest.find('>')
+            {
+                rest = &rest[tag_end + 1..];
+                continue;
             }
             break;
         }
