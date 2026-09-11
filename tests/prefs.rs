@@ -240,14 +240,25 @@ async fn two_tab_session_renders_strip_and_keeps_hash() {
     let output = temp_dir("prefs-tabs-out");
     okmate::site::build_workspace(&workspace, &output).unwrap();
     let session = temp_dir("prefs-tabs-session").join("session.json");
+    let architecture = okmate::views::type_color("Architecture");
     okmate::preview::persist_prefs_to(
         &session,
         &serde_json::json!({
             "open_path": "/register/",
             "open_hash": "s21",
             "tabs": [
-                { "path": "/hello/", "hash": "details", "title": "Hello" },
-                { "path": "/register/", "hash": "s21", "title": "Register" }
+                {
+                    "path": "/hello/",
+                    "hash": "details",
+                    "title": "Hello",
+                    "type_color": architecture
+                },
+                {
+                    "path": "/register/",
+                    "hash": "s21",
+                    "title": "Register",
+                    "type_color": architecture
+                }
             ]
         }),
     );
@@ -260,11 +271,34 @@ async fn two_tab_session_renders_strip_and_keeps_hash() {
     )
     .await;
     assert!(html.contains("id=\"okmate-tabs\""), "{html}");
+    assert!(html.contains("id=\"okmate-tab-template\""), "{html}");
+    let nav_at = html.find("id=\"okmate-nav\"").expect("nav");
+    let tabs_at = html.find("id=\"okmate-tabs\"").expect("tabs");
+    let main_at = html.find("id=\"okmate-main\"").expect("main");
+    assert!(
+        nav_at < tabs_at && tabs_at < main_at,
+        "tabs should sit in the shell after nav and before main"
+    );
     assert!(html.contains("Hello"), "{html}");
     assert!(html.contains("data-okmate-tab-hash=\"s21\""), "{html}");
+    assert!(html.contains("okmate-type-dot"), "{html}");
+    assert!(html.contains("okmate-tab-label"), "{html}");
+    let tabs_js = include_str!(concat!(env!("CARGO_MANIFEST_DIR"), "/assets/tabs.js"));
+    assert!(
+        !tabs_js.contains("replaceChildren"),
+        "Askama owns tab HTML; tabs.js must not rebuild the strip: {tabs_js}"
+    );
+    assert!(
+        tabs_js.contains("shell.insertBefore(el, main)"),
+        "tab strip belongs in the document column: {tabs_js}"
+    );
+    assert!(tabs_js.contains("/__okmate/peek"), "{tabs_js}");
+    assert!(tabs_js.contains("document_title"), "{tabs_js}");
+    assert!(tabs_js.contains("options.title"), "{tabs_js}");
     let stored = okmate::preview::load_session_from(&session);
     assert_eq!(stored.open_path.as_deref(), Some("/register/"));
     assert_eq!(stored.open_hash.as_deref(), Some("s21"));
+    assert_eq!(stored.tabs[0].type_color, architecture);
 
     let fragment = body_text(
         app.oneshot(
@@ -300,4 +334,53 @@ async fn single_tab_session_omits_strip() {
     )
     .await;
     assert!(!html.contains("id=\"okmate-tabs\""), "{html}");
+}
+
+#[tokio::test]
+async fn document_get_retargets_single_tab() {
+    let (root, output, workspace) = fixture();
+    let session = temp_dir("prefs-retarget-one").join("session.json");
+    okmate::preview::persist_prefs_to(
+        &session,
+        &serde_json::json!({
+            "open_path": "/hello/",
+            "tabs": [{ "path": "/hello/", "title": "Hello" }]
+        }),
+    );
+    let app = okmate::http::router(state(root, output, workspace, session.clone()));
+    let _ = app
+        .oneshot(Request::get("/").body(Body::empty()).unwrap())
+        .await
+        .unwrap();
+    let stored = okmate::preview::load_session_from(&session);
+    assert_eq!(stored.open_path.as_deref(), Some("/"));
+    assert_eq!(stored.tabs.len(), 1);
+    assert_eq!(stored.tabs[0].path, "/");
+}
+
+#[tokio::test]
+async fn document_get_retargets_active_of_two_tabs() {
+    let (root, output, workspace) = fixture();
+    let session = temp_dir("prefs-retarget-two").join("session.json");
+    okmate::preview::persist_prefs_to(
+        &session,
+        &serde_json::json!({
+            "open_path": "/hello/",
+            "tabs": [
+                { "path": "/", "title": "Home" },
+                { "path": "/hello/", "title": "Hello" }
+            ]
+        }),
+    );
+    let app = okmate::http::router(state(root, output, workspace, session.clone()));
+    let _ = app
+        .oneshot(Request::get("/log/").body(Body::empty()).unwrap())
+        .await
+        .unwrap();
+    let stored = okmate::preview::load_session_from(&session);
+    assert_eq!(stored.open_path.as_deref(), Some("/log/"));
+    assert_eq!(stored.tabs.len(), 2);
+    assert_eq!(stored.tabs[0].path, "/");
+    assert_eq!(stored.tabs[0].title, "Home");
+    assert_eq!(stored.tabs[1].path, "/log/");
 }

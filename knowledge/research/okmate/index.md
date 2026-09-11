@@ -10,3 +10,4 @@
 * [Extended multi-bundle viewer](extended-multi-bundle.md) - Registry versus single-bundle Askama site; nav modes, dashboard recents, collection hover, merged log.
 * [Viewer click-path latency and large chrome pages](viewer-responsiveness.md) - Pre-change click stall and post-change `okmate timings` baseline (this machine).
 * [Leptos instead of Askama and Datastar](leptos.md) - SSR-only templating versus islands or hydrate; keep the current hypermedia stack.
+* [Client-side JavaScript for the Datastar viewer](datastar-client-js.md) - Keep vanilla ES modules; no TypeScript toolchain; enhance chrome outside the morph. Plan: [datastar-client-js](/plans/okmate/datastar-client-js.md).

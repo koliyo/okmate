@@ -117,6 +117,8 @@ pub struct SessionTab {
     pub hash: Option<String>,
     #[serde(default)]
     pub title: String,
+    #[serde(default, skip_serializing_if = "String::is_empty")]
+    pub type_color: String,
 }
 
 impl Session {
@@ -342,11 +344,22 @@ pub fn persist_open_path_to(path: &Path, route: &str) {
         session.open_hash = tab.hash.clone();
     } else {
         session.open_hash = None;
-        session.tabs.push(SessionTab {
-            path: open_path.clone(),
-            hash: None,
-            title: String::new(),
-        });
+        let previous = session.open_path.clone();
+        if let Some(tab) = session
+            .tabs
+            .iter_mut()
+            .find(|tab| previous.as_deref() == Some(tab.path.as_str()))
+        {
+            tab.path = open_path.clone();
+            tab.hash = None;
+        } else {
+            session.tabs.push(SessionTab {
+                path: open_path.clone(),
+                hash: None,
+                title: String::new(),
+                type_color: String::new(),
+            });
+        }
     }
     session.open_path = Some(open_path);
     session.main_scroll = None;
@@ -369,6 +382,51 @@ fn sanitize_tab_title(value: &str) -> String {
     trimmed.trim().to_string()
 }
 
+fn sanitize_type_color(value: &str) -> String {
+    let trimmed = value.trim();
+    if trimmed.is_empty() || trimmed.len() > 64 {
+        return String::new();
+    }
+    if let Some(hex) = trimmed.strip_prefix('#') {
+        if (hex.len() == 3 || hex.len() == 6) && hex.bytes().all(|byte| byte.is_ascii_hexdigit()) {
+            return format!("#{hex}");
+        }
+        return String::new();
+    }
+    let lower = trimmed.to_ascii_lowercase();
+    let inner = if let Some(rest) = lower.strip_prefix("rgba(") {
+        rest
+    } else if let Some(rest) = lower.strip_prefix("rgb(") {
+        rest
+    } else {
+        return String::new();
+    };
+    let Some(inner) = inner.strip_suffix(')') else {
+        return String::new();
+    };
+    let parts: Vec<&str> = inner.split(',').map(str::trim).collect();
+    if parts.len() != 3 && parts.len() != 4 {
+        return String::new();
+    }
+    if !parts.iter().take(3).all(|part| {
+        part.parse::<u8>().is_ok() || part.parse::<u16>().ok().is_some_and(|n| n <= 255)
+    }) {
+        return String::new();
+    }
+    if parts.len() == 4 {
+        let alpha = parts[3];
+        let alpha_ok = alpha
+            .parse::<f32>()
+            .ok()
+            .is_some_and(|n| (0.0..=1.0).contains(&n))
+            || alpha.parse::<u8>().is_ok();
+        if !alpha_ok {
+            return String::new();
+        }
+    }
+    trimmed.to_string()
+}
+
 fn sanitize_tabs(values: &[serde_json::Value]) -> Vec<SessionTab> {
     let mut tabs = Vec::new();
     for value in values {
@@ -384,7 +442,17 @@ fn sanitize_tabs(values: &[serde_json::Value]) -> Vec<SessionTab> {
             .and_then(serde_json::Value::as_str)
             .map(sanitize_tab_title)
             .unwrap_or_default();
-        tabs.push(SessionTab { path, hash, title });
+        let type_color = obj
+            .get("type_color")
+            .and_then(serde_json::Value::as_str)
+            .map(sanitize_type_color)
+            .unwrap_or_default();
+        tabs.push(SessionTab {
+            path,
+            hash,
+            title,
+            type_color,
+        });
         if tabs.len() >= MAX_TABS {
             break;
         }
@@ -405,12 +473,16 @@ fn normalize_tabs(
         tab.path = path;
         tab.hash = sanitize_open_hash(tab.hash.as_deref());
         tab.title = sanitize_tab_title(&tab.title);
+        tab.type_color = sanitize_type_color(&tab.type_color);
         if let Some(existing) = out.iter_mut().find(|item| item.path == tab.path) {
             if existing.hash.is_none() {
                 existing.hash = tab.hash;
             }
             if existing.title.is_empty() {
                 existing.title = tab.title;
+            }
+            if existing.type_color.is_empty() {
+                existing.type_color = tab.type_color;
             }
             continue;
         }
@@ -431,6 +503,7 @@ fn normalize_tabs(
                     path: path.to_string(),
                     hash: open_hash.map(str::to_string),
                     title: String::new(),
+                    type_color: String::new(),
                 },
             );
             if out.len() > MAX_TABS {
@@ -731,9 +804,47 @@ mod tests {
         assert_eq!(session.open_path.as_deref(), Some("/review/"));
         assert!(session.open_hash.is_none());
         assert!(session.main_scroll.is_none());
+        assert_eq!(session.tabs.len(), 1);
+        assert_eq!(session.tabs[0].path, "/review/");
         persist_open_path_to(&path, "/review/");
         let again = load_session_from(&path);
         assert_eq!(again.open_path.as_deref(), Some("/review/"));
+        assert_eq!(again.tabs.len(), 1);
+        let _ = fs::remove_dir_all(dir);
+    }
+
+    #[test]
+    fn persist_open_path_retargets_active_tab_only() {
+        let dir = std::env::temp_dir().join(format!(
+            "okmate-state-{}-{}",
+            std::process::id(),
+            "tabs-retarget"
+        ));
+        let _ = fs::remove_dir_all(&dir);
+        fs::create_dir_all(&dir).unwrap();
+        let path = dir.join("session.json");
+        persist_prefs_to(
+            &path,
+            &serde_json::json!({
+                "open_path": "/register/",
+                "open_hash": "fn-s21",
+                "tabs": [
+                    { "path": "/hello/", "hash": "details", "title": "Hello" },
+                    { "path": "/register/", "hash": "fn-s21", "title": "Register" }
+                ]
+            }),
+        );
+        persist_open_path_to(&path, "/review/");
+        let session = load_session_from(&path);
+        assert_eq!(session.open_path.as_deref(), Some("/review/"));
+        assert!(session.open_hash.is_none());
+        assert_eq!(session.tabs.len(), 2);
+        assert_eq!(session.tabs[0].path, "/hello/");
+        assert_eq!(session.tabs[0].hash.as_deref(), Some("details"));
+        assert_eq!(session.tabs[0].title, "Hello");
+        assert_eq!(session.tabs[1].path, "/review/");
+        assert!(session.tabs[1].hash.is_none());
+        assert_eq!(session.tabs[1].title, "Register");
         let _ = fs::remove_dir_all(dir);
     }
 
@@ -772,6 +883,36 @@ mod tests {
         let switched = load_session_from(&path);
         assert_eq!(switched.open_path.as_deref(), Some("/hello/"));
         assert_eq!(switched.open_hash.as_deref(), Some("details"));
+        let _ = fs::remove_dir_all(dir);
+    }
+
+    #[test]
+    fn session_prefs_round_trip_tab_type_color() {
+        let dir = std::env::temp_dir().join(format!(
+            "okmate-state-{}-{}",
+            std::process::id(),
+            "tabs-color"
+        ));
+        let _ = fs::remove_dir_all(&dir);
+        fs::create_dir_all(&dir).unwrap();
+        let path = dir.join("session.json");
+        persist_prefs_to(
+            &path,
+            &serde_json::json!({
+                "open_path": "/hello/",
+                "tabs": [
+                    {
+                        "path": "/hello/",
+                        "title": "Hello",
+                        "type_color": "#6E56CF"
+                    }
+                ]
+            }),
+        );
+        let session = load_session_from(&path);
+        assert_eq!(session.tabs.len(), 1);
+        assert_eq!(session.tabs[0].title, "Hello");
+        assert_eq!(session.tabs[0].type_color, "#6E56CF");
         let _ = fs::remove_dir_all(dir);
     }
 

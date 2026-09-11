@@ -233,6 +233,7 @@ pub struct DocTab {
     pub hash: String,
     pub href: String,
     pub title: String,
+    pub type_color: String,
     pub current: bool,
 }
 

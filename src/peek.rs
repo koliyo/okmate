@@ -3,6 +3,7 @@ use serde::Serialize;
 
 use crate::html_util::{first_prose_paragraph, plaintext};
 use crate::nav::collection_title;
+use crate::views::type_color;
 use crate::workspace::{Workspace, WorkspaceMember, normalize_route};
 
 const EXCERPT_LIMIT: usize = 280;
@@ -25,6 +26,16 @@ pub struct Peek {
     #[serde(skip_serializing_if = "String::is_empty")]
     pub description: String,
     pub excerpt: String,
+    #[serde(skip_serializing_if = "String::is_empty")]
+    pub type_color: String,
+}
+
+fn type_color_for(kind: &str) -> String {
+    if kind.is_empty() {
+        String::new()
+    } else {
+        type_color(kind)
+    }
 }
 
 pub fn peek(workspace: &Workspace, path: &str, hash: &str) -> Option<Peek> {
@@ -76,6 +87,7 @@ fn peek_concept(
     {
         return Peek {
             kind: PeekKind::Heading,
+            type_color: type_color_for(&concept_type),
             concept_type,
             document_title,
             title: heading_text,
@@ -94,14 +106,15 @@ fn peek_index(index: &Index, hash: &str) -> Peek {
     {
         return Peek {
             kind: PeekKind::Heading,
-            concept_type: String::new(),
+            concept_type: "Index".into(),
+            type_color: type_color("Index"),
             document_title: document_title.clone(),
             title: heading_text,
             description: String::new(),
             excerpt,
         };
     }
-    document_peek(String::new(), document_title, String::new(), lead)
+    document_peek("Index".into(), document_title, String::new(), lead)
 }
 
 fn chrome_peek(workspace: &Workspace, route: &str) -> Peek {
@@ -134,6 +147,7 @@ fn document_peek(
     Peek {
         kind: PeekKind::Document,
         title: document_title.clone(),
+        type_color: type_color_for(&concept_type),
         concept_type,
         document_title,
         description,
@@ -199,6 +213,7 @@ fn footnote_peek(
     Some(Peek {
         kind: PeekKind::Footnote,
         concept_type,
+        type_color: type_color_for(&concept_type),
         document_title,
         title,
         description,

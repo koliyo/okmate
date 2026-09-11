@@ -1,22 +1,12 @@
-(function () {
-  if (window.__okmateNav) {
-    return;
-  }
+import { isInAppDocumentHref, normalizeRoute, requestDocument } from "./core.js";
 
+if (!window.__okmateNav) {
   var sectionState = {};
   var pendingRoute = "";
   var afterPatch = "auto";
   var mountedRoute = normalizeRoute(window.location.pathname);
   if (history.scrollRestoration) {
     history.scrollRestoration = "manual";
-  }
-
-  function normalizeRoute(path) {
-    var route = (path || "/").split(/[?#]/)[0];
-    if (!route || route === "/") {
-      return "/";
-    }
-    return "/" + route.replace(/^\/+|\/+$/g, "") + "/";
   }
 
   function readSections() {
@@ -43,6 +33,14 @@
 
   function navRoot() {
     return document.getElementById("okmate-nav");
+  }
+
+  function tabSeedFromLink(link) {
+    var label = link.querySelector(".okmate-nav-label");
+    var title = ((label || link).textContent || "").trim();
+    var dot = link.querySelector(".okmate-type-dot");
+    var typeColor = (dot && (dot.style.backgroundColor || dot.style.background)) || "";
+    return { title: title, typeColor: typeColor };
   }
 
   function rememberScroll() {
@@ -241,29 +239,6 @@
     return id.indexOf("fn-") === 0 || id.indexOf("fnref-") === 0;
   }
 
-  function isInAppDocumentHref(href, originHref) {
-    if (!href || href.indexOf("/__okmate") === 0) {
-      return false;
-    }
-    var dest;
-    try {
-      dest = new URL(href, originHref || (window.location && window.location.href) || "http://okmate.local/");
-    } catch (err) {
-      return false;
-    }
-    if (dest.protocol === "mailto:" || dest.protocol === "javascript:") {
-      return false;
-    }
-    if (dest.origin && window.location && dest.origin !== window.location.origin) {
-      return false;
-    }
-    var path = dest.pathname || "";
-    if (path.indexOf("/assets/") === 0 || /\.(png|jpe?g|gif|svg|webp|pdf)$/i.test(path)) {
-      return false;
-    }
-    return true;
-  }
-
   function syncTitle() {
     var crumb = document.querySelector(".okmate-crumb-current");
     var heading = document.querySelector("#okmate-main h1");
@@ -360,17 +335,49 @@
     }
   }
 
-  function observeMain() {
-    var main = document.getElementById("okmate-main");
-    if (!main || main.__okmateNavObserved) {
+  function isInAppDocumentFetch(el) {
+    if (!el) {
+      return false;
+    }
+    if (el.id === "okmate-ds") {
+      return true;
+    }
+    var attrs = [
+      el.getAttribute("action") || "",
+      el.getAttribute("href") || "",
+      el.getAttribute("data-on:submit") || "",
+      el.getAttribute("data-on:change") || "",
+      el.getAttribute("data-on:click") || "",
+      el.getAttribute("data-on:click__prevent") || "",
+      el.getAttribute("data-on:input__debounce.300ms") || "",
+    ].join(" ");
+    if (
+      attrs.indexOf("/__okmate/settings") !== -1 ||
+      attrs.indexOf("/__okmate/prefs") !== -1 ||
+      attrs.indexOf("@post") !== -1 ||
+      attrs.indexOf("@put") !== -1 ||
+      attrs.indexOf("@patch") !== -1 ||
+      attrs.indexOf("@delete") !== -1
+    ) {
+      return false;
+    }
+    var href = el.getAttribute("href") || "";
+    if (href && isInAppDocumentHref(href, window.location.href)) {
+      return true;
+    }
+    return attrs.indexOf("@get") !== -1;
+  }
+
+  document.addEventListener("datastar-fetch", function (event) {
+    var detail = event.detail || {};
+    if (detail.type !== "finished") {
       return;
     }
-    main.__okmateNavObserved = true;
-    // Datastar patches #okmate-main (and toc) without replacing #okmate-nav.
-    new MutationObserver(function () {
-      afterDocumentPatch();
-    }).observe(main, { childList: true });
-  }
+    if (!isInAppDocumentFetch(detail.el)) {
+      return;
+    }
+    afterDocumentPatch();
+  });
 
   document.addEventListener(
     "click",
@@ -405,7 +412,12 @@
           event.preventDefault();
           event.stopImmediatePropagation();
           if (window.__okmateTabs && typeof window.__okmateTabs.openHref === "function") {
-            window.__okmateTabs.openHref(href, { activate: !!event.shiftKey });
+            var seed = tabSeedFromLink(link);
+            window.__okmateTabs.openHref(href, {
+              activate: !!event.shiftKey,
+              title: seed.title,
+              typeColor: seed.typeColor,
+            });
           }
           return;
         }
@@ -461,26 +473,16 @@
       }
       event.preventDefault();
       if (window.__okmateTabs && typeof window.__okmateTabs.openHref === "function") {
-        window.__okmateTabs.openHref(href, { activate: false });
+        var seed = tabSeedFromLink(link);
+        window.__okmateTabs.openHref(href, {
+          activate: false,
+          title: seed.title,
+          typeColor: seed.typeColor,
+        });
       }
     },
     true
   );
-
-  function requestDocument(href) {
-    if (!href) {
-      return;
-    }
-    var probe = document.createElement("button");
-    probe.type = "button";
-    probe.hidden = true;
-    probe.setAttribute("data-on:click", "@get('" + href.replace(/'/g, "\\'") + "')");
-    document.body.appendChild(probe);
-    setTimeout(function () {
-      probe.click();
-      probe.remove();
-    }, 0);
-  }
 
   function openRoute(path, hash) {
     var next = path + (hash ? "#" + String(hash).replace(/^#/, "") : "");
@@ -562,7 +564,6 @@
   }
 
   function enhance() {
-    observeMain();
     bindBlurbs();
     syncNav(window.location.pathname);
     restoreSections();
@@ -589,4 +590,4 @@
     isInAppDocumentHref: isInAppDocumentHref,
     isFootnoteHash: isFootnoteHash,
   };
-})();
+}

@@ -1517,7 +1517,7 @@ dependencies = [
 [[package]]
 name = "h35-desktop"
 version = "0.1.0"
-source = "git+https://github.com/koliyo/h35-desktop#8e2b1d7a98cb9fa2834e7f8335bd0c267d7bd038"
+source = "git+https://github.com/koliyo/h35-desktop?rev=9e38d9915a848b0f4f92a28a58265e8ac13a9743#9e38d9915a848b0f4f92a28a58265e8ac13a9743"
 dependencies = [
  "libc",
  "muda",

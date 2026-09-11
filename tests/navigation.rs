@@ -74,6 +74,10 @@ async fn datastar_get_concept_returns_main_fragment() {
         !body.contains("id=\"okmate-nav\""),
         "nav should stay in the DOM: {body}"
     );
+    assert!(
+        !body.contains("id=\"okmate-tabs\""),
+        "tabs should stay outside the Datastar patch: {body}"
+    );
 }
 
 #[tokio::test]
@@ -285,10 +289,46 @@ fn nav_uses_fixed_icons_and_type_dots() {
 #[test]
 fn nav_js_keeps_register_hash_links_in_app() {
     let js = include_str!(concat!(env!("CARGO_MANIFEST_DIR"), "/assets/nav.js"));
+    let core = include_str!(concat!(env!("CARGO_MANIFEST_DIR"), "/assets/core.js"));
     assert!(js.contains("isInAppDocumentHref"), "{js}");
     assert!(js.contains("requestDocument"), "{js}");
+    assert!(core.contains("requestDocument"), "{core}");
+    assert!(
+        core.contains("import { actions } from \"./datastar.js\""),
+        "{core}"
+    );
+    assert!(!js.contains("document.createElement(\"button\")"), "{js}");
+    assert!(
+        !core.contains("document.createElement(\"button\")"),
+        "{core}"
+    );
     assert!(js.contains("fnref-"), "{js}");
     assert!(js.contains("stopImmediatePropagation"), "{js}");
+    assert!(js.contains("datastar-fetch"), "{js}");
+    assert!(
+        !js.contains("new MutationObserver"),
+        "nav.js must not use MutationObserver as the patch bus: {js}"
+    );
+}
+
+#[test]
+fn live_page_loads_core_as_module() {
+    let (root, output) = fixture();
+    let _ = root;
+    let home = fs::read_to_string(output.join("index.html")).unwrap();
+    assert!(
+        home.contains("<script type=\"module\" src=\"/__okmate/core.js\">"),
+        "{home}"
+    );
+    assert!(home.contains("/__okmate/goto.js"), "{home}");
+    assert!(home.contains("id=\"okmate-ds\""), "{home}");
+    assert!(output.join("__okmate").join("core.js").is_file());
+    let goto = include_str!(concat!(env!("CARGO_MANIFEST_DIR"), "/assets/goto.js"));
+    assert!(
+        !goto.contains("location.assign"),
+        "Cmd-K must join the Datastar document path: {goto}"
+    );
+    assert!(goto.contains("openRoute"), "{goto}");
 }
 
 #[test]
