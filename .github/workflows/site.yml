@@ -22,8 +22,8 @@ permissions:
 env:
   # Pinned rocci revision that provides `rocdown` (rocci-rocdown-cli).
   ROCCI_REV: 05a4179665c2b55d7d41450cd3e52c36859822f2
-  ROC_NIGHTLY_DATE: "2026-08-23"
-  ROC_NIGHTLY_SHA: fb208ba
+  ROC_NIGHTLY_DATE: "2026-09-03"
+  ROC_NIGHTLY_SHA: 62fcb65
 
 jobs:
   build:
