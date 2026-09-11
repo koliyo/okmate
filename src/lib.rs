@@ -11,6 +11,7 @@ pub mod http;
 pub mod init;
 mod nav;
 mod paths;
+pub mod peek;
 pub mod port;
 pub mod preview;
 pub mod roots;

@@ -2,12 +2,14 @@ use std::convert::Infallible;
 use std::path::PathBuf;
 use std::time::Instant;
 
-use axum::extract::{Request, State};
-use axum::http::{HeaderMap, HeaderValue, Method};
+use axum::Json;
+use axum::extract::{Query, Request, State};
+use axum::http::{HeaderMap, HeaderValue, Method, StatusCode};
 use axum::middleware::Next;
 use axum::response::{Html, IntoResponse, Response, Sse, sse::Event};
 use datastar::prelude::PatchElements;
 use futures_util::stream;
+use serde::Deserialize;
 
 use crate::http::AppState;
 use crate::site;
@@ -129,6 +131,24 @@ pub async fn review_window(
     match document.render_queue_fragment() {
         Ok(html) => Html(html).into_response(),
         Err(_) => axum::http::StatusCode::INTERNAL_SERVER_ERROR.into_response(),
+    }
+}
+
+#[derive(Deserialize)]
+pub struct PeekQuery {
+    pub path: String,
+    #[serde(default)]
+    pub hash: String,
+}
+
+pub async fn peek(State(state): State<AppState>, Query(query): Query<PeekQuery>) -> Response {
+    let workspace = state
+        .workspace
+        .read()
+        .unwrap_or_else(std::sync::PoisonError::into_inner);
+    match crate::peek::peek(&workspace, &query.path, &query.hash) {
+        Some(peek) => Json(peek).into_response(),
+        None => StatusCode::NOT_FOUND.into_response(),
     }
 }
 

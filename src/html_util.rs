@@ -70,7 +70,7 @@ pub fn first_prose_paragraph(article_html: &str) -> String {
     plaintext(&inner[..end])
 }
 
-fn plaintext(html: &str) -> String {
+pub(crate) fn plaintext(html: &str) -> String {
     let mut out = String::new();
     let mut in_tag = false;
     for ch in html.chars() {

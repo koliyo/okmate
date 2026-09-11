@@ -101,6 +101,7 @@ pub fn router(state: AppState) -> Router {
     let output = state.output.clone();
     Router::new()
         .route("/__okmate/nav-mode", get(set_nav_mode))
+        .route("/__okmate/peek", get(pages::peek))
         .route("/__okmate/prefs", post(prefs::post))
         .route("/__okmate/settings", post(settings::post))
         .route("/__okmate/events", get(config_events))
