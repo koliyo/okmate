@@ -236,6 +236,34 @@
     return normalizeRoute(url.pathname) === mountedRoute;
   }
 
+  function isFootnoteHash(hash) {
+    var id = (hash || "").replace(/^#/, "");
+    return id.indexOf("fn-") === 0 || id.indexOf("fnref-") === 0;
+  }
+
+  function isInAppDocumentHref(href, originHref) {
+    if (!href || href.indexOf("/__okmate") === 0) {
+      return false;
+    }
+    var dest;
+    try {
+      dest = new URL(href, originHref || (window.location && window.location.href) || "http://okmate.local/");
+    } catch (err) {
+      return false;
+    }
+    if (dest.protocol === "mailto:" || dest.protocol === "javascript:") {
+      return false;
+    }
+    if (dest.origin && window.location && dest.origin !== window.location.origin) {
+      return false;
+    }
+    var path = dest.pathname || "";
+    if (path.indexOf("/assets/") === 0 || /\.(png|jpe?g|gif|svg|webp|pdf)$/i.test(path)) {
+      return false;
+    }
+    return true;
+  }
+
   function syncTitle() {
     var crumb = document.querySelector(".okmate-crumb-current");
     var heading = document.querySelector("#okmate-main h1");
@@ -369,6 +397,10 @@
       if (!href || href.indexOf("/__okmate/") === 0) {
         return;
       }
+      if (event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) {
+        event.stopImmediatePropagation();
+        return;
+      }
       var dest;
       try {
         dest = new URL(link.href, window.location.href);
@@ -385,13 +417,19 @@
         finishInPage(dest.pathname + dest.search + dest.hash);
         return;
       }
-      var action =
-        link.getAttribute("data-on:click__prevent") || link.getAttribute("data-on:click") || "";
-      if (action.indexOf("@get") === -1 && !link.closest("#okmate-nav")) {
+      if (!isInAppDocumentHref(href, window.location.href)) {
         return;
       }
+      var next = dest.pathname + dest.search + dest.hash;
+      var action =
+        link.getAttribute("data-on:click__prevent") || link.getAttribute("data-on:click") || "";
       rememberHere();
-      pendingRoute = href;
+      pendingRoute = next;
+      if (action.indexOf("@get") !== -1 || link.closest("#okmate-nav")) {
+        return;
+      }
+      event.preventDefault();
+      requestDocument(dest.pathname + dest.search);
     },
     true
   );
@@ -506,5 +544,8 @@
     rememberHere: rememberHere,
     beginInPage: beginInPage,
     finishInPage: finishInPage,
+    requestDocument: requestDocument,
+    isInAppDocumentHref: isInAppDocumentHref,
+    isFootnoteHash: isFootnoteHash,
   };
 })();

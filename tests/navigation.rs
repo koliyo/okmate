@@ -281,3 +281,68 @@ fn nav_uses_fixed_icons_and_type_dots() {
         "overview leaves must not use the Index type dot: {home}"
     );
 }
+
+#[test]
+fn nav_js_keeps_register_hash_links_in_app() {
+    let js = include_str!(concat!(env!("CARGO_MANIFEST_DIR"), "/assets/nav.js"));
+    assert!(js.contains("isInAppDocumentHref"), "{js}");
+    assert!(js.contains("requestDocument"), "{js}");
+    assert!(js.contains("fnref-"), "{js}");
+    assert!(js.contains("stopImmediatePropagation"), "{js}");
+}
+
+#[test]
+fn report_body_link_to_register_heading_is_in_app_target() {
+    let root = temp_dir("nav-cite");
+    write_index(&root);
+    fs::write(
+        root.join("register.md"),
+        valid_strict_concept("Register", "", "Lead.\n\n### S21\n\nContext.\n"),
+    )
+    .unwrap();
+    fs::write(
+        root.join("report.md"),
+        valid_strict_concept(
+            "Report",
+            "sources:\n  - id: s21\n    resource: https://example.com/steinberger\n    title: Steinberger on citations\n    author: human:steinberger\n",
+            "The report cites Steinberger.[^s21]\n\n[^s21]: Steinberger, 2021. [Research context](register.md#s21).\n",
+        ),
+    )
+    .unwrap();
+    let workspace = okmate::workspace::Workspace::load_single(&root, Profile::Strict).unwrap();
+    let report = workspace
+        .primary()
+        .unwrap()
+        .bundle
+        .concepts
+        .iter()
+        .find(|concept| concept.id == "report")
+        .unwrap();
+    assert!(
+        report.article_html.contains("href=\"/register/#s21\""),
+        "{}",
+        report.article_html
+    );
+    let js = include_str!(concat!(env!("CARGO_MANIFEST_DIR"), "/assets/nav.js"));
+    assert!(
+        js.contains("dest.pathname + dest.search"),
+        "hashed in-app links must @get the document then restore the hash: {js}"
+    );
+}
+
+#[tokio::test]
+async fn datastar_get_still_excludes_nav_for_hashed_concept_route() {
+    let (root, output) = fixture();
+    let response = app(root, output)
+        .oneshot(
+            Request::get("/hello/")
+                .header("datastar-request", "true")
+                .body(Body::empty())
+                .unwrap(),
+        )
+        .await
+        .unwrap();
+    let body = body_text(response).await;
+    assert!(body.contains("id=\"okmate-main\""), "{body}");
+    assert!(!body.contains("id=\"okmate-nav\""), "{body}");
+}
