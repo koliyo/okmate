@@ -27,6 +27,7 @@ const LOG_JS: &str = include_str!("../assets/log.js");
 const RELOAD_JS: &str = include_str!("../assets/reload.js");
 const TABLES_JS: &str = include_str!("../assets/tables.js");
 const META_JS: &str = include_str!("../assets/meta.js");
+const PEEK_JS: &str = include_str!("../assets/peek.js");
 
 #[derive(Serialize)]
 struct NavPage {
@@ -449,7 +450,8 @@ fn write_assets(output: &Path) -> Result<()> {
     fs::write(dir.join("log.js"), LOG_JS).context("failed to write log.js")?;
     fs::write(dir.join("reload.js"), RELOAD_JS).context("failed to write reload.js")?;
     fs::write(dir.join("tables.js"), TABLES_JS).context("failed to write tables.js")?;
-    fs::write(dir.join("meta.js"), META_JS).context("failed to write meta.js")
+    fs::write(dir.join("meta.js"), META_JS).context("failed to write meta.js")?;
+    fs::write(dir.join("peek.js"), PEEK_JS).context("failed to write peek.js")
 }
 
 fn nav_pages(workspace: &Workspace) -> Vec<NavPage> {

@@ -483,6 +483,7 @@ mod tests {
         assert!(html.contains("id=\"okmate-goto-chips\""), "{html}");
         assert!(html.contains("id=\"okmate-goto-input\""), "{html}");
         assert!(html.contains("/__okmate/nav.js"), "{html}");
+        assert!(html.contains("/__okmate/peek.js"), "{html}");
         assert!(html.contains("/__okmate/resize.js"), "{html}");
         assert!(html.contains("/__okmate/tables.js"), "{html}");
         assert!(html.contains("/__okmate/meta.js"), "{html}");

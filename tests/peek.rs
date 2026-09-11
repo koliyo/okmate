@@ -198,6 +198,7 @@ async fn peek_http_returns_heading_and_footnote_json() {
     );
 
     let missing = app
+        .clone()
         .oneshot(
             Request::get("/__okmate/peek?path=/missing/&hash=")
                 .body(Body::empty())
@@ -206,6 +207,16 @@ async fn peek_http_returns_heading_and_footnote_json() {
         .await
         .unwrap();
     assert_eq!(missing.status(), StatusCode::NOT_FOUND);
+
+    let script = app
+        .oneshot(
+            Request::get("/__okmate/peek.js")
+                .body(Body::empty())
+                .unwrap(),
+        )
+        .await
+        .unwrap();
+    assert_eq!(script.status(), StatusCode::OK);
 }
 
 #[tokio::test]
@@ -225,4 +236,51 @@ async fn peek_http_hello_details_is_section_not_intro() {
     let body = body_text(response).await;
     assert!(body.contains("Details body"), "{body}");
     assert!(!body.contains("Intro paragraph"), "{body}");
+}
+
+#[test]
+fn peek_script_classifies_comrak_footnote_refs() {
+    let js = include_str!(concat!(env!("CARGO_MANIFEST_DIR"), "/assets/peek.js"));
+    assert!(js.contains("fnref-"), "{js}");
+    assert!(js.contains("indexOf(\"fn-\")"), "{js}");
+    assert!(js.contains(r#"removeAttribute("title")"#), "{js}");
+    assert!(js.contains(r#"setAttribute("role", "tooltip")"#), "{js}");
+}
+
+#[test]
+fn citation_article_html_has_footnote_ref_hrefs() {
+    let (_root, workspace) = citation_fixture();
+    let report = workspace
+        .primary()
+        .unwrap()
+        .bundle
+        .concepts
+        .iter()
+        .find(|concept| concept.id == "report")
+        .unwrap();
+    assert!(
+        report.article_html.contains("href=\"#fn-s21\""),
+        "{}",
+        report.article_html
+    );
+    assert!(
+        report.article_html.contains("fnref-s21") || report.article_html.contains("footnote-ref"),
+        "{}",
+        report.article_html
+    );
+}
+
+#[tokio::test]
+async fn live_page_includes_peek_script() {
+    let (root, workspace) = hello_fixture();
+    let output = temp_dir("peek-live-out");
+    okmate::site::build_workspace(&workspace, &output).unwrap();
+    assert!(output.join("__okmate").join("peek.js").is_file());
+    let page = app(root, output)
+        .oneshot(Request::get("/hello/").body(Body::empty()).unwrap())
+        .await
+        .unwrap();
+    assert_eq!(page.status(), StatusCode::OK);
+    let body = body_text(page).await;
+    assert!(body.contains("/__okmate/peek.js"), "{body}");
 }
