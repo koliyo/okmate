@@ -320,8 +320,15 @@ fn live_page_loads_core_as_module() {
         home.contains("<script type=\"module\" src=\"/__okmate/core.js\">"),
         "{home}"
     );
+    assert!(home.contains("/__okmate/goto.js"), "{home}");
     assert!(home.contains("id=\"okmate-ds\""), "{home}");
     assert!(output.join("__okmate").join("core.js").is_file());
+    let goto = include_str!(concat!(env!("CARGO_MANIFEST_DIR"), "/assets/goto.js"));
+    assert!(
+        !goto.contains("location.assign"),
+        "Cmd-K must join the Datastar document path: {goto}"
+    );
+    assert!(goto.contains("openRoute"), "{goto}");
 }
 
 #[test]

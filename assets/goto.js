@@ -406,7 +406,11 @@
 
   function go(route) {
     dialog.close();
-    window.location.assign(route);
+    if (!window.__okmateNav || typeof window.__okmateNav.openRoute !== "function") {
+      return;
+    }
+    const dest = new URL(route, window.location.href);
+    window.__okmateNav.openRoute(dest.pathname + dest.search, dest.hash);
   }
 
   function acceptTab(event) {
