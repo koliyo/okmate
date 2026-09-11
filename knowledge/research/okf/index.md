@@ -1,5 +1,7 @@
 # OKF
 
+* [Reference authoring style for OKF](reference-authoring-style.md) - Keyed claim citations, shared registers, reference concepts, and current resolver limitations.
+
 * [State-of-the-art OKF tools and workflows](okf-tools-and-workflows.md) - Portable OKF ecosystem survey.
 * [Knowledge systems built on Open Knowledge Format](knowledge-systems-built-on-okf.md) - Census of OKF-native wikis, memory, retrieval, governance, workspaces, publishing, and vertical knowledge products. Operator setup: [Memanto integration](/research/okmate/memanto-integration.md).
 * [OKMate versus serradura/okf](../okmate/serradura-okf.md) - Pairwise comparison with the Ruby okf-gem toolkit.

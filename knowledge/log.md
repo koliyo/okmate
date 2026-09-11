@@ -5,6 +5,10 @@ Independent bullets under the same `## YYYY-MM-DD` heading combine instead of
 conflicting. Add a new list item; do not reword another session's bullet in
 the same change.
 
+## 2026-09-11
+
+- Investigated OKF reference authoring: recommend document-local keyed claim citations, preserve existing register anchors, and promote reference concepts selectively. Draft research distinguishes the v0.2 citation mechanism from proposed style and current engine limitations.
+
 ## 2026-09-10
 
 - Drafted a plan for `okmate init` (plan-then-`--apply` scaffold, optional `--register` and `--agents`; `new`, TUI studio, and git remotes out of bound). Exploratory; do not log complete until hosted CI succeeds.
