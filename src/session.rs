@@ -342,11 +342,22 @@ pub fn persist_open_path_to(path: &Path, route: &str) {
         session.open_hash = tab.hash.clone();
     } else {
         session.open_hash = None;
-        session.tabs.push(SessionTab {
-            path: open_path.clone(),
-            hash: None,
-            title: String::new(),
-        });
+        let previous = session.open_path.clone();
+        if let Some(tab) = session
+            .tabs
+            .iter_mut()
+            .find(|tab| previous.as_deref() == Some(tab.path.as_str()))
+        {
+            tab.path = open_path.clone();
+            tab.hash = None;
+            tab.title.clear();
+        } else {
+            session.tabs.push(SessionTab {
+                path: open_path.clone(),
+                hash: None,
+                title: String::new(),
+            });
+        }
     }
     session.open_path = Some(open_path);
     session.main_scroll = None;
@@ -731,9 +742,47 @@ mod tests {
         assert_eq!(session.open_path.as_deref(), Some("/review/"));
         assert!(session.open_hash.is_none());
         assert!(session.main_scroll.is_none());
+        assert_eq!(session.tabs.len(), 1);
+        assert_eq!(session.tabs[0].path, "/review/");
         persist_open_path_to(&path, "/review/");
         let again = load_session_from(&path);
         assert_eq!(again.open_path.as_deref(), Some("/review/"));
+        assert_eq!(again.tabs.len(), 1);
+        let _ = fs::remove_dir_all(dir);
+    }
+
+    #[test]
+    fn persist_open_path_retargets_active_tab_only() {
+        let dir = std::env::temp_dir().join(format!(
+            "okmate-state-{}-{}",
+            std::process::id(),
+            "tabs-retarget"
+        ));
+        let _ = fs::remove_dir_all(&dir);
+        fs::create_dir_all(&dir).unwrap();
+        let path = dir.join("session.json");
+        persist_prefs_to(
+            &path,
+            &serde_json::json!({
+                "open_path": "/register/",
+                "open_hash": "fn-s21",
+                "tabs": [
+                    { "path": "/hello/", "hash": "details", "title": "Hello" },
+                    { "path": "/register/", "hash": "fn-s21", "title": "Register" }
+                ]
+            }),
+        );
+        persist_open_path_to(&path, "/review/");
+        let session = load_session_from(&path);
+        assert_eq!(session.open_path.as_deref(), Some("/review/"));
+        assert!(session.open_hash.is_none());
+        assert_eq!(session.tabs.len(), 2);
+        assert_eq!(session.tabs[0].path, "/hello/");
+        assert_eq!(session.tabs[0].hash.as_deref(), Some("details"));
+        assert_eq!(session.tabs[0].title, "Hello");
+        assert_eq!(session.tabs[1].path, "/review/");
+        assert!(session.tabs[1].hash.is_none());
+        assert!(session.tabs[1].title.is_empty());
         let _ = fs::remove_dir_all(dir);
     }
 

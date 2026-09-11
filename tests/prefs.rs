@@ -301,3 +301,52 @@ async fn single_tab_session_omits_strip() {
     .await;
     assert!(!html.contains("id=\"okmate-tabs\""), "{html}");
 }
+
+#[tokio::test]
+async fn document_get_retargets_single_tab() {
+    let (root, output, workspace) = fixture();
+    let session = temp_dir("prefs-retarget-one").join("session.json");
+    okmate::preview::persist_prefs_to(
+        &session,
+        &serde_json::json!({
+            "open_path": "/hello/",
+            "tabs": [{ "path": "/hello/", "title": "Hello" }]
+        }),
+    );
+    let app = okmate::http::router(state(root, output, workspace, session.clone()));
+    let _ = app
+        .oneshot(Request::get("/").body(Body::empty()).unwrap())
+        .await
+        .unwrap();
+    let stored = okmate::preview::load_session_from(&session);
+    assert_eq!(stored.open_path.as_deref(), Some("/"));
+    assert_eq!(stored.tabs.len(), 1);
+    assert_eq!(stored.tabs[0].path, "/");
+}
+
+#[tokio::test]
+async fn document_get_retargets_active_of_two_tabs() {
+    let (root, output, workspace) = fixture();
+    let session = temp_dir("prefs-retarget-two").join("session.json");
+    okmate::preview::persist_prefs_to(
+        &session,
+        &serde_json::json!({
+            "open_path": "/hello/",
+            "tabs": [
+                { "path": "/", "title": "Home" },
+                { "path": "/hello/", "title": "Hello" }
+            ]
+        }),
+    );
+    let app = okmate::http::router(state(root, output, workspace, session.clone()));
+    let _ = app
+        .oneshot(Request::get("/log/").body(Body::empty()).unwrap())
+        .await
+        .unwrap();
+    let stored = okmate::preview::load_session_from(&session);
+    assert_eq!(stored.open_path.as_deref(), Some("/log/"));
+    assert_eq!(stored.tabs.len(), 2);
+    assert_eq!(stored.tabs[0].path, "/");
+    assert_eq!(stored.tabs[0].title, "Home");
+    assert_eq!(stored.tabs[1].path, "/log/");
+}

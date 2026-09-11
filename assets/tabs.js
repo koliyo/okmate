@@ -5,6 +5,7 @@
 
   var tabs = [];
   var active = "";
+  var closed = [];
 
   function normalizeRoute(path) {
     var route = (path || "/").split(/[?#]/)[0];
@@ -14,12 +15,12 @@
     return "/" + route.replace(/^\/+|\/+$/g, "") + "/";
   }
 
-  function hrefFor(tab) {
-    return tab.hash ? tab.path + "#" + tab.hash : tab.path;
-  }
-
   function titleFor(tab) {
     return tab.title || tab.path;
+  }
+
+  function hasIpc() {
+    return !!(window.ipc && typeof window.ipc.postMessage === "function");
   }
 
   function persist() {
@@ -106,15 +107,29 @@
     });
   }
 
-  function upsert(path, hash, title, activate) {
+  function findTab(path) {
     path = normalizeRoute(path);
-    var tab = null;
     for (var i = 0; i < tabs.length; i += 1) {
       if (tabs[i].path === path) {
-        tab = tabs[i];
-        break;
+        return tabs[i];
       }
     }
+    return null;
+  }
+
+  function rememberClosed(tab) {
+    if (!tab) {
+      return;
+    }
+    closed.push({ path: tab.path, hash: tab.hash || "", title: tab.title || "" });
+    if (closed.length > 16) {
+      closed.shift();
+    }
+  }
+
+  function upsert(path, hash, title, activateTab) {
+    path = normalizeRoute(path);
+    var tab = findTab(path);
     if (!tab) {
       tab = { path: path, hash: "", title: "" };
       tabs.push(tab);
@@ -125,7 +140,7 @@
     if (title) {
       tab.title = title;
     }
-    if (activate) {
+    if (activateTab) {
       active = path;
     }
     render();
@@ -135,10 +150,7 @@
   function activate(path, hash) {
     path = normalizeRoute(path);
     upsert(path, hash, "", true);
-    var tab = tabs.filter(function (item) {
-      return item.path === path;
-    })[0];
-    var href = hrefFor({ path: path, hash: hash != null && hash !== "" ? hash : tab && tab.hash });
+    var tab = findTab(path);
     if (window.__okmateNav && typeof window.__okmateNav.openRoute === "function") {
       window.__okmateNav.openRoute(path, hash != null && hash !== "" ? hash : tab && tab.hash);
     }
@@ -170,7 +182,7 @@
   function closePath(path) {
     path = normalizeRoute(path);
     if (tabs.length < 2) {
-      return;
+      return false;
     }
     var index = -1;
     tabs.forEach(function (tab, i) {
@@ -179,8 +191,9 @@
       }
     });
     if (index < 0) {
-      return;
+      return false;
     }
+    rememberClosed(tabs[index]);
     var closingActive = tabs[index].path === active;
     tabs.splice(index, 1);
     if (closingActive) {
@@ -191,13 +204,97 @@
       render();
       persist();
     }
+    return true;
+  }
+
+  function closeCurrent() {
+    if (tabs.length >= 2) {
+      return closePath(active);
+    }
+    if (hasIpc()) {
+      window.ipc.postMessage("close-window");
+    }
+    return false;
+  }
+
+  function newTab() {
+    var home = findTab("/");
+    if (home) {
+      activate("/", home.hash);
+      return;
+    }
+    openHref("/", { activate: true });
+  }
+
+  function reopenClosed() {
+    var tab = closed.pop();
+    if (!tab) {
+      return;
+    }
+    if (findTab(tab.path)) {
+      activate(tab.path, tab.hash);
+      return;
+    }
+    upsert(tab.path, tab.hash, tab.title, true);
+    activate(tab.path, tab.hash);
+  }
+
+  function cycle(delta) {
+    if (tabs.length < 2) {
+      return;
+    }
+    var index = -1;
+    tabs.forEach(function (tab, i) {
+      if (tab.path === active) {
+        index = i;
+      }
+    });
+    if (index < 0) {
+      index = 0;
+    }
+    var next = tabs[(index + delta + tabs.length) % tabs.length];
+    activate(next.path, next.hash);
+  }
+
+  function jump(n) {
+    if (!tabs.length) {
+      return;
+    }
+    var tab = n === 9 ? tabs[tabs.length - 1] : tabs[n - 1];
+    if (tab) {
+      activate(tab.path, tab.hash);
+    }
   }
 
   function afterPatch() {
     var path = normalizeRoute(window.location.pathname);
     var hash = (window.location.hash || "").replace(/^#/, "");
     var title = (document.title || "").trim();
-    upsert(path, hash, title, true);
+    var existing = findTab(path);
+    if (existing) {
+      if (hash) {
+        existing.hash = hash;
+      }
+      if (title) {
+        existing.title = title;
+      }
+      active = path;
+    } else {
+      var current = findTab(active);
+      if (current) {
+        current.path = path;
+        current.hash = hash;
+        if (title) {
+          current.title = title;
+        }
+        active = path;
+      } else {
+        upsert(path, hash, title, true);
+        return;
+      }
+    }
+    render();
+    persist();
   }
 
   function onClick(event) {
@@ -234,6 +331,58 @@
     }
   }
 
+  function typingTarget(event) {
+    var target = event.target;
+    if (!target) {
+      return false;
+    }
+    var tag = (target.tagName || "").toLowerCase();
+    if (tag === "input" || tag === "textarea" || tag === "select" || target.isContentEditable) {
+      return true;
+    }
+    var gotoDialog = document.getElementById("okmate-goto");
+    return !!(gotoDialog && gotoDialog.open);
+  }
+
+  function onKey(event) {
+    if (typingTarget(event)) {
+      return;
+    }
+    var desktop = hasIpc();
+    if (event.key === "Tab" && event.ctrlKey && !event.metaKey && !event.altKey) {
+      if (!desktop) {
+        return;
+      }
+      event.preventDefault();
+      cycle(event.shiftKey ? -1 : 1);
+      return;
+    }
+    var meta = event.metaKey || event.ctrlKey;
+    if (!meta || event.altKey || !desktop) {
+      return;
+    }
+    var key = event.key;
+    if (event.shiftKey && key.toLowerCase() === "t") {
+      event.preventDefault();
+      reopenClosed();
+      return;
+    }
+    if (!event.shiftKey && key.toLowerCase() === "t") {
+      event.preventDefault();
+      newTab();
+      return;
+    }
+    if (!event.shiftKey && key.toLowerCase() === "w") {
+      event.preventDefault();
+      closeCurrent();
+      return;
+    }
+    if (!event.shiftKey && /^[1-9]$/.test(key)) {
+      event.preventDefault();
+      jump(parseInt(key, 10));
+    }
+  }
+
   function enhance() {
     readDom();
     if (!active) {
@@ -253,6 +402,10 @@
       strip.addEventListener("click", onClick);
       strip.addEventListener("auxclick", onAuxClick);
     }
+    if (!window.__okmateTabsKeysBound) {
+      window.__okmateTabsKeysBound = true;
+      window.addEventListener("keydown", onKey);
+    }
   }
 
   if (document.readyState === "loading") {
@@ -261,10 +414,21 @@
     enhance();
   }
 
+  window.__h35NewTab = newTab;
+  window.__h35CloseTab = function () {
+    if (tabs.length < 2) {
+      return false;
+    }
+    closePath(active);
+    return true;
+  };
+
   window.__okmateTabs = {
     enhance: enhance,
     afterPatch: afterPatch,
     openHref: openHref,
     persist: persist,
+    newTab: newTab,
+    closeCurrent: closeCurrent,
   };
 })();
