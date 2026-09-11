@@ -19,16 +19,18 @@
     <script src="/__okmate/reload.js" defer></script>
   </head>
   <body>
-    <div class="okmate-shell">
-      <div class="okmate-chrome" id="okmate-nav">
-        {% include "nav.html" %}
+    <div class="okmate-app">
+      <div class="okmate-shell">
+        <div class="okmate-chrome" id="okmate-nav">
+          {% include "nav.html" %}
+        </div>
+        <main id="okmate-main">
+          {% block main %}{% endblock %}
+        </main>
+        {% include "toc.html" %}
       </div>
-      <main id="okmate-main">
-        {% block main %}{% endblock %}
-      </main>
-      {% include "toc.html" %}
+      {% include "toolbar.html" %}
     </div>
-    {% include "toolbar.html" %}
     <dialog id="okmate-goto" class="okmate-goto" aria-label="Go to page">
       <div class="okmate-goto-query">
         <div id="okmate-goto-chips" class="okmate-goto-chips"></div>

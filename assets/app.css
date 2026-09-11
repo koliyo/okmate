@@ -26,7 +26,6 @@
   --syntax-punctuation: #abb2bf;
   --okmate-ui-font: 16px;
   --okmate-toolbar-height: calc(2.65 * 16px);
-  --okmate-chrome-bottom: calc(var(--okmate-toolbar-height) + env(safe-area-inset-bottom, 0px));
 }
 
 html, body {
@@ -35,6 +34,7 @@ html, body {
   color: var(--rd-fg);
   margin: 0;
   height: 100%;
+  min-height: 0;
   overflow: hidden;
   line-height: 1.65;
 }
@@ -43,12 +43,20 @@ a { color: var(--rd-primary); text-decoration: none; }
 a:hover { text-decoration: underline; }
 code, pre { font-family: var(--rd-font-mono); }
 
+.okmate-app {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-height: 0;
+  overflow: hidden;
+}
 .okmate-shell {
   position: relative;
   display: grid;
+  flex: 1 1 auto;
+  min-height: 0;
   grid-template-columns: var(--okmate-nav-width, 16.5rem) minmax(0, 1fr) var(--okmate-outline-width, 13.5rem);
   align-items: stretch;
-  height: calc(100dvh - var(--okmate-chrome-top, 0px) - var(--okmate-chrome-bottom, 0px));
   overflow: hidden;
 }
 .okmate-shell:not(:has(#okmate-toc .okmate-toc-link)),
@@ -101,7 +109,7 @@ body.is-col-resizing {
 .okmate-chrome {
   box-sizing: border-box;
   min-height: 0;
-  padding: 2.15rem 1.2rem 2rem 1.5rem;
+  padding: 0.9rem 1.2rem 1rem 1.5rem;
   overflow-x: hidden;
   overflow-y: auto;
   -webkit-user-select: none;
@@ -291,11 +299,8 @@ body.is-col-resizing {
   vertical-align: 0.08em;
 }
 .okmate-toolbar {
-  position: fixed;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  z-index: 12;
+  position: relative;
+  flex: 0 0 auto;
   box-sizing: border-box;
   display: flex;
   align-items: center;
@@ -609,7 +614,7 @@ html[data-okmate-wrap="off"] #okmate-main .okmate-md-table td {
   box-sizing: border-box;
   min-width: 0;
   min-height: 0;
-  padding: 2.15rem 1.2rem 2rem 0;
+  padding: 0.9rem 1.2rem 1rem 0;
   overflow-x: hidden;
   overflow-y: auto;
   -webkit-user-select: none;
@@ -1244,7 +1249,10 @@ html[data-okmate-wrap="off"] #okmate-main .okmate-md-table td {
   html, body {
     height: auto;
     overflow: auto;
-    padding-bottom: var(--okmate-chrome-bottom);
+  }
+  .okmate-app {
+    height: auto;
+    overflow: visible;
   }
   #okmate-toc-toggle { display: none; }
   .okmate-shell {

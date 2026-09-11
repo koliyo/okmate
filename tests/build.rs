@@ -48,6 +48,7 @@ fn build_writes_engine_catalog_html_landmarks_and_pages_json() {
     assert_eq!(catalog.as_array().unwrap().len(), 2);
 
     let home = fs::read_to_string(output.join("index.html")).unwrap();
+    assert!(home.contains("class=\"okmate-app\""), "{home}");
     assert!(home.contains("id=\"okmate-nav\""), "{home}");
     assert!(home.contains("id=\"okmate-main\""), "{home}");
     assert!(home.contains("id=\"okmate-toolbar\""), "{home}");
@@ -129,6 +130,9 @@ fn build_writes_engine_catalog_html_landmarks_and_pages_json() {
         "{css}"
     );
     assert!(!css.contains("--okmate-toolbar-height: 2.65rem"), "{css}");
+    assert!(css.contains(".okmate-app"), "{css}");
+    assert!(css.contains("flex-direction: column"), "{css}");
+    assert!(!css.contains("100dvh"), "{css}");
     assert!(css.contains("overflow-x: hidden"), "{css}");
     assert!(css.contains("overflow-x: auto"), "{css}");
     assert!(css.contains("overflow-wrap: anywhere"), "{css}");

@@ -474,6 +474,7 @@ mod tests {
         assert!(html.contains("id=\"okmate-main\""), "{html}");
         assert!(html.contains("id=\"okmate-toc\""), "{html}");
         assert!(html.contains("id=\"okmate-toolbar\""), "{html}");
+        assert!(html.contains("class=\"okmate-app\""), "{html}");
         assert!(html.contains("id=\"okmate-font-larger\""), "{html}");
         assert!(html.contains("<h1>Hello</h1>"));
         assert!(html.contains("/__okmate/app.css"));
