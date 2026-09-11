@@ -39,6 +39,9 @@ datastar = { version = "0.4", features = ["axum"] }
 futures-util = { version = "0.3", default-features = false, features = ["std"] }
 h35-desktop = { git = "https://github.com/koliyo/h35-desktop", rev = "9e38d9915a848b0f4f92a28a58265e8ac13a9743", optional = true }
 
+[target.'cfg(target_os = "macos")'.dependencies]
+objc2-foundation = { version = "0.3", default-features = false, features = ["std", "NSProcessInfo"] }
+
 [dev-dependencies]
 http-body-util = "0.1"
 tower = { version = "0.5", features = ["util"] }

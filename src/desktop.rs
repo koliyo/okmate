@@ -7,9 +7,19 @@ const PICK_FOLDER_ALIAS: &str = concat!(
     "});\n",
 );
 
+const APP_NAME: &str = "OKMate";
+
 const APP_ICON: &[u8] = include_bytes!("../assets/brand/okmate-app-icon-macos.png");
 
+#[cfg(target_os = "macos")]
+fn set_macos_app_name(name: &str) {
+    use objc2_foundation::{NSProcessInfo, NSString};
+    NSProcessInfo::processInfo().setProcessName(&NSString::from_str(name));
+}
+
 pub fn run(options: crate::preview::ViewOptions) -> Result<()> {
+    #[cfg(target_os = "macos")]
+    set_macos_app_name(APP_NAME);
     let (tx, rx) = std::sync::mpsc::channel();
     std::thread::spawn(move || {
         let runtime = match tokio::runtime::Runtime::new() {
@@ -29,7 +39,7 @@ pub fn run(options: crate::preview::ViewOptions) -> Result<()> {
         .context("preview server thread exited before binding")?;
     let ready = ready?;
     h35_desktop::preview(h35_desktop::HostOptions {
-        title: "OKMate".into(),
+        title: APP_NAME.into(),
         identifier: "dev.okmate.preview".into(),
         icon_png: Some(APP_ICON),
         state_dir: crate::preview::state_dir(),
@@ -57,6 +67,13 @@ mod tests {
         assert!(PICK_FOLDER_ALIAS.contains("h35-pick-folder"));
         assert!(PICK_FOLDER_ALIAS.contains("okmate-pick-folder"));
         assert!(PICK_FOLDER_ALIAS.contains("window.__h35FindRoot = '#okmate-main'"));
+    }
+
+    #[test]
+    fn desktop_host_sets_macos_app_name() {
+        let source = include_str!("desktop.rs");
+        assert!(source.contains("setProcessName"));
+        assert!(source.contains("const APP_NAME: &str = \"OKMate\""));
     }
 
     #[test]
