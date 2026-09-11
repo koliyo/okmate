@@ -119,10 +119,10 @@ fn peek_index(index: &Index, hash: &str) -> Peek {
 
 fn chrome_peek(workspace: &Workspace, route: &str) -> Peek {
     let title = match route {
-        "/review/" => "Knowledge Governance & Review Queue",
+        "/review/" => "Review queue",
         "/log/" => "Log",
         "/settings/" => "Settings",
-        _ => "Knowledge",
+        _ => "Dashboard",
     };
     let excerpt = workspace
         .primary()
@@ -212,8 +212,8 @@ fn footnote_peek(
     }
     Some(Peek {
         kind: PeekKind::Footnote,
-        concept_type,
         type_color: type_color_for(&concept_type),
+        concept_type,
         document_title,
         title,
         description,

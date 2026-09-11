@@ -1,3 +1,4 @@
+{% import "nav_macros.html" as nav_ui %}
 <!DOCTYPE html>
 <html lang="en"{% if html_style != "" %} style="{{ html_style }}"{% endif %}{% if !reading_wrap %} data-okmate-wrap="off"{% endif %}{% if reading_full %} data-okmate-full="on"{% endif %}{% if !reading_nav %} data-okmate-nav="off"{% endif %}{% if !reading_toc %} data-okmate-toc="off"{% endif %}{% if main_scroll > 0 %} data-okmate-main-scroll="{{ main_scroll }}"{% endif %}{% if nav_scroll > 0 %} data-okmate-nav-scroll="{{ nav_scroll }}"{% endif %}>
   <head>
@@ -32,7 +33,7 @@
         <nav id="okmate-tabs" class="okmate-tabs" aria-label="Open documents">
           {% for tab in tabs %}
           <div class="okmate-tab{% if tab.current %} is-current{% endif %}" role="tab" aria-selected="{% if tab.current %}true{% else %}false{% endif %}" data-okmate-tab-path="{{ tab.path }}" data-okmate-tab-hash="{{ tab.hash }}" data-okmate-tab-href="{{ tab.href }}" data-okmate-tab-color="{{ tab.type_color }}">
-            <button type="button" class="okmate-tab-open">{% if !tab.type_color.is_empty() %}<span class="okmate-type-dot" style="background: {{ tab.type_color }}"></span>{% endif %}<span class="okmate-tab-label">{{ tab.title }}</span></button>
+            <button type="button" class="okmate-tab-open">{% if tab.path == "/" || tab.path == "/review/" || tab.path == "/log/" || tab.path == "/settings/" %}<span class="okmate-nav-icon" aria-hidden="true">{% call nav_ui::chrome_icon(tab.path) %}{% endcall %}</span>{% else if !tab.type_color.is_empty() %}<span class="okmate-type-dot" style="background: {{ tab.type_color }}"></span>{% endif %}<span class="okmate-tab-label">{{ tab.title }}</span></button>
             <button type="button" class="okmate-tab-close" aria-label="Close">×</button>
           </div>
           {% endfor %}

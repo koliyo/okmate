@@ -258,13 +258,15 @@ fn view_tabs(session: &crate::preview::Session, current_title: &str) -> Vec<crat
         .iter()
         .map(|tab| {
             let current = tab.path == active;
-            let title = if !tab.title.is_empty() {
-                tab.title.clone()
-            } else if current && !current_title.is_empty() {
-                current_title.to_string()
-            } else {
-                chrome_tab_title(&tab.path).unwrap_or_else(|| "…".into())
-            };
+            let title = chrome_tab_title(&tab.path).unwrap_or_else(|| {
+                if !tab.title.is_empty() {
+                    tab.title.clone()
+                } else if current && !current_title.is_empty() {
+                    current_title.to_string()
+                } else {
+                    "…".into()
+                }
+            });
             let hash = tab.hash.clone().unwrap_or_default();
             let href = if hash.is_empty() {
                 tab.path.clone()

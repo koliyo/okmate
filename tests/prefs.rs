@@ -384,3 +384,37 @@ async fn document_get_retargets_active_of_two_tabs() {
     assert_eq!(stored.tabs[0].title, "Home");
     assert_eq!(stored.tabs[1].path, "/log/");
 }
+
+#[tokio::test]
+async fn chrome_tabs_use_short_names_and_nav_icons() {
+    let (root, output, workspace) = fixture();
+    let session = temp_dir("prefs-chrome-tabs").join("session.json");
+    okmate::preview::persist_prefs_to(
+        &session,
+        &serde_json::json!({
+            "open_path": "/review/",
+            "tabs": [
+                { "path": "/", "title": "Knowledge" },
+                { "path": "/review/", "title": "Knowledge Governance & Review Queue" }
+            ]
+        }),
+    );
+    let app = okmate::http::router(state(root, output, workspace, session));
+    let html = body_text(
+        app.oneshot(Request::get("/review/").body(Body::empty()).unwrap())
+            .await
+            .unwrap(),
+    )
+    .await;
+    assert!(html.contains("okmate-tab-label\">Dashboard"), "{html}");
+    assert!(html.contains("okmate-tab-label\">Review queue"), "{html}");
+    assert!(
+        html.contains("data-okmate-tab-path=\"/\"") && html.contains("okmate-nav-icon"),
+        "{html}"
+    );
+    assert!(!html.contains("okmate-tab-label\">Knowledge"), "{html}");
+    assert!(
+        !html.contains("okmate-tab-label\">Knowledge Governance"),
+        "{html}"
+    );
+}

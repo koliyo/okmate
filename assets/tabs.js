@@ -22,7 +22,23 @@
   }
 
   function titleFor(tab) {
-    return tab.title || "…";
+    return chromeTitle(tab.path) || tab.title || "…";
+  }
+
+  function chromeTitle(path) {
+    if (path === "/") {
+      return "Dashboard";
+    }
+    if (path === "/review/") {
+      return "Review queue";
+    }
+    if (path === "/log/") {
+      return "Log";
+    }
+    if (path === "/settings/") {
+      return "Settings";
+    }
+    return "";
   }
 
   function colorFor(tab) {
@@ -92,15 +108,39 @@
       open.appendChild(label);
     }
     label.textContent = titleFor(tab);
+    var chrome = chromeTitle(tab.path);
+    var icon = open.querySelector(".okmate-nav-icon");
     var dot = open.querySelector(".okmate-type-dot");
+    if (chrome) {
+      if (dot) {
+        dot.remove();
+      }
+      if (!icon) {
+        icon = document.createElement("span");
+        icon.className = "okmate-nav-icon";
+        icon.setAttribute("aria-hidden", "true");
+        open.insertBefore(icon, label);
+      }
+      var navIcon = document.querySelector(
+        '#okmate-nav a[href="' + tab.path + '"] .okmate-nav-icon'
+      );
+      if (navIcon) {
+        icon.innerHTML = navIcon.innerHTML;
+      }
+    } else if (icon) {
+      icon.remove();
+    }
+    if (chrome) {
+      return;
+    }
     if (colorFor(tab)) {
-      if (!dot) {
+      if (!dot || !dot.isConnected) {
         dot = document.createElement("span");
         dot.className = "okmate-type-dot";
         open.insertBefore(dot, label);
       }
       dot.style.background = colorFor(tab);
-    } else if (dot) {
+    } else if (dot && dot.isConnected) {
       dot.remove();
     }
   }
@@ -254,10 +294,16 @@
         if (!tab) {
           return;
         }
-        if (data.document_title) {
-          tab.title = data.document_title;
+        var chrome = chromeTitle(path);
+        if (chrome) {
+          tab.title = chrome;
+          tab.typeColor = "";
+        } else {
+          if (data.document_title) {
+            tab.title = data.document_title;
+          }
+          tab.typeColor = data.type_color || "";
         }
-        tab.typeColor = data.type_color || "";
         syncStrip();
         persist();
       })
@@ -294,7 +340,7 @@
     var path = normalizeRoute(dest.pathname);
     var hash = (dest.hash || "").replace(/^#/, "");
     var activateTab = !!options.activate;
-    upsert(path, hash, options.title || "", activateTab, options.typeColor || "");
+    upsert(path, hash, chromeTitle(path) || options.title || "", activateTab, options.typeColor || "");
     fillMeta(path);
     if (activateTab) {
       activate(path, hash);
@@ -396,8 +442,9 @@
   function afterPatch() {
     var path = normalizeRoute(window.location.pathname);
     var hash = (window.location.hash || "").replace(/^#/, "");
-    var title = (document.title || "").trim();
-    var typeColor = metaDotColor();
+    var chrome = chromeTitle(path);
+    var title = chrome || (document.title || "").trim();
+    var typeColor = chrome ? "" : metaDotColor();
     var existing = findTab(path);
     if (existing) {
       if (hash) {
@@ -526,8 +573,8 @@
       tabs.push({
         path: active,
         hash: (window.location.hash || "").replace(/^#/, ""),
-        title: (document.title || "").trim(),
-        typeColor: metaDotColor(),
+        title: chromeTitle(active) || (document.title || "").trim(),
+        typeColor: chromeTitle(active) ? "" : metaDotColor(),
       });
     }
     syncVisibility(stripEl());

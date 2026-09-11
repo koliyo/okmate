@@ -98,6 +98,11 @@ fn hello_heading_peek_uses_details_not_intro() {
     assert_eq!(lead.type_color, okmate::views::type_color("Architecture"));
     let chrome = peek(&workspace, "/review/", "").expect("chrome");
     assert!(chrome.type_color.is_empty(), "{chrome:?}");
+    assert_eq!(chrome.document_title, "Review queue");
+    assert_eq!(
+        peek(&workspace, "/", "").expect("home").document_title,
+        "Dashboard"
+    );
     assert!(
         !serde_json::to_string(&chrome)
             .unwrap()

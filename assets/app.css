@@ -1431,6 +1431,10 @@ html[data-okmate-wrap="off"] #okmate-main .okmate-md-table td {
   overflow: hidden;
   white-space: nowrap;
 }
+.okmate-tab-open .okmate-nav-icon {
+  width: 0.85em;
+  height: 0.85em;
+}
 .okmate-tab-label {
   min-width: 0;
   overflow: hidden;
