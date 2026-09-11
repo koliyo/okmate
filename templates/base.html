@@ -7,8 +7,9 @@
     <title>{{ title }}</title>
     <link rel="stylesheet" href="/__okmate/app.css">
     <script type="module" src="/__okmate/datastar.js"></script>
+    <script type="module" src="/__okmate/core.js"></script>
     <script src="/__okmate/goto.js" defer></script>
-    <script src="/__okmate/nav.js" defer></script>
+    <script type="module" src="/__okmate/nav.js"></script>
     <script src="/__okmate/peek.js" defer></script>
     <script src="/__okmate/tabs.js" defer></script>
     <script src="/__okmate/resize.js" defer></script>
@@ -21,6 +22,7 @@
     <script src="/__okmate/reload.js" defer></script>
   </head>
   <body>
+    <div id="okmate-ds" hidden></div>
     <div class="okmate-app">
       {% if tabs.len() > 1 %}
       <nav id="okmate-tabs" class="okmate-tabs" aria-label="Open documents">

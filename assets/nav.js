@@ -1,22 +1,12 @@
-(function () {
-  if (window.__okmateNav) {
-    return;
-  }
+import { isInAppDocumentHref, normalizeRoute, requestDocument } from "./core.js";
 
+if (!window.__okmateNav) {
   var sectionState = {};
   var pendingRoute = "";
   var afterPatch = "auto";
   var mountedRoute = normalizeRoute(window.location.pathname);
   if (history.scrollRestoration) {
     history.scrollRestoration = "manual";
-  }
-
-  function normalizeRoute(path) {
-    var route = (path || "/").split(/[?#]/)[0];
-    if (!route || route === "/") {
-      return "/";
-    }
-    return "/" + route.replace(/^\/+|\/+$/g, "") + "/";
   }
 
   function readSections() {
@@ -241,29 +231,6 @@
     return id.indexOf("fn-") === 0 || id.indexOf("fnref-") === 0;
   }
 
-  function isInAppDocumentHref(href, originHref) {
-    if (!href || href.indexOf("/__okmate") === 0) {
-      return false;
-    }
-    var dest;
-    try {
-      dest = new URL(href, originHref || (window.location && window.location.href) || "http://okmate.local/");
-    } catch (err) {
-      return false;
-    }
-    if (dest.protocol === "mailto:" || dest.protocol === "javascript:") {
-      return false;
-    }
-    if (dest.origin && window.location && dest.origin !== window.location.origin) {
-      return false;
-    }
-    var path = dest.pathname || "";
-    if (path.indexOf("/assets/") === 0 || /\.(png|jpe?g|gif|svg|webp|pdf)$/i.test(path)) {
-      return false;
-    }
-    return true;
-  }
-
   function syncTitle() {
     var crumb = document.querySelector(".okmate-crumb-current");
     var heading = document.querySelector("#okmate-main h1");
@@ -467,21 +434,6 @@
     true
   );
 
-  function requestDocument(href) {
-    if (!href) {
-      return;
-    }
-    var probe = document.createElement("button");
-    probe.type = "button";
-    probe.hidden = true;
-    probe.setAttribute("data-on:click", "@get('" + href.replace(/'/g, "\\'") + "')");
-    document.body.appendChild(probe);
-    setTimeout(function () {
-      probe.click();
-      probe.remove();
-    }, 0);
-  }
-
   function openRoute(path, hash) {
     var next = path + (hash ? "#" + String(hash).replace(/^#/, "") : "");
     rememberHere();
@@ -589,4 +541,4 @@
     isInAppDocumentHref: isInAppDocumentHref,
     isFootnoteHash: isFootnoteHash,
   };
-})();
+}

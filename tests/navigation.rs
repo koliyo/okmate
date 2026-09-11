@@ -285,10 +285,34 @@ fn nav_uses_fixed_icons_and_type_dots() {
 #[test]
 fn nav_js_keeps_register_hash_links_in_app() {
     let js = include_str!(concat!(env!("CARGO_MANIFEST_DIR"), "/assets/nav.js"));
+    let core = include_str!(concat!(env!("CARGO_MANIFEST_DIR"), "/assets/core.js"));
     assert!(js.contains("isInAppDocumentHref"), "{js}");
     assert!(js.contains("requestDocument"), "{js}");
+    assert!(core.contains("requestDocument"), "{core}");
+    assert!(
+        core.contains("import { actions } from \"./datastar.js\""),
+        "{core}"
+    );
+    assert!(!js.contains("document.createElement(\"button\")"), "{js}");
+    assert!(
+        !core.contains("document.createElement(\"button\")"),
+        "{core}"
+    );
     assert!(js.contains("fnref-"), "{js}");
     assert!(js.contains("stopImmediatePropagation"), "{js}");
+}
+
+#[test]
+fn live_page_loads_core_as_module() {
+    let (root, output) = fixture();
+    let _ = root;
+    let home = fs::read_to_string(output.join("index.html")).unwrap();
+    assert!(
+        home.contains("<script type=\"module\" src=\"/__okmate/core.js\">"),
+        "{home}"
+    );
+    assert!(home.contains("id=\"okmate-ds\""), "{home}");
+    assert!(output.join("__okmate").join("core.js").is_file());
 }
 
 #[test]
