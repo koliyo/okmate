@@ -42,6 +42,7 @@ pub fn run(options: crate::preview::ViewOptions) -> Result<()> {
         check_updates: std::env::current_exe()
             .ok()
             .is_some_and(|exe| crate::bundle::running_inside_app_bundle(&exe)),
+        tab_shortcuts: true,
         ..h35_desktop::HostOptions::default()
     })
     .map_err(|error| anyhow::anyhow!("{error}"))
@@ -56,6 +57,12 @@ mod tests {
         assert!(PICK_FOLDER_ALIAS.contains("h35-pick-folder"));
         assert!(PICK_FOLDER_ALIAS.contains("okmate-pick-folder"));
         assert!(PICK_FOLDER_ALIAS.contains("window.__h35FindRoot = '#okmate-main'"));
+    }
+
+    #[test]
+    fn desktop_host_enables_tab_shortcuts() {
+        let source = include_str!("desktop.rs");
+        assert!(source.contains("tab_shortcuts: true"));
     }
 
     #[test]
