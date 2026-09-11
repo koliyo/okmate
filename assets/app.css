@@ -56,6 +56,7 @@ code, pre { font-family: var(--rd-font-mono); }
   flex: 1 1 auto;
   min-height: 0;
   grid-template-columns: var(--okmate-nav-width, 16.5rem) minmax(0, 1fr) var(--okmate-outline-width, 13.5rem);
+  grid-template-rows: auto minmax(0, 1fr);
   align-items: stretch;
   overflow: hidden;
 }
@@ -73,12 +74,31 @@ html[data-okmate-nav="off"][data-okmate-toc="off"] .okmate-shell {
 html[data-okmate-nav="off"] .okmate-chrome {
   display: none;
 }
+#okmate-main {
+  grid-column: 2;
+  grid-row: 2;
+}
+#okmate-toc {
+  grid-column: 3;
+  grid-row: 2;
+}
+html[data-okmate-nav="off"] .okmate-tabs {
+  grid-column: 1 / -1;
+}
+html[data-okmate-nav="off"] #okmate-main {
+  grid-column: 1;
+}
+html[data-okmate-nav="off"] #okmate-toc {
+  grid-column: 2;
+}
 html[data-okmate-toc="off"] #okmate-toc {
   display: none;
 }
 
 .okmate-col-resizer {
   position: absolute;
+  grid-column: 1 / -1;
+  grid-row: 1 / -1;
   top: 0;
   bottom: 0;
   width: 11px;
@@ -117,6 +137,8 @@ body.is-col-resizing {
 }
 
 #okmate-nav.okmate-chrome {
+  grid-column: 1;
+  grid-row: 1 / -1;
   padding-left: 0;
   padding-right: 0;
 }
@@ -1367,7 +1389,8 @@ html[data-okmate-wrap="off"] #okmate-main .okmate-md-table td {
 
 .okmate-tabs {
   display: flex;
-  flex: 0 0 auto;
+  grid-column: 2 / -1;
+  grid-row: 1;
   gap: 0.2rem;
   min-height: 2.1rem;
   padding: 0.28rem 0.55rem 0;

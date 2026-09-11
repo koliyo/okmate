@@ -272,6 +272,13 @@ async fn two_tab_session_renders_strip_and_keeps_hash() {
     .await;
     assert!(html.contains("id=\"okmate-tabs\""), "{html}");
     assert!(html.contains("id=\"okmate-tab-template\""), "{html}");
+    let nav_at = html.find("id=\"okmate-nav\"").expect("nav");
+    let tabs_at = html.find("id=\"okmate-tabs\"").expect("tabs");
+    let main_at = html.find("id=\"okmate-main\"").expect("main");
+    assert!(
+        nav_at < tabs_at && tabs_at < main_at,
+        "tabs should sit in the shell after nav and before main"
+    );
     assert!(html.contains("Hello"), "{html}");
     assert!(html.contains("data-okmate-tab-hash=\"s21\""), "{html}");
     assert!(html.contains("okmate-type-dot"), "{html}");
@@ -280,6 +287,10 @@ async fn two_tab_session_renders_strip_and_keeps_hash() {
     assert!(
         !tabs_js.contains("replaceChildren"),
         "Askama owns tab HTML; tabs.js must not rebuild the strip: {tabs_js}"
+    );
+    assert!(
+        tabs_js.contains("shell.insertBefore(el, main)"),
+        "tab strip belongs in the document column: {tabs_js}"
     );
     assert!(tabs_js.contains("/__okmate/peek"), "{tabs_js}");
     assert!(tabs_js.contains("document_title"), "{tabs_js}");

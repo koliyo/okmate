@@ -68,6 +68,11 @@
     var edge = kind === "nav" ? hostBox.right : hostBox.left;
     handle.style.left = Math.round(edge - shellBox.left - handle.offsetWidth / 2) + "px";
     handle.style.right = "auto";
+    if (kind === "outline") {
+      handle.style.top = Math.max(0, Math.round(hostBox.top - shellBox.top)) + "px";
+    } else {
+      handle.style.top = "0";
+    }
   }
 
   function placeAll() {

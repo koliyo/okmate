@@ -60,16 +60,16 @@
     if (el) {
       return el;
     }
-    var app = document.querySelector(".okmate-app");
     var shell = document.querySelector(".okmate-shell");
-    if (!app || !shell) {
+    var main = document.getElementById("okmate-main");
+    if (!shell || !main) {
       return null;
     }
     el = document.createElement("nav");
     el.id = "okmate-tabs";
     el.className = "okmate-tabs";
     el.setAttribute("aria-label", "Open documents");
-    app.insertBefore(el, shell);
+    shell.insertBefore(el, main);
     return el;
   }
 
