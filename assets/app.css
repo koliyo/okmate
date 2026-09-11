@@ -712,6 +712,22 @@ html[data-okmate-wrap="off"] #okmate-main .okmate-md-table td {
   justify-content: flex-start;
 }
 
+.okmate-reload {
+  width: min(28rem, calc(100vw - 2rem));
+  padding: 1rem 1.1rem;
+  border: 1px solid var(--rd-border);
+  border-radius: 0.6rem;
+  background: var(--rd-bg-subtle);
+  color: var(--rd-fg);
+}
+.okmate-reload::backdrop { background: rgb(0 0 0 / 0.45); }
+.okmate-reload p { margin: 0 0 0.85rem; }
+.okmate-reload-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.5rem;
+}
+
 .okmate-meta { display: flex; flex-wrap: wrap; gap: 0.4rem; margin: 0 0 1.25rem; }
 .okmate-badge {
   display: inline-flex;

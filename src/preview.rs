@@ -6,6 +6,7 @@ use anyhow::{Context, Result, bail};
 use notify::{Config, RecommendedWatcher, RecursiveMode, Watcher};
 use okf::{LoadOptions, Profile};
 use tokio::sync::mpsc;
+use tokio::sync::watch;
 
 use crate::http::{bind_addr, output_path, router};
 use crate::site;
@@ -176,13 +177,34 @@ async fn prepare(options: ViewOptions) -> Result<PreparedView> {
     eprintln!("okmate: serving {label} at http://{}{}", bound, open_path);
 
     let workspace = crate::http::share_workspace(target.workspace);
+    let (config_prompt, _) = watch::channel((0, None));
+    let (watch_paths, watch_paths_rx) = watch::channel(
+        workspace
+            .read()
+            .unwrap_or_else(PoisonError::into_inner)
+            .watch_paths(),
+    );
     let watch_workspace = workspace.clone();
     let watch_output = output.clone();
+    let watch_cache = cache_parent.clone();
     tokio::spawn(async move {
-        if let Err(error) =
-            watch_rebuild(watch_workspace, watch_output, load_options, cache_parent).await
+        if let Err(error) = watch_rebuild(
+            watch_workspace,
+            watch_output,
+            load_options,
+            watch_cache,
+            watch_paths_rx,
+        )
+        .await
         {
             eprintln!("okmate: watch stopped: {error:#}");
+        }
+    });
+    let config_watch_path = crate::config::config_path();
+    let config_prompt_watch = config_prompt.clone();
+    tokio::spawn(async move {
+        if let Err(error) = watch_config(config_watch_path, config_prompt_watch).await {
+            eprintln!("okmate: config watch stopped: {error:#}");
         }
     });
 
@@ -207,6 +229,10 @@ async fn prepare(options: ViewOptions) -> Result<PreparedView> {
             profile: options.profile,
             config_path: crate::config::config_path(),
             session_path: session_path(),
+            load_options,
+            cache_parent,
+            config_prompt,
+            watch_paths,
         },
         home_url,
         initial_url,
@@ -226,15 +252,47 @@ async fn prepare_settings_host(options: ViewOptions) -> Result<PreparedView> {
     let home_url = home_url(bound);
     let initial_url = format!("{}settings/", home_url);
     eprintln!("okmate: serving settings at {initial_url}");
+    let workspace = crate::http::share_workspace(Workspace::empty());
+    let (config_prompt, _) = watch::channel((0, None));
+    let (watch_paths, watch_paths_rx) = watch::channel(Vec::new());
+    let load_options = view_load_options(options.profile, options.provenance);
+    let cache_parent = crate::config::cache_dir();
+    let watch_workspace = workspace.clone();
+    let watch_output = output.clone();
+    let watch_cache = cache_parent.clone();
+    tokio::spawn(async move {
+        if let Err(error) = watch_rebuild(
+            watch_workspace,
+            watch_output,
+            load_options,
+            watch_cache,
+            watch_paths_rx,
+        )
+        .await
+        {
+            eprintln!("okmate: watch stopped: {error:#}");
+        }
+    });
+    let config_watch_path = crate::config::config_path();
+    let config_prompt_watch = config_prompt.clone();
+    tokio::spawn(async move {
+        if let Err(error) = watch_config(config_watch_path, config_prompt_watch).await {
+            eprintln!("okmate: config watch stopped: {error:#}");
+        }
+    });
     Ok(PreparedView {
         listener,
         state: crate::http::AppState {
             output,
             root: PathBuf::from("/"),
-            workspace: crate::http::share_workspace(Workspace::empty()),
+            workspace,
             profile: options.profile,
             config_path: crate::config::config_path(),
             session_path: session_path(),
+            load_options,
+            cache_parent,
+            config_prompt,
+            watch_paths,
         },
         home_url,
         initial_url,
@@ -255,11 +313,43 @@ pub fn resolve_target(path: Option<&Path>) -> Result<okf::PreviewTarget> {
     bail!("pass a knowledge bundle path, or open one first so ~/.okmate/state remembers it");
 }
 
+pub(crate) fn apply_workspace_reload(state: &crate::http::AppState) -> Result<()> {
+    let session = load_session_from(&state.session_path);
+    let workspace = match Workspace::for_view(
+        None,
+        state.load_options,
+        &state.config_path,
+        &state.cache_parent,
+        session.bundle.as_deref(),
+    ) {
+        Ok(target) => {
+            persist_workspace_to(&state.session_path, &target.workspace);
+            target.workspace
+        }
+        Err(error) => {
+            eprintln!("okmate: {error:#}; keeping empty workspace");
+            Workspace::empty()
+        }
+    };
+    if workspace.is_empty() {
+        site::write_settings_host(&state.output)?;
+    } else {
+        site::build_workspace_nav(&workspace, &state.output)?;
+    }
+    let paths = workspace.watch_paths();
+    state.replace_workspace(workspace);
+    let _ = state.watch_paths.send(paths);
+    let generation = state.config_prompt.borrow().0;
+    let _ = state.config_prompt.send((generation, None));
+    Ok(())
+}
+
 async fn watch_rebuild(
     workspace: Arc<RwLock<Workspace>>,
     output: PathBuf,
     options: LoadOptions,
     cache_parent: PathBuf,
+    mut paths_rx: watch::Receiver<Vec<PathBuf>>,
 ) -> Result<()> {
     let (tx, mut rx) = mpsc::unbounded_channel();
     let mut watcher = RecommendedWatcher::new(
@@ -269,16 +359,59 @@ async fn watch_rebuild(
         Config::default(),
     )
     .context("failed to start knowledge watcher")?;
-    for path in workspace
-        .read()
-        .unwrap_or_else(PoisonError::into_inner)
-        .watch_paths()
-    {
-        watcher
-            .watch(&path, RecursiveMode::Recursive)
-            .with_context(|| format!("failed to watch {}", path.display()))?;
+    let mut watched = paths_rx.borrow().clone();
+    sync_bundle_watches(&mut watcher, &mut Vec::new(), &watched);
+    loop {
+        tokio::select! {
+            event = rx.recv() => {
+                let Some(event) = event else {
+                    break;
+                };
+                if event.is_err() {
+                    continue;
+                }
+                debounce_notify(&mut rx).await;
+                let snapshot = workspace
+                    .read()
+                    .unwrap_or_else(PoisonError::into_inner)
+                    .clone();
+                match snapshot.reload_with(options, Some(&cache_parent)) {
+                    Ok(reloaded) => {
+                        if let Err(error) = site::build_workspace_nav(&reloaded, &output) {
+                            eprintln!("okmate: rebuild failed: {error:#}");
+                        }
+                        *workspace.write().unwrap_or_else(PoisonError::into_inner) = reloaded;
+                    }
+                    Err(error) => eprintln!("okmate: reload failed: {error:#}"),
+                }
+            }
+            changed = paths_rx.changed() => {
+                if changed.is_err() {
+                    break;
+                }
+                let desired = paths_rx.borrow().clone();
+                sync_bundle_watches(&mut watcher, &mut watched, &desired);
+            }
+        }
     }
+    Ok(())
+}
 
+async fn watch_config(
+    config_path: PathBuf,
+    prompt: watch::Sender<(u64, Option<String>)>,
+) -> Result<()> {
+    let mut fingerprint =
+        crate::config::membership_fingerprint(&crate::config::load_or_default(&config_path));
+    let (tx, mut rx) = mpsc::unbounded_channel();
+    let mut watcher = RecommendedWatcher::new(
+        move |event| {
+            let _ = tx.send(event);
+        },
+        Config::default(),
+    )
+    .context("failed to start config watcher")?;
+    watch_config_targets(&mut watcher, &config_path)?;
     loop {
         let Some(event) = rx.recv().await else {
             break;
@@ -286,33 +419,84 @@ async fn watch_rebuild(
         if event.is_err() {
             continue;
         }
-        let debounce = tokio::time::sleep(Duration::from_millis(200));
-        tokio::pin!(debounce);
-        loop {
-            tokio::select! {
-                next = rx.recv() => {
-                    if next.is_none() {
-                        break;
+        debounce_notify(&mut rx).await;
+        if config_path.is_file() {
+            match crate::config::load_from_path(&config_path) {
+                Ok(config) => {
+                    let next = crate::config::membership_fingerprint(&config);
+                    if let Some(message) =
+                        crate::config::membership_change_summary(&fingerprint, &next)
+                    {
+                        fingerprint = next;
+                        let generation = prompt.borrow().0 + 1;
+                        let _ = prompt.send((generation, Some(message)));
                     }
                 }
-                _ = &mut debounce => break,
+                Err(error) => eprintln!("okmate: config reload skipped: {error:#}"),
+            }
+        } else {
+            let next = crate::config::membership_fingerprint(&crate::config::UserConfig::default());
+            if let Some(message) = crate::config::membership_change_summary(&fingerprint, &next) {
+                fingerprint = next;
+                let generation = prompt.borrow().0 + 1;
+                let _ = prompt.send((generation, Some(message)));
             }
         }
-        let snapshot = workspace
-            .read()
-            .unwrap_or_else(PoisonError::into_inner)
-            .clone();
-        match snapshot.reload_with(options, Some(&cache_parent)) {
-            Ok(reloaded) => {
-                if let Err(error) = site::build_workspace_nav(&reloaded, &output) {
-                    eprintln!("okmate: rebuild failed: {error:#}");
-                }
-                *workspace.write().unwrap_or_else(PoisonError::into_inner) = reloaded;
-            }
-            Err(error) => eprintln!("okmate: reload failed: {error:#}"),
+        let _ = watch_config_targets(&mut watcher, &config_path);
+    }
+    Ok(())
+}
+
+fn watch_config_targets(watcher: &mut RecommendedWatcher, config_path: &Path) -> Result<()> {
+    if let Some(parent) = config_path.parent() {
+        if parent.exists() {
+            watcher
+                .watch(parent, RecursiveMode::NonRecursive)
+                .with_context(|| format!("failed to watch {}", parent.display()))?;
+        } else if let Some(grand) = parent.parent()
+            && grand.exists()
+        {
+            watcher
+                .watch(grand, RecursiveMode::NonRecursive)
+                .with_context(|| format!("failed to watch {}", grand.display()))?;
         }
     }
     Ok(())
+}
+
+fn sync_bundle_watches(
+    watcher: &mut RecommendedWatcher,
+    current: &mut Vec<PathBuf>,
+    desired: &[PathBuf],
+) {
+    for path in current.iter() {
+        if !desired.iter().any(|wanted| wanted == path) {
+            let _ = watcher.unwatch(path);
+        }
+    }
+    for path in desired {
+        if !current.iter().any(|watched| watched == path)
+            && let Err(error) = watcher.watch(path, RecursiveMode::Recursive)
+        {
+            eprintln!("okmate: failed to watch {}: {error:#}", path.display());
+        }
+    }
+    *current = desired.to_vec();
+}
+
+async fn debounce_notify(rx: &mut mpsc::UnboundedReceiver<notify::Result<notify::Event>>) {
+    let debounce = tokio::time::sleep(Duration::from_millis(200));
+    tokio::pin!(debounce);
+    loop {
+        tokio::select! {
+            next = rx.recv() => {
+                if next.is_none() {
+                    break;
+                }
+            }
+            _ = &mut debounce => break,
+        }
+    }
 }
 
 #[cfg(test)]

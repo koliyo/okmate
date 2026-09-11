@@ -1,15 +1,18 @@
+use std::convert::Infallible;
 use std::net::{IpAddr, Ipv4Addr, SocketAddr};
 use std::path::{Path, PathBuf};
 use std::sync::{Arc, PoisonError, RwLock};
 
 use axum::Router;
-use axum::extract::{Query, State};
-use axum::http::HeaderMap;
+use axum::extract::{ConnectInfo, Query, State};
+use axum::http::{HeaderMap, StatusCode};
 use axum::middleware;
-use axum::response::Redirect;
+use axum::response::{IntoResponse, Redirect, Response, Sse, sse::Event};
 use axum::routing::{get, post};
-use okf::Profile;
+use futures_util::StreamExt;
+use okf::{LoadOptions, Profile};
 use serde::Deserialize;
+use tokio::sync::watch;
 use tower_http::services::ServeDir;
 
 mod pages;
@@ -26,19 +29,48 @@ pub struct AppState {
     pub profile: Profile,
     pub config_path: PathBuf,
     pub session_path: PathBuf,
+    pub load_options: LoadOptions,
+    pub cache_parent: PathBuf,
+    pub config_prompt: watch::Sender<(u64, Option<String>)>,
+    pub watch_paths: watch::Sender<Vec<PathBuf>>,
 }
 
 impl AppState {
     pub fn new(output: PathBuf, root: PathBuf, profile: Profile, config_path: PathBuf) -> Self {
         let workspace = crate::workspace::Workspace::load_single(&root, profile)
             .unwrap_or_else(|_| crate::workspace::Workspace::empty());
+        Self::from_workspace(
+            output,
+            root,
+            workspace,
+            profile,
+            config_path,
+            crate::session::session_path(),
+        )
+    }
+
+    pub fn from_workspace(
+        output: PathBuf,
+        root: PathBuf,
+        workspace: crate::workspace::Workspace,
+        profile: Profile,
+        config_path: PathBuf,
+        session_path: PathBuf,
+    ) -> Self {
+        let paths = workspace.watch_paths();
+        let (config_prompt, _) = watch::channel((0, None));
+        let (watch_paths, _) = watch::channel(paths);
         Self {
             output,
             root,
             workspace: share_workspace(workspace),
             profile,
             config_path,
-            session_path: crate::session::session_path(),
+            session_path,
+            load_options: LoadOptions::new(profile),
+            cache_parent: crate::config::cache_dir(),
+            config_prompt,
+            watch_paths,
         }
     }
 
@@ -71,6 +103,8 @@ pub fn router(state: AppState) -> Router {
         .route("/__okmate/nav-mode", get(set_nav_mode))
         .route("/__okmate/prefs", post(prefs::post))
         .route("/__okmate/settings", post(settings::post))
+        .route("/__okmate/events", get(config_events))
+        .route("/__okmate/reload-workspace", post(reload_workspace))
         .route("/__okmate/review-window", get(pages::review_window))
         .route("/__okmate/log-window", get(pages::log_window))
         .nest_service("/__okmate", ServeDir::new(output.join("__okmate")))
@@ -101,6 +135,52 @@ async fn set_nav_mode(
         let _ = crate::site::build_workspace_nav(&workspace, &state.output);
     }
     redirect_back(&headers)
+}
+
+async fn config_events(
+    ConnectInfo(addr): ConnectInfo<SocketAddr>,
+    State(state): State<AppState>,
+) -> Response {
+    if !addr.ip().is_loopback() {
+        return (StatusCode::FORBIDDEN, "events is loopback-only").into_response();
+    }
+    let rx = state.config_prompt.subscribe();
+    let stream = futures_util::stream::unfold((rx, true), |(mut rx, first)| async move {
+        let value = if first {
+            rx.borrow().clone()
+        } else {
+            rx.changed().await.ok()?;
+            rx.borrow().clone()
+        };
+        Some((config_reload_event(value), (rx, false)))
+    })
+    .filter_map(|event| async move { event.map(Ok::<Event, Infallible>) });
+    Sse::new(stream).into_response()
+}
+
+fn config_reload_event(value: (u64, Option<String>)) -> Option<Event> {
+    let (generation, message) = value;
+    Some(
+        Event::default()
+            .event("config-reload")
+            .id(generation.to_string())
+            .data(message?),
+    )
+}
+
+async fn reload_workspace(
+    ConnectInfo(addr): ConnectInfo<SocketAddr>,
+    State(state): State<AppState>,
+) -> Response {
+    if !addr.ip().is_loopback() {
+        return (StatusCode::FORBIDDEN, "workspace reload is loopback-only").into_response();
+    }
+    match tokio::task::spawn_blocking(move || crate::preview::apply_workspace_reload(&state)).await
+    {
+        Ok(Ok(())) => StatusCode::NO_CONTENT.into_response(),
+        Ok(Err(error)) => (StatusCode::INTERNAL_SERVER_ERROR, format!("{error:#}")).into_response(),
+        Err(error) => (StatusCode::INTERNAL_SERVER_ERROR, format!("{error:#}")).into_response(),
+    }
 }
 
 fn redirect_back(headers: &HeaderMap) -> Redirect {

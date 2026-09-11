@@ -141,3 +141,72 @@ async fn settings_post_rejects_non_loopback() {
         .unwrap();
     assert_eq!(response.status(), StatusCode::FORBIDDEN);
 }
+
+#[tokio::test]
+async fn reload_workspace_loads_config_roots() {
+    let a = temp_dir("reload-a");
+    let b = temp_dir("reload-b");
+    write_index(&a);
+    write_index(&b);
+    fs::write(
+        a.join("hello.md"),
+        valid_strict_concept("Alpha", "", "A body.\n"),
+    )
+    .unwrap();
+    fs::write(
+        b.join("hello.md"),
+        valid_strict_concept("Beta", "", "B body.\n"),
+    )
+    .unwrap();
+    let output = temp_dir("reload-out");
+    okmate::site::build(&a, &output, Profile::Strict).unwrap();
+    let config = temp_dir("reload-cfg").join("config.toml");
+    fs::write(
+        &config,
+        format!(
+            "[[roots]]\nid = \"a\"\nkind = \"directory\"\npath = \"{}\"\n[[roots]]\nid = \"b\"\nkind = \"directory\"\npath = \"{}\"\n",
+            a.display(),
+            b.display()
+        ),
+    )
+    .unwrap();
+    let cache = temp_dir("reload-cache");
+    let mut state = okmate::http::AppState::new(output.clone(), a.clone(), Profile::Strict, config);
+    state.cache_parent = cache;
+    let app = okmate::http::router(state)
+        .layer(MockConnectInfo(SocketAddr::from(([127, 0, 0, 1], 40000))));
+    let response = app
+        .clone()
+        .oneshot(
+            Request::post("/__okmate/reload-workspace")
+                .body(Body::empty())
+                .unwrap(),
+        )
+        .await
+        .unwrap();
+    assert_eq!(response.status(), StatusCode::NO_CONTENT);
+
+    let body = body_text(
+        app.oneshot(Request::get("/@a/hello/").body(Body::empty()).unwrap())
+            .await
+            .unwrap(),
+    )
+    .await;
+    assert!(body.contains("Alpha"), "{body}");
+    assert!(body.contains("data-okmate-nav-section=\"b\""), "{body}");
+}
+
+#[tokio::test]
+async fn reload_workspace_rejects_non_loopback() {
+    let (root, output, config) = fixture();
+    let app = app(root, output, config, [10, 0, 0, 1]);
+    let response = app
+        .oneshot(
+            Request::post("/__okmate/reload-workspace")
+                .body(Body::empty())
+                .unwrap(),
+        )
+        .await
+        .unwrap();
+    assert_eq!(response.status(), StatusCode::FORBIDDEN);
+}

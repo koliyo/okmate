@@ -273,6 +273,93 @@ pub fn valid_git_url(url: &str) -> bool {
         || url.starts_with("file://")
 }
 
+pub fn membership_fingerprint(config: &UserConfig) -> Vec<String> {
+    let mut rows: Vec<String> = config.roots.iter().map(membership_row).collect();
+    rows.sort();
+    rows
+}
+
+pub fn membership_change_summary(before: &[String], after: &[String]) -> Option<String> {
+    if before == after {
+        return None;
+    }
+    let before_ids = membership_ids(before);
+    let after_ids = membership_ids(after);
+    let added: Vec<&str> = after_ids
+        .iter()
+        .copied()
+        .filter(|id| !before_ids.contains(id))
+        .collect();
+    let removed: Vec<&str> = before_ids
+        .iter()
+        .copied()
+        .filter(|id| !after_ids.contains(id))
+        .collect();
+    if !added.is_empty() && removed.is_empty() {
+        return Some(format!(
+            "{} Reload the workspace to use {}.",
+            listed("added", &added),
+            if added.len() == 1 {
+                "the new root"
+            } else {
+                "the new roots"
+            }
+        ));
+    }
+    if added.is_empty() && !removed.is_empty() {
+        return Some(format!(
+            "{} Reload the workspace to drop {}.",
+            listed("removed", &removed),
+            if removed.len() == 1 { "it" } else { "them" }
+        ));
+    }
+    if !added.is_empty() || !removed.is_empty() {
+        let mut parts = Vec::new();
+        if !added.is_empty() {
+            parts.push(listed("added", &added));
+        }
+        if !removed.is_empty() {
+            parts.push(listed("removed", &removed));
+        }
+        return Some(format!(
+            "{} Reload the workspace to apply the change.",
+            parts.join(" ")
+        ));
+    }
+    Some("A knowledge root path or remote changed. Reload the workspace to apply it.".into())
+}
+
+fn membership_row(root: &RootConfig) -> String {
+    match root {
+        RootConfig::Directory(dir) => format!("directory\0{}\0{}", dir.id, dir.path),
+        RootConfig::Git(git) => {
+            format!(
+                "git\0{}\0{}\0{}\0{}",
+                git.id, git.url, git.branch, git.bundle
+            )
+        }
+    }
+}
+
+fn membership_ids(rows: &[String]) -> Vec<&str> {
+    rows.iter()
+        .filter_map(|row| row.split('\0').nth(1))
+        .collect()
+}
+
+fn listed(verb: &str, ids: &[&str]) -> String {
+    let names = ids
+        .iter()
+        .map(|id| format!("`{id}`"))
+        .collect::<Vec<_>>()
+        .join(", ");
+    if ids.len() == 1 {
+        format!("A knowledge root was {verb} ({names}).")
+    } else {
+        format!("Knowledge roots were {verb} ({names}).")
+    }
+}
+
 pub fn expand_tilde(path: &str) -> PathBuf {
     if (path == "~" || path.starts_with("~/") || path.starts_with("~\\"))
         && let Some(home) = home_dir()
@@ -485,5 +572,93 @@ token_env = "GITHUB_TOKEN"
         assert!(debug.contains("<redacted>"));
         let encoded = to_toml(&config).unwrap();
         assert!(encoded.contains("super-secret-token"));
+    }
+
+    #[test]
+    fn membership_ignores_incoming_and_tokens() {
+        let before = parse(
+            r#"
+[[roots]]
+id = "notes"
+kind = "directory"
+path = "/tmp/a"
+incoming = "allow"
+[[roots]]
+id = "remote"
+kind = "git"
+url = "https://example.com/notes.git"
+token = "secret"
+"#,
+        )
+        .unwrap();
+        let after = parse(
+            r#"
+poll = "5m"
+[[roots]]
+id = "notes"
+kind = "directory"
+path = "/tmp/a"
+incoming = "deny"
+[[roots]]
+id = "remote"
+kind = "git"
+url = "https://example.com/notes.git"
+token = "other-secret"
+incoming = "allow"
+"#,
+        )
+        .unwrap();
+        assert_eq!(
+            membership_fingerprint(&before),
+            membership_fingerprint(&after)
+        );
+        assert!(
+            membership_change_summary(
+                &membership_fingerprint(&before),
+                &membership_fingerprint(&after)
+            )
+            .is_none()
+        );
+    }
+
+    #[test]
+    fn membership_summarizes_added_and_removed_roots() {
+        let before = parse(
+            r#"
+[[roots]]
+id = "notes"
+kind = "directory"
+path = "/tmp/a"
+"#,
+        )
+        .unwrap();
+        let added = parse(
+            r#"
+[[roots]]
+id = "notes"
+kind = "directory"
+path = "/tmp/a"
+[[roots]]
+id = "docs"
+kind = "directory"
+path = "/tmp/b"
+"#,
+        )
+        .unwrap();
+        let summary = membership_change_summary(
+            &membership_fingerprint(&before),
+            &membership_fingerprint(&added),
+        )
+        .unwrap();
+        assert!(summary.contains("`docs`"), "{summary}");
+        assert!(summary.contains("added"), "{summary}");
+
+        let removed = membership_change_summary(
+            &membership_fingerprint(&added),
+            &membership_fingerprint(&before),
+        )
+        .unwrap();
+        assert!(removed.contains("`docs`"), "{removed}");
+        assert!(removed.contains("removed"), "{removed}");
     }
 }

@@ -66,13 +66,13 @@ fn two_bundles() -> (
 }
 
 fn app(root: std::path::PathBuf, output: std::path::PathBuf, workspace: Workspace) -> axum::Router {
-    okmate::http::router(okmate::http::AppState {
+    okmate::http::router(okmate::http::AppState::from_workspace(
         output,
         root,
-        workspace: okmate::http::share_workspace(workspace),
-        profile: Profile::Strict,
-        config_path: std::env::temp_dir().join("okmate-ws-unused.toml"),
-        session_path: std::env::temp_dir().join(format!(
+        workspace,
+        Profile::Strict,
+        std::env::temp_dir().join("okmate-ws-unused.toml"),
+        std::env::temp_dir().join(format!(
             "okmate-ws-session-{}-{}.json",
             std::process::id(),
             std::time::SystemTime::now()
@@ -80,7 +80,7 @@ fn app(root: std::path::PathBuf, output: std::path::PathBuf, workspace: Workspac
                 .unwrap()
                 .as_nanos()
         )),
-    })
+    ))
 }
 
 #[tokio::test]
@@ -309,14 +309,14 @@ fn merged_subindex_selects_nested_overview() {
 async fn nav_mode_toggle_switches_trees() {
     let (a, _b, workspace, output) = two_bundles();
     let session = temp_dir("ws-nav-session").join("session.json");
-    let state = okmate::http::AppState {
-        output: output.clone(),
-        root: a,
-        workspace: okmate::http::share_workspace(workspace),
-        profile: Profile::Strict,
-        config_path: std::env::temp_dir().join("okmate-ws-unused.toml"),
-        session_path: session.clone(),
-    };
+    let state = okmate::http::AppState::from_workspace(
+        output.clone(),
+        a,
+        workspace,
+        Profile::Strict,
+        std::env::temp_dir().join("okmate-ws-unused.toml"),
+        session.clone(),
+    );
     let app = okmate::http::router(state.clone());
     let separated = body_text(
         app.clone()

@@ -48,14 +48,14 @@ fn state(
     workspace: okmate::workspace::Workspace,
     session: std::path::PathBuf,
 ) -> okmate::http::AppState {
-    okmate::http::AppState {
+    okmate::http::AppState::from_workspace(
         output,
         root,
-        workspace: okmate::http::share_workspace(workspace),
-        profile: Profile::Strict,
-        config_path: temp_dir("prefs-cfg").join("config.toml"),
-        session_path: session,
-    }
+        workspace,
+        Profile::Strict,
+        temp_dir("prefs-cfg").join("config.toml"),
+        session,
+    )
 }
 
 #[test]

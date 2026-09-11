@@ -16,6 +16,7 @@
     <script src="/__okmate/toc.js" defer></script>
     <script src="/__okmate/review.js" defer></script>
     <script src="/__okmate/log.js" defer></script>
+    <script src="/__okmate/reload.js" defer></script>
   </head>
   <body>
     <div class="okmate-shell">
@@ -34,6 +35,13 @@
         <input id="okmate-goto-input" type="search" placeholder="Go to page or @bundle" autocomplete="off">
       </div>
       <ul id="okmate-goto-list"></ul>
+    </dialog>
+    <dialog id="okmate-reload" class="okmate-reload" aria-label="Reload workspace">
+      <p id="okmate-reload-message">Knowledge roots changed. Reload the workspace?</p>
+      <form method="dialog" class="okmate-reload-actions">
+        <button type="button" id="okmate-reload-later">Later</button>
+        <button type="button" id="okmate-reload-confirm">Reload</button>
+      </form>
     </dialog>
   </body>
 </html>
