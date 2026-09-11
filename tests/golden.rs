@@ -83,6 +83,7 @@ fn sample() -> Document {
         reading_width: 66,
         main_scroll: 0,
         nav_scroll: 0,
+        tabs: Vec::new(),
     }
 }
 

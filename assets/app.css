@@ -1364,3 +1364,49 @@ html[data-okmate-wrap="off"] #okmate-main .okmate-md-table td {
   color: var(--rd-muted);
   font-size: 0.72rem;
 }
+
+.okmate-tabs {
+  display: flex;
+  flex: 0 0 auto;
+  gap: 0.2rem;
+  min-height: 2.1rem;
+  padding: 0.28rem 0.55rem 0;
+  overflow-x: auto;
+  border-bottom: 1px solid var(--rd-border);
+  background: var(--rd-bg-subtle);
+}
+.okmate-tabs[hidden] { display: none; }
+.okmate-tab {
+  display: inline-flex;
+  align-items: center;
+  max-width: 14rem;
+  border: 1px solid var(--rd-border);
+  border-bottom: 0;
+  border-radius: 0.4rem 0.4rem 0 0;
+  background: var(--rd-bg);
+  color: var(--rd-muted);
+}
+.okmate-tab.is-current {
+  background: var(--rd-bg);
+  color: var(--rd-fg);
+  border-color: var(--rd-primary);
+}
+.okmate-tab-open,
+.okmate-tab-close {
+  font: inherit;
+  color: inherit;
+  background: none;
+  border: 0;
+  cursor: pointer;
+}
+.okmate-tab-open {
+  min-width: 0;
+  padding: 0.28rem 0.45rem 0.32rem 0.65rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.okmate-tab-close {
+  padding: 0.2rem 0.45rem 0.2rem 0.15rem;
+  color: var(--rd-muted);
+}

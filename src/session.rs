@@ -82,6 +82,8 @@ pub struct Session {
     pub nav_sections: BTreeMap<String, bool>,
     #[serde(default)]
     pub nav_scroll: Option<u32>,
+    #[serde(default)]
+    pub tabs: Vec<SessionTab>,
 }
 
 impl Default for Session {
@@ -103,8 +105,18 @@ impl Default for Session {
             main_scroll: None,
             nav_sections: BTreeMap::new(),
             nav_scroll: None,
+            tabs: Vec::new(),
         }
     }
+}
+
+#[derive(Clone, Debug, Default, PartialEq, Eq, Serialize, Deserialize)]
+pub struct SessionTab {
+    pub path: String,
+    #[serde(default)]
+    pub hash: Option<String>,
+    #[serde(default)]
+    pub title: String,
 }
 
 impl Session {
@@ -166,6 +178,14 @@ impl Session {
         if obj.contains_key("nav_scroll") {
             self.nav_scroll = obj.get("nav_scroll").and_then(as_u32).map(clamp_scroll);
         }
+        if let Some(tabs) = obj.get("tabs").and_then(serde_json::Value::as_array) {
+            self.tabs = sanitize_tabs(tabs);
+        }
+        self.tabs = normalize_tabs(
+            std::mem::take(&mut self.tabs),
+            self.open_path.as_deref(),
+            self.open_hash.as_deref(),
+        );
     }
 
     pub fn sanitize(&mut self) {
@@ -193,6 +213,11 @@ impl Session {
         if let Some(scroll) = self.nav_scroll {
             self.nav_scroll = Some(clamp_scroll(scroll));
         }
+        self.tabs = normalize_tabs(
+            std::mem::take(&mut self.tabs),
+            self.open_path.as_deref(),
+            self.open_hash.as_deref(),
+        );
     }
 
     pub fn location_href(&self) -> Option<String> {
@@ -305,12 +330,115 @@ pub fn persist_open_path_to(path: &Path, route: &str) {
     };
     let mut session = load_session_from(path);
     if session.open_path.as_deref() == Some(open_path.as_str()) {
+        session.tabs = normalize_tabs(
+            std::mem::take(&mut session.tabs),
+            session.open_path.as_deref(),
+            session.open_hash.as_deref(),
+        );
+        log_write(path, &session);
         return;
     }
+    if let Some(tab) = session.tabs.iter().find(|tab| tab.path == open_path) {
+        session.open_hash = tab.hash.clone();
+    } else {
+        session.open_hash = None;
+        session.tabs.push(SessionTab {
+            path: open_path.clone(),
+            hash: None,
+            title: String::new(),
+        });
+    }
     session.open_path = Some(open_path);
-    session.open_hash = None;
     session.main_scroll = None;
+    session.tabs = normalize_tabs(
+        std::mem::take(&mut session.tabs),
+        session.open_path.as_deref(),
+        session.open_hash.as_deref(),
+    );
     log_write(path, &session);
+}
+
+const MAX_TABS: usize = 24;
+
+fn sanitize_tab_title(value: &str) -> String {
+    let trimmed: String = value
+        .chars()
+        .filter(|ch| !ch.is_control())
+        .take(80)
+        .collect();
+    trimmed.trim().to_string()
+}
+
+fn sanitize_tabs(values: &[serde_json::Value]) -> Vec<SessionTab> {
+    let mut tabs = Vec::new();
+    for value in values {
+        let Some(obj) = value.as_object() else {
+            continue;
+        };
+        let Some(path) = sanitize_open_path(obj.get("path").and_then(as_opt_str)) else {
+            continue;
+        };
+        let hash = sanitize_open_hash(obj.get("hash").and_then(as_opt_str));
+        let title = obj
+            .get("title")
+            .and_then(serde_json::Value::as_str)
+            .map(sanitize_tab_title)
+            .unwrap_or_default();
+        tabs.push(SessionTab { path, hash, title });
+        if tabs.len() >= MAX_TABS {
+            break;
+        }
+    }
+    tabs
+}
+
+fn normalize_tabs(
+    tabs: Vec<SessionTab>,
+    open_path: Option<&str>,
+    open_hash: Option<&str>,
+) -> Vec<SessionTab> {
+    let mut out: Vec<SessionTab> = Vec::new();
+    for mut tab in tabs {
+        let Some(path) = sanitize_open_path(Some(&tab.path)) else {
+            continue;
+        };
+        tab.path = path;
+        tab.hash = sanitize_open_hash(tab.hash.as_deref());
+        tab.title = sanitize_tab_title(&tab.title);
+        if let Some(existing) = out.iter_mut().find(|item| item.path == tab.path) {
+            if existing.hash.is_none() {
+                existing.hash = tab.hash;
+            }
+            if existing.title.is_empty() {
+                existing.title = tab.title;
+            }
+            continue;
+        }
+        out.push(tab);
+        if out.len() >= MAX_TABS {
+            break;
+        }
+    }
+    if let Some(path) = open_path {
+        if let Some(tab) = out.iter_mut().find(|tab| tab.path == path) {
+            if tab.hash.is_none() {
+                tab.hash = open_hash.map(str::to_string);
+            }
+        } else {
+            out.insert(
+                0,
+                SessionTab {
+                    path: path.to_string(),
+                    hash: open_hash.map(str::to_string),
+                    title: String::new(),
+                },
+            );
+            if out.len() > MAX_TABS {
+                out.pop();
+            }
+        }
+    }
+    out
 }
 
 fn clamp_font(value: u16) -> u16 {
@@ -606,6 +734,44 @@ mod tests {
         persist_open_path_to(&path, "/review/");
         let again = load_session_from(&path);
         assert_eq!(again.open_path.as_deref(), Some("/review/"));
+        let _ = fs::remove_dir_all(dir);
+    }
+
+    #[test]
+    fn two_tab_session_restores_active_route_and_hash() {
+        let dir = std::env::temp_dir().join(format!(
+            "okmate-state-{}-{}",
+            std::process::id(),
+            "tabs-restore"
+        ));
+        let _ = fs::remove_dir_all(&dir);
+        fs::create_dir_all(&dir).unwrap();
+        let path = dir.join("session.json");
+        persist_prefs_to(
+            &path,
+            &serde_json::json!({
+                "open_path": "/register/",
+                "open_hash": "fn-s21",
+                "tabs": [
+                    { "path": "/hello/", "hash": "details", "title": "Hello" },
+                    { "path": "/register/", "hash": "fn-s21", "title": "Register" }
+                ]
+            }),
+        );
+        let session = load_session_from(&path);
+        assert_eq!(session.open_path.as_deref(), Some("/register/"));
+        assert_eq!(session.open_hash.as_deref(), Some("fn-s21"));
+        assert_eq!(session.tabs.len(), 2);
+        assert_eq!(session.tabs[0].path, "/hello/");
+        assert_eq!(session.tabs[0].hash.as_deref(), Some("details"));
+        assert_eq!(session.tabs[1].hash.as_deref(), Some("fn-s21"));
+        persist_open_path_to(&path, "/register/");
+        let again = load_session_from(&path);
+        assert_eq!(again.open_hash.as_deref(), Some("fn-s21"));
+        persist_open_path_to(&path, "/hello/");
+        let switched = load_session_from(&path);
+        assert_eq!(switched.open_path.as_deref(), Some("/hello/"));
+        assert_eq!(switched.open_hash.as_deref(), Some("details"));
         let _ = fs::remove_dir_all(dir);
     }
 

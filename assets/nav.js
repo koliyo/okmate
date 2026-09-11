@@ -355,6 +355,9 @@
     if (window.__okmateMeta && typeof window.__okmateMeta.enhance === "function") {
       window.__okmateMeta.enhance();
     }
+    if (window.__okmateTabs && typeof window.__okmateTabs.afterPatch === "function") {
+      window.__okmateTabs.afterPatch();
+    }
   }
 
   function observeMain() {
@@ -398,6 +401,14 @@
         return;
       }
       if (event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) {
+        if ((event.metaKey || event.ctrlKey) && isInAppDocumentHref(href, window.location.href)) {
+          event.preventDefault();
+          event.stopImmediatePropagation();
+          if (window.__okmateTabs && typeof window.__okmateTabs.openHref === "function") {
+            window.__okmateTabs.openHref(href, { activate: !!event.shiftKey });
+          }
+          return;
+        }
         event.stopImmediatePropagation();
         return;
       }
@@ -434,6 +445,28 @@
     true
   );
 
+  document.addEventListener(
+    "auxclick",
+    function (event) {
+      if (event.button !== 1) {
+        return;
+      }
+      var link = event.target.closest && event.target.closest("a[href]");
+      if (!link) {
+        return;
+      }
+      var href = link.getAttribute("href") || "";
+      if (!isInAppDocumentHref(href, window.location.href)) {
+        return;
+      }
+      event.preventDefault();
+      if (window.__okmateTabs && typeof window.__okmateTabs.openHref === "function") {
+        window.__okmateTabs.openHref(href, { activate: false });
+      }
+    },
+    true
+  );
+
   function requestDocument(href) {
     if (!href) {
       return;
@@ -447,6 +480,13 @@
       probe.click();
       probe.remove();
     }, 0);
+  }
+
+  function openRoute(path, hash) {
+    var next = path + (hash ? "#" + String(hash).replace(/^#/, "") : "");
+    rememberHere();
+    pendingRoute = next;
+    requestDocument(path);
   }
 
   window.addEventListener("popstate", function (event) {
@@ -545,6 +585,7 @@
     beginInPage: beginInPage,
     finishInPage: finishInPage,
     requestDocument: requestDocument,
+    openRoute: openRoute,
     isInAppDocumentHref: isInAppDocumentHref,
     isFootnoteHash: isFootnoteHash,
   };

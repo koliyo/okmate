@@ -28,6 +28,7 @@ const RELOAD_JS: &str = include_str!("../assets/reload.js");
 const TABLES_JS: &str = include_str!("../assets/tables.js");
 const META_JS: &str = include_str!("../assets/meta.js");
 const PEEK_JS: &str = include_str!("../assets/peek.js");
+const TABS_JS: &str = include_str!("../assets/tabs.js");
 
 #[derive(Serialize)]
 struct NavPage {
@@ -229,6 +230,7 @@ fn document(
         reading_width: 66,
         main_scroll: 0,
         nav_scroll: 0,
+        tabs: Vec::new(),
     }
 }
 
@@ -241,7 +243,57 @@ pub fn apply_reading_prefs(document: &mut Document, session: &crate::preview::Se
     document.reading_font = session.font_size;
     document.reading_width = session.reading_width();
     document.nav_scroll = session.nav_scroll.unwrap_or(0);
+    document.tabs = view_tabs(session, &document.title);
     apply_nav_sections(&mut document.nav, &session.nav_sections);
+}
+
+fn view_tabs(session: &crate::preview::Session, current_title: &str) -> Vec<crate::views::DocTab> {
+    if session.tabs.len() < 2 {
+        return Vec::new();
+    }
+    let active = session.open_path.as_deref().unwrap_or("/");
+    session
+        .tabs
+        .iter()
+        .map(|tab| {
+            let current = tab.path == active;
+            let title = if !tab.title.is_empty() {
+                tab.title.clone()
+            } else if current && !current_title.is_empty() {
+                current_title.to_string()
+            } else {
+                default_tab_title(&tab.path)
+            };
+            let hash = tab.hash.clone().unwrap_or_default();
+            let href = if hash.is_empty() {
+                tab.path.clone()
+            } else {
+                format!("{}#{}", tab.path, hash)
+            };
+            crate::views::DocTab {
+                path: tab.path.clone(),
+                hash,
+                href,
+                title,
+                current,
+            }
+        })
+        .collect()
+}
+
+fn default_tab_title(path: &str) -> String {
+    match path {
+        "/" => "Dashboard".into(),
+        "/review/" => "Review queue".into(),
+        "/log/" => "Log".into(),
+        "/settings/" => "Settings".into(),
+        other => other
+            .trim_matches('/')
+            .rsplit('/')
+            .next()
+            .unwrap_or(other)
+            .to_string(),
+    }
 }
 
 fn apply_nav_sections(
@@ -451,7 +503,8 @@ fn write_assets(output: &Path) -> Result<()> {
     fs::write(dir.join("reload.js"), RELOAD_JS).context("failed to write reload.js")?;
     fs::write(dir.join("tables.js"), TABLES_JS).context("failed to write tables.js")?;
     fs::write(dir.join("meta.js"), META_JS).context("failed to write meta.js")?;
-    fs::write(dir.join("peek.js"), PEEK_JS).context("failed to write peek.js")
+    fs::write(dir.join("peek.js"), PEEK_JS).context("failed to write peek.js")?;
+    fs::write(dir.join("tabs.js"), TABS_JS).context("failed to write tabs.js")
 }
 
 fn nav_pages(workspace: &Workspace) -> Vec<NavPage> {

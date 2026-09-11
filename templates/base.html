@@ -10,6 +10,7 @@
     <script src="/__okmate/goto.js" defer></script>
     <script src="/__okmate/nav.js" defer></script>
     <script src="/__okmate/peek.js" defer></script>
+    <script src="/__okmate/tabs.js" defer></script>
     <script src="/__okmate/resize.js" defer></script>
     <script src="/__okmate/tables.js" defer></script>
     <script src="/__okmate/meta.js" defer></script>
@@ -21,6 +22,16 @@
   </head>
   <body>
     <div class="okmate-app">
+      {% if tabs.len() > 1 %}
+      <nav id="okmate-tabs" class="okmate-tabs" aria-label="Open documents">
+        {% for tab in tabs %}
+        <div class="okmate-tab{% if tab.current %} is-current{% endif %}" role="tab" aria-selected="{% if tab.current %}true{% else %}false{% endif %}" data-okmate-tab-path="{{ tab.path }}" data-okmate-tab-hash="{{ tab.hash }}" data-okmate-tab-href="{{ tab.href }}">
+          <button type="button" class="okmate-tab-open">{{ tab.title }}</button>
+          <button type="button" class="okmate-tab-close" aria-label="Close">×</button>
+        </div>
+        {% endfor %}
+      </nav>
+      {% endif %}
       <div class="okmate-shell">
         <div class="okmate-chrome" id="okmate-nav">
           {% include "nav.html" %}

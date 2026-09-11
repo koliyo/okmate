@@ -221,3 +221,83 @@ async fn prefs_post_is_loopback_only() {
     assert_eq!(response.status(), StatusCode::FORBIDDEN);
     assert!(!session.exists());
 }
+
+#[tokio::test]
+async fn two_tab_session_renders_strip_and_keeps_hash() {
+    let root = temp_dir("prefs-tabs-src");
+    write_index(&root);
+    fs::write(
+        root.join("hello.md"),
+        valid_strict_concept("Hello", "", "Intro.\n\n## Details\n\nBody.\n"),
+    )
+    .unwrap();
+    fs::write(
+        root.join("register.md"),
+        valid_strict_concept("Register", "", "Lead.\n\n### S21\n\nContext.\n"),
+    )
+    .unwrap();
+    let workspace = okmate::workspace::Workspace::load_single(&root, Profile::Strict).unwrap();
+    let output = temp_dir("prefs-tabs-out");
+    okmate::site::build_workspace(&workspace, &output).unwrap();
+    let session = temp_dir("prefs-tabs-session").join("session.json");
+    okmate::preview::persist_prefs_to(
+        &session,
+        &serde_json::json!({
+            "open_path": "/register/",
+            "open_hash": "s21",
+            "tabs": [
+                { "path": "/hello/", "hash": "details", "title": "Hello" },
+                { "path": "/register/", "hash": "s21", "title": "Register" }
+            ]
+        }),
+    );
+    let app = okmate::http::router(state(root, output, workspace, session.clone()));
+    let html = body_text(
+        app.clone()
+            .oneshot(Request::get("/register/").body(Body::empty()).unwrap())
+            .await
+            .unwrap(),
+    )
+    .await;
+    assert!(html.contains("id=\"okmate-tabs\""), "{html}");
+    assert!(html.contains("Hello"), "{html}");
+    assert!(html.contains("data-okmate-tab-hash=\"s21\""), "{html}");
+    let stored = okmate::preview::load_session_from(&session);
+    assert_eq!(stored.open_path.as_deref(), Some("/register/"));
+    assert_eq!(stored.open_hash.as_deref(), Some("s21"));
+
+    let fragment = body_text(
+        app.oneshot(
+            Request::get("/register/")
+                .header("datastar-request", "true")
+                .body(Body::empty())
+                .unwrap(),
+        )
+        .await
+        .unwrap(),
+    )
+    .await;
+    assert!(!fragment.contains("id=\"okmate-nav\""), "{fragment}");
+    assert!(!fragment.contains("id=\"okmate-tabs\""), "{fragment}");
+}
+
+#[tokio::test]
+async fn single_tab_session_omits_strip() {
+    let (root, output, workspace) = fixture();
+    let session = temp_dir("prefs-one-tab").join("session.json");
+    okmate::preview::persist_prefs_to(
+        &session,
+        &serde_json::json!({
+            "open_path": "/hello/",
+            "tabs": [{ "path": "/hello/", "title": "Hello" }]
+        }),
+    );
+    let app = okmate::http::router(state(root, output, workspace, session));
+    let html = body_text(
+        app.oneshot(Request::get("/hello/").body(Body::empty()).unwrap())
+            .await
+            .unwrap(),
+    )
+    .await;
+    assert!(!html.contains("id=\"okmate-tabs\""), "{html}");
+}

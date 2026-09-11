@@ -134,6 +134,7 @@ macro_rules! document_template {
             pub reading_width: u16,
             pub main_scroll: u32,
             pub nav_scroll: u32,
+            pub tabs: Vec<DocTab>,
         }
 
         impl From<Document> for $name {
@@ -172,6 +173,7 @@ macro_rules! document_template {
                     reading_width: document.reading_width,
                     main_scroll: document.main_scroll,
                     nav_scroll: document.nav_scroll,
+                    tabs: document.tabs,
                 }
             }
         }
@@ -222,6 +224,16 @@ pub struct Document {
     pub reading_width: u16,
     pub main_scroll: u32,
     pub nav_scroll: u32,
+    pub tabs: Vec<DocTab>,
+}
+
+#[derive(Clone, Debug, Default)]
+pub struct DocTab {
+    pub path: String,
+    pub hash: String,
+    pub href: String,
+    pub title: String,
+    pub current: bool,
 }
 
 impl Document {
@@ -458,6 +470,7 @@ mod tests {
             reading_width: 66,
             main_scroll: 0,
             nav_scroll: 0,
+            tabs: Vec::new(),
         }
     }
 
@@ -484,6 +497,7 @@ mod tests {
         assert!(html.contains("id=\"okmate-goto-input\""), "{html}");
         assert!(html.contains("/__okmate/nav.js"), "{html}");
         assert!(html.contains("/__okmate/peek.js"), "{html}");
+        assert!(html.contains("/__okmate/tabs.js"), "{html}");
         assert!(html.contains("/__okmate/resize.js"), "{html}");
         assert!(html.contains("/__okmate/tables.js"), "{html}");
         assert!(html.contains("/__okmate/meta.js"), "{html}");
