@@ -14,3 +14,4 @@ Application, desktop preview, agent setup, and product site.
 * [Viewer responsiveness](viewer-responsiveness.md) - `okmate timings` pipeline, in-memory clicks, preview load policy, windowed review and log.
 * [Peek previews and document tabs](peek-and-tabs.md) - Heading and keyed-footnote hover peeks, then a live-preview tab strip. Research: [reference authoring](/research/okf/reference-authoring-style.md). Exploratory; no phase started.
 * [Idiomatic document tab gestures](tab-gestures.md) - Current-tab navigation, Cmd+T home, desktop Cmd+W closes a tab. Extends [peek-and-tabs](peek-and-tabs.md). Exploratory; no phase started.
+* [Datastar-aligned client JavaScript](datastar-client-js.md) - ES modules, public `@get`, `datastar-fetch`, enhance Askama tabs. Research: [datastar-client-js](/research/okmate/datastar-client-js.md). Exploratory; no phase started.
