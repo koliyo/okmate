@@ -7,6 +7,7 @@ the same change.
 
 ## 2026-09-11
 
+- Drafted a plan for idiomatic document tab gestures (retarget the current tab on ordinary navigation; desktop Cmd+T home and Cmd+W close tab). Exploratory; do not log complete until hosted CI succeeds.
 - Drafted a plan for live-preview hover peeks that honor heading anchors and keyed footnotes, plus a document tab strip outside the Datastar patch. Exploratory; do not log complete until hosted CI succeeds.
 - Retargeted leftover rocci-only concept links in historical viewer plans and research to GitHub blob URLs, and attached the unused `http` footnote in the Leptos research record. Exploratory; do not log complete until hosted CI succeeds.
 - Investigated OKF reference authoring: recommend document-local keyed claim citations, preserve existing register anchors, and promote reference concepts selectively. Draft research distinguishes the v0.2 citation mechanism from proposed style and current engine limitations.

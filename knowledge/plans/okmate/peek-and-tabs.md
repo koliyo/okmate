@@ -4,7 +4,7 @@ title: Viewer peek previews and document tabs
 description: Add live-preview hover peeks that honor heading anchors and keyed footnotes, then a document tab strip that stays outside the Datastar patch.
 tags: [domain/okmate, concern/rendering, concern/tooling, concern/evidence]
 status: draft
-generated: { by: process:cursor, at: 2026-09-11T08:07:00Z }
+generated: { by: process:cursor, at: 2026-09-11T08:49:00Z }
 stale_after: 2026-12-11
 authority: exploratory
 owners: [human:nils]
@@ -116,7 +116,8 @@ document tab strip in the live preview shell.[^studio][^cite][^pages][^shell]
 ## Out of bound
 
 Static `okmate build` HTML (no peek endpoint, no tabs). OS window tear-off,
-empty tabs, Cmd+T, per-tab back/fwd stacks, drag-reorder. Replacing collection
+empty tabs, per-tab back/fwd stacks, drag-reorder. Cmd+T, Cmd+W, and other
+tab chrome shortcuts live in [tab gestures](tab-gestures.md). Replacing collection
 nav blurbs. Graph or search as tab types. Changing `published_href` unless
 a real fragment bug is found. Interactive peek cards (`pointer-events` stay
 none). A shared-bibliography resolver; join only this concept's `sources[].id`
