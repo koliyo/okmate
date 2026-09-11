@@ -12,3 +12,4 @@ Application, desktop preview, agent setup, and product site.
 * [Viewer shell parity with last rocci-okf](viewer-shell-parity.md) - Three panes, resize, outline spy, and keep-nav sidebar.
 * [Extended multi-bundle viewer](extended-multi-bundle.md) - Workspace nav modes, merged dashboard recents and log, collection hover.
 * [Viewer responsiveness](viewer-responsiveness.md) - `okmate timings` pipeline, in-memory clicks, preview load policy, windowed review and log.
+* [Peek previews and document tabs](peek-and-tabs.md) - Heading and keyed-footnote hover peeks, then a live-preview tab strip. Research: [reference authoring](/research/okf/reference-authoring-style.md). Exploratory; no phase started.

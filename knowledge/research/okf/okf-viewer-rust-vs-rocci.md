@@ -4,7 +4,7 @@ title: OKF viewer as a Rust HTML app versus a finished Rust-plus-Rocci shell
 description: Dropping Rocci does not drop Datastar; the chosen product is okmate (Askama, Axum, official Datastar SDK) in a root crate that depends only on okf. Public rocci.dev mount stays a prefixed static build copy; live operations need a hosted origin.
 tags: [domain/okf, domain/rocci-okf, integration/roc, concern/architecture, concern/rendering, concern/tooling]
 status: draft
-generated: { by: process:cursor, at: 2026-08-26T08:05:00Z }
+generated: { by: process:cursor, at: 2026-09-11T08:10:00Z }
 stale_after: 2026-11-26
 authority: exploratory
 owners: [human:nils]
@@ -169,8 +169,8 @@ Knowledge records stay inert Markdown. Catalog checks must not require
 Roc.[^static-okf][^agents][^generation-research]
 
 Cost measurements and the generate/apply split already live in the
-[compile/render research](/research/okf/okf-compile-render-cost.md) and its
-[follow-on plan](/plans/okf/okf-compile-render-follow-ons.md). This record
+[compile/render research](https://github.com/koliyo/rocci/blob/main/knowledge/research/okf/okf-compile-render-cost.md) and its
+[follow-on plan](https://github.com/koliyo/rocci/blob/main/knowledge/plans/okf/okf-compile-render-follow-ons.md). This record
 uses those facts and asks the product question those records left open:
 whether skip-Roc should become the *product*, or whether the Rocci path
 should become the *only* static shell.[^compile-research][^compile-follow-ons]
@@ -387,7 +387,7 @@ Still open outside that plan:
 - Review approve / comment and in-UI agent jobs; those stay
   [rocci-okf-app](/plans/okf/rocci-okf-app.md).[^okf-app]
 - Public `/knowledge/` packaging and the local-first publication
-  amendment; [site lane](/plans/site/okf-viewer-site-lane.md) copies
+  amendment; [site lane](https://github.com/koliyo/rocci/blob/main/knowledge/plans/site/okf-viewer-site-lane.md) copies
   whatever static tree `build` emits.[^site-lane]
 
 ## First principles if catalog-shell does not bind

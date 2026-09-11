@@ -4,7 +4,7 @@ title: Okmate — extractable Rust OKF mate
 description: Create okmate/ as a new workspace crate that rewrites the knowledge viewer in Askama 0.16, Axum, and the official Datastar Rust SDK, depending only on the portable okf engine so the directory can become its own repository.
 tags: [domain/okf, domain/okmate, integration/datastar, concern/architecture, concern/rendering, concern/tooling]
 status: draft
-generated: { by: process:cursor, at: 2026-08-26T08:05:00Z }
+generated: { by: process:cursor, at: 2026-09-11T08:10:00Z }
 stale_after: 2026-11-26
 authority: exploratory
 owners: [human:nils]
@@ -146,7 +146,7 @@ Deleting or renaming `rocci-okf`. Changing the portable `okf` engine
 except to consume its existing public API. Depending on any `rocci-*`
 crate. Interpreting `.rocci` in Rust. Live SSE for the settings registry.
 Review approve / request-changes / comment, in-UI agent jobs, or a hosted
-public origin. Amending [local-first publication](/decisions/local-knowledge-publication.md).
+public origin. Amending [local-first publication](https://github.com/koliyo/rocci/blob/main/knowledge/decisions/local-knowledge-publication.md).
 Switching CI / `manage-rocci-knowledge` off `rocci-okf`. Creating the
 standalone git remote. Horizon B (a later Rocci-authored viewer). Minting
 an approved Decision.

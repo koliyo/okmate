@@ -4,7 +4,7 @@ title: Rust-templated OKF viewer with Datastar, then a Rocci reference
 description: Make rocci-okf a single Rust+Askama+Datastar application for short-term usability and public distribution, and freeze that viewer as the behavioral reference for a later Roc+Rocci port that does not own HTML in Rust.
 tags: [domain/okf, domain/rocci-okf, domain/rocci, integration/datastar, concern/architecture, concern/rendering, concern/tooling, concern/publication]
 status: draft
-generated: { by: process:cursor, at: 2026-08-26T08:05:00Z }
+generated: { by: process:cursor, at: 2026-09-11T08:10:00Z }
 stale_after: 2026-11-26
 authority: exploratory
 owners: [human:nils]
@@ -161,8 +161,8 @@ DSL in `rocci-rocdown` or `rocci-template`. Interpreting `.rocci` in Rust
 to skip a compiler. Live SSE for the settings registry. Review
 approve / request-changes / comment, in-UI agent jobs, or a hosted public
 origin. Shipping a prebuilt applicator or wasm apply-to-disk. Amending
-[local-first publication](/decisions/local-knowledge-publication.md)
-(that remains [site-lane](../site/okf-viewer-site-lane.md) Phase 0).
+[local-first publication](https://github.com/koliyo/rocci/blob/main/knowledge/decisions/local-knowledge-publication.md)
+(that remains [site-lane](https://github.com/koliyo/rocci/blob/main/knowledge/plans/site/okf-viewer-site-lane.md) Phase 0).
 Replacing [settings UX](settings-ux.md) folder-pick and card copy.
 Replacing `goto.js` / Cmd-K. Minting an approved Decision in this
 authoring. Implementing Horizon B.
@@ -174,7 +174,7 @@ authoring. Implementing Horizon B.
 - Durable registry is `okf.toml`. Mutations validate, write, re-read, and
   render a stable-id region. Tokens are never echoed.[^multi-roots][^settings-ux][^server-state]
 - `/__rocci_okf/settings` stays loopback-only.[^okf-readme]
-- Rocdown keeps the [catalog-shell](/decisions/rust-catalog-rocci-shell.md)
+- Rocdown keeps the [catalog-shell](https://github.com/koliyo/rocci/blob/main/knowledge/decisions/rust-catalog-rocci-shell.md)
   split. This exception is `rocci-okf` only.[^catalog-shell]
 - Askama lives only in `rocci-okf`. Do not grow a second docs-template
   language for documentation sites.[^catalog-shell][^agents]
@@ -349,8 +349,8 @@ record exists.[^research]
 | [Host surfaces](okf-viewer-host-surfaces.md) | Superseded; phases absorbed into Phase 1 |
 | [Settings UX](settings-ux.md) | Still implement folder-pick and cards; Datastar morph is this plan |
 | [Multi-roots](multi-knowledge-roots.md) | Unchanged domain; UI owner becomes Askama |
-| [Compile/render follow-ons](okf-compile-render-follow-ons.md) | Phase 2 inverted; Phase 3 (wasm apply) not needed for this product |
-| [Site knowledge lane](../site/okf-viewer-site-lane.md) | Still copies `build`; chrome comes from Askama; live ops still a different deploy |
+| [Compile/render follow-ons](https://github.com/koliyo/rocci/blob/main/knowledge/plans/okf/okf-compile-render-follow-ons.md) | Phase 2 inverted; Phase 3 (wasm apply) not needed for this product |
+| [Site knowledge lane](https://github.com/koliyo/rocci/blob/main/knowledge/plans/site/okf-viewer-site-lane.md) | Still copies `build`; chrome comes from Askama; live ops still a different deploy |
 | [rocci-okf-app](rocci-okf-app.md) | Engine/CLI phases unchanged; “built with Rocci” is Horizon B |
 
 ## Phases (Horizon A)
@@ -505,7 +505,7 @@ start this in-place `rocci-okf` rewrite. Pair:
 Absorbs [host surfaces](okf-viewer-host-surfaces.md) only if someone
 still patches `rocci-okf` before okmate exists. Settings copy remains
 [settings UX](settings-ux.md). Public snapshot remains
-[site lane](../site/okf-viewer-site-lane.md).[^okmate]
+[site lane](https://github.com/koliyo/rocci/blob/main/knowledge/plans/site/okf-viewer-site-lane.md).[^okmate]
 
 [^okmate]: Extractable root crate with Askama, Axum, and the official Datastar SDK; depends only on `okf`.
 [^research]: Unbound pick is Rust HTML + Datastar from Rust; operations need the protocol not a static theme; public lane is a snapshot; do not keep the hybrid.

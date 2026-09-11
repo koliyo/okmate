@@ -4,7 +4,7 @@ title: Reference authoring style for OKF
 description: Prefer document-local keyed claim citations, retain useful source registers, and promote reused evidence into reference concepts selectively.
 tags: [domain/okf, concern/evidence, concern/authoring]
 status: draft
-generated: { by: process:cursor, at: 2026-09-11T07:47:50Z }
+generated: { by: process:cursor, at: 2026-09-11T08:07:00Z }
 stale_after: 2026-12-11
 authority: exploratory
 owners: [human:nils]
@@ -25,6 +25,11 @@ sources:
   - id: validate
     resource: ../../../okf/src/validate.rs
     title: Source validation and repository provenance
+  - id: peek
+    resource: ../../plans/okmate/peek-and-tabs.md
+    title: Viewer peek previews and document tabs
+    author: process:cursor
+    last_modified: 2026-09-11
 ---
 
 # Reference authoring style for OKF
@@ -176,7 +181,8 @@ register section as a pointer so existing links still work.
 
 No register migration or citation-resolution code change is part of this
 research record. General OKF guidance belongs here; domain evidence stays in
-its owning knowledge bundle.
+its owning knowledge bundle. Live-preview hover of keyed footnotes and
+register heading hashes is a separate okmate plan.[^peek]
 
 ## Evidence
 
@@ -185,3 +191,4 @@ its owning knowledge bundle.
 [^graph]: `okf/src/graph.rs`, `resolve_graph` and bundle-path resolution.
 [^markdown]: `okf/src/markdown.rs`, heading, link, and footnote extraction.
 [^validate]: `okf/src/validate.rs`, `collect_source_ids`, `validate_lifecycle_and_sources_with`, and `repository_source_path`.
+[^peek]: [Viewer peek previews and document tabs](/plans/okmate/peek-and-tabs.md).

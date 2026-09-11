@@ -4,7 +4,7 @@ title: Leptos as an okmate viewer instead of Askama and Datastar
 description: Leptos 0.8 can emit the same HTML strings Askama does, but the product people mean by leptos.dev is a WASM hydrate or islands app that fights okmate’s single native binary, static `/{id}/` tree, and server-owned hypermedia contract.
 tags: [domain/okmate, concern/architecture, concern/rendering, concern/tooling]
 status: draft
-generated: { by: process:cursor, at: 2026-08-28T11:00:00Z }
+generated: { by: process:cursor, at: 2026-09-11T08:10:00Z }
 stale_after: 2026-11-28
 authority: exploratory
 owners: [human:nils]
@@ -152,7 +152,7 @@ The published stack is Askama 0.16, Axum 0.8, official Datastar 0.4, and optiona
 | --- | --- |
 | Parse, graph, `article_html`, artifacts | `okf/` (UI-neutral) |
 | Full documents and fragments | Askama templates + `Document` view structs |
-| Live HTTP | Axum; Datastar middleware on GET; `ServeDir` for assets |
+| Live HTTP | Axum; Datastar middleware on GET; `ServeDir` for assets[^http] |
 | Keep-nav, outline spy, resize, reading prefs, goto | Small staged JS (`nav.js`, `toc.js`, …) |
 | Desktop window | `h35-desktop` loads the localhost origin; folder pick is IPC |
 
