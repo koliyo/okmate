@@ -8,6 +8,22 @@ use crate::{
     CheckFormat, ProfileArg, TrustTierArg, benchmark, check, inspect, print_check, search,
 };
 
+#[derive(Clone, Copy, Debug, ValueEnum)]
+enum InitTemplateArg {
+    Minimal,
+    #[value(name = "software-project")]
+    SoftwareProject,
+}
+
+impl From<InitTemplateArg> for crate::init::InitTemplate {
+    fn from(value: InitTemplateArg) -> Self {
+        match value {
+            InitTemplateArg::Minimal => Self::Minimal,
+            InitTemplateArg::SoftwareProject => Self::SoftwareProject,
+        }
+    }
+}
+
 #[derive(Parser)]
 #[command(
     name = "okmate",
@@ -39,9 +55,18 @@ enum Commands {
         /// Heading for the root index (`# Title`).
         #[arg(long, default_value = "Knowledge")]
         title: String,
-        /// Only `index.md` and `log.md`; omit collection indexes.
+        /// Content template. Default is `minimal` (`index.md` and `log.md`).
+        #[arg(long, value_enum)]
+        template: Option<InitTemplateArg>,
+        /// Alias for `--template minimal`.
         #[arg(long)]
         bare: bool,
+        /// Extra collection directory relative to the bundle (repeatable).
+        #[arg(long = "collection", value_name = "DIR")]
+        collections: Vec<String>,
+        /// Local TOML template with `[[collections]]` entries. Not fetched or executed.
+        #[arg(long = "template-file", value_name = "TOML")]
+        template_file: Option<PathBuf>,
         /// Write the planned files. Default is a dry-run.
         #[arg(long)]
         apply: bool,
@@ -268,7 +293,10 @@ pub fn run() -> Result<()> {
         Commands::Init {
             path,
             title,
+            template,
             bare,
+            collections,
+            template_file,
             apply,
             register,
             id,
@@ -277,6 +305,9 @@ pub fn run() -> Result<()> {
         } => crate::init::run(crate::init::InitOptions {
             path,
             title,
+            template: template.map(Into::into),
+            collections,
+            template_file,
             bare,
             apply,
             format,

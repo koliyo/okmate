@@ -4,7 +4,7 @@ title: Support heterogeneous OKF bundle authoring
 description: Separate portable reading, evidence checks, and local authoring style; make init minimal and path-correct, add optional conventions and templates, and improve discovery and documentation without migrating existing bundles by default.
 tags: [domain/okmate, domain/okf, concern/authoring, concern/architecture, concern/tooling]
 status: draft
-generated: { by: process:cursor, at: 2026-09-12T10:30:00Z }
+generated: { by: process:cursor, at: 2026-09-12T11:50:00Z }
 stale_after: 2026-12-12
 authority: exploratory
 owners: [human:nils]
@@ -69,6 +69,9 @@ sources:
 Exploratory follow-up to the implemented `init` command. Phase 1 published
 the authoring guide, contrasting examples, and a fixture-backed
 compatibility inventory in this revision.[^authoring-guide][^examples][^compatibility]
+Phase 2 made `init` default to a minimal scaffold, restored the previous
+six collections as `--template software-project`, and writes actual
+bundle paths after a staged check.[^init][^cli]
 Later phases have not started.
 Hosted CI is not claimed. The [research report](/research/okmate/heterogeneous-bundle-authoring.md) records
 all five registered roots, public examples, exact local revisions, compatibility

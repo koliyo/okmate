@@ -17,6 +17,7 @@ canonical list.
 ```sh
 okmate init
 okmate init --apply
+okmate init --template software-project --apply
 okmate init . --bare --apply
 okmate check knowledge --profile strict --format json
 okmate inspect catalog knowledge

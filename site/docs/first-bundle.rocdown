@@ -52,5 +52,6 @@ That `knowledge/` tree is this repository’s type-first archive. To start a
 different bundle (handbook, operations, data catalog, or a path other than
 `knowledge/`), use
 [`docs/authoring.md`](https://github.com/koliyo/okmate/blob/main/docs/authoring.md)
-and `okmate init [path]`. `--bare` skips the six product collections.
+and `okmate init [path]`. The default scaffold is minimal; `--template
+software-project` restores the six product collections.
 

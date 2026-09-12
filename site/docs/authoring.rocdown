@@ -25,6 +25,7 @@ Current reader limits:
 [`docs/compatibility.md`](https://github.com/koliyo/okmate/blob/main/docs/compatibility.md).
 
 `okmate init [path]` is create-only. Default path `knowledge`; default
-scaffold is six type-first collections; `--bare` is index and log only.
-Pass `docs`, `.okf`, or another directory when that is the bundle root.
-See the [CLI](/docs/cli/) page and the repository README.
+scaffold is minimal (`index.md` and `log.md`). The previous six
+collections are `--template software-project`. `--bare` is an alias for
+minimal. Pass `docs`, `.okf`, or another directory when that is the
+bundle root. See the [CLI](/docs/cli/) page and the repository README.

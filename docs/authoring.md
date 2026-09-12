@@ -126,25 +126,29 @@ policy. See [`compatibility.md`](compatibility.md).
 `okmate init [path]` prints a create-only plan. `--apply` writes. The
 default path is `knowledge`.
 
-- Default scaffold: root `index.md`, `log.md`, and six type-first collection
-  indexes (`architecture`, `decisions`, `status`, `plans`, `research`,
-  `audits`).
-- `--bare`: only `index.md` and `log.md`.
-- `--register` / `--id`: optional local registry entry. `--id` must be unique.
-- `--agents`: optional create-only agent routing files at the git toplevel.
+- Default scaffold: `index.md` and `log.md` (`--template minimal`). This
+  changed from the previous six collection indexes.
+- `--template software-project`: restore that previous layout
+  (`architecture`, `decisions`, `status`, `plans`, `research`, `audits`).
+- `--bare`: alias for `--template minimal`.
+- `--collection DIR`: add a relative collection (repeatable). Cannot
+  combine with `--bare`.
+- `--template-file path.toml`: local `[[collections]]` data. Not fetched
+  or executed. Cannot combine with `--template`.
+- `--register` / `--id`: optional local registry entry. `--id` wins.
+  Generic directory names such as `docs` prefer the repository or title.
+- `--agents`: optional create-only agent routing files at the git
+  toplevel, using the actual bundle path. Rejected for a repository-root
+  bundle because `AGENTS.md` would sit inside the corpus.
 - `--title`: heading for the root index.
-
-The bundle can live at `docs`, `.okf`, or another path; pass that path as
-`okmate init <path>`. Generated agent text currently still mentions
-`knowledge/` in places; treat the path you passed as the real root, and run
-`okmate check <path>` on that directory. `--bare` is the way to avoid empty
-product collections you do not need.
 
 ```sh
 okmate init
 okmate init --apply
+okmate init --template software-project --apply
 okmate init . --bare --apply
-okmate init docs --bare --apply
+okmate init docs --apply
+okmate init --collection runbooks --apply
 okmate init --apply --register --id my-bundle
 okmate check knowledge --profile strict
 okmate check path/to/bundle --profile base

@@ -42,8 +42,9 @@ Settings live under `~/.okmate/` (`OKMATE_CONFIG`, `OKMATE_CACHE`,
 ```sh
 okmate init
 okmate init --apply
+okmate init --template software-project --apply
 okmate init . --bare --apply
-okmate init docs --bare --apply
+okmate init docs --apply
 okmate init --apply --register --id my-bundle
 okmate check knowledge --profile strict --format json
 okmate check docs/examples/minimal --profile base
@@ -66,11 +67,16 @@ are under [`docs/examples/`](docs/examples/). Current reader limits are in
 [`docs/compatibility.md`](docs/compatibility.md).
 
 `okmate init [path]` prints a create-only plan; `--apply` writes. The
-default path is `knowledge`. The default scaffold is root `index.md`,
-`log.md`, and six type-first collection indexes. `--bare` writes only
-`index.md` and `log.md`. The bundle may live at `docs/`, `.okf/`, or
+default path is `knowledge`. **The default scaffold is now minimal**
+(`index.md` and `log.md` only). That is a compatibility change: the
+previous six collection indexes are
+`okmate init --template software-project`. `--bare` remains an alias for
+`--template minimal`. Optional `--collection DIR` (repeatable) and
+`--template-file <local.toml>` add or replace collections without
+fetching remote templates. The bundle may live at `docs/`, `.okf/`, or
 another path; pass that path to `init`, `check`, `inspect`, `search`,
 `build`, and `view`. `--register` / `--id` and `--agents` stay optional.
+Generated agent files use the actual bundle path.
 
 `--profile strict` is Okmate’s owners-and-evidence profile (used by this
 repository’s `knowledge/`). `--profile base` is closer to portable OKF and
