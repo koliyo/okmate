@@ -1,0 +1,170 @@
+# Authoring an OKF bundle
+
+This guide is for starting or reshaping a knowledge bundle. It does not
+require Okmate’s own `knowledge/` layout or the in-repo agent skill. Those
+are local conventions for this product, not OKF rules.
+
+Open Knowledge Format (OKF) v0.2 leaves taxonomy and directory names to the
+producer. Concept identity is the path without `.md`. `type` is an open
+vocabulary. Choose structure from the job the corpus has to do.
+
+## Start from reader questions
+
+Before creating folders, write down a few questions a reader or agent should
+be able to answer, and the kind of record that answers each one.
+
+| Reader job | Typical record | What the body must do |
+| --- | --- | --- |
+| Understand a mechanism | Explanation | Model, tradeoffs, limits, a worked example |
+| Complete a repeatable goal | How-to Guide | Prerequisites, steps, success check, recovery |
+| Look up a stable interface | Reference | Scope, fields or options, examples |
+| Evaluate evidence | Research Report | Question, method, findings, uncertainty |
+| Understand an observed state | Audit | Environment, method, findings, date |
+| Recover an adopted choice | Decision | Choice, alternatives, consequences |
+| Respond to an operational trigger | Runbook | Trigger, steps, rollback, owner |
+| Coordinate recurring work | Workflow | Roles, stages, handoffs |
+| Describe a data asset | Dataset, Table, Metric | Identity, grain, owners, related assets |
+
+Add a type only when the distinction changes how someone uses the record. A
+Workflow is not a How-to Guide with a different label. A dated audit is not
+team policy.
+
+## Scope before folders
+
+Give the bundle one audience, one maintenance responsibility, and a boundary
+for what it will not contain.
+
+- Product contracts stay in the product’s corpus.
+- Private host operations stay in an operations corpus.
+- General practice can live in a handbook that *cites* product evidence
+  instead of copying it.
+- A generated projection (export, build output, compiled wiki) is not the
+  canonical authored tree. Edit the source of truth.
+
+If two groups cannot share owners, release cadence, or secrecy, they are two
+bundles, not two folders in one root.
+
+## Collection, type, and authority
+
+These axes are independent. Do not encode all three in the folder name.
+
+| Axis | Question | Not the same as |
+| --- | --- | --- |
+| Collection / navigation | Where does a reader start? | The record’s type |
+| Type | What kind of reusable thing is this? | Whether it is binding |
+| Authority | Advice, observation, adopted rule, or history? | How recently it was edited |
+| Tags | Which other subjects it intersects | Identity or location |
+| Lifecycle / evidence | Is it current, and what supports it? | Folder name |
+
+A Research Report can live under a topic folder. A How-to Guide can cite an
+Audit without becoming that audit. `authority: exploratory` is not an
+adopted Decision.
+
+## Research versus reusable guidance
+
+Keep dated investigations as research or audits. When a finding is still
+useful, write a maintained guide that links to that evidence and states
+when it applies. Do not retitle a 2024 model comparison as timeless
+practice, and do not mark guidance verified merely because it was moved.
+
+## Resource versus source
+
+- `resource` on a concept points at the thing the record *is* (a table, a
+  repo, a service).
+- `sources[]` are citations for claims in *this* document. Each `id` should
+  match a keyed footnote (`[^id]`) in the body.
+- Not every URL needs its own concept. A source register can be one
+  Reference with anchors.
+
+## Generated projection versus authored knowledge
+
+Canonical knowledge is inert Markdown you review in git. A static site, a
+catalog export, or an agent index may be generated from it. Editing the
+projection is lost on rebuild. Keep generated trees out of the authored
+root, or treat them as derived output.
+
+## Directory names and bundle boundaries
+
+The directory name is not the bundle’s identity. Pass the actual path to
+`okmate check`, `inspect`, `search`, `build`, and `view`.
+
+| Placement | When it fits | Costs |
+| --- | --- | --- |
+| `knowledge/` | Curated knowledge beside source, tools, or other docs | Familiar default; not required |
+| `docs/` | The documentation tree *is* the typed corpus | Ordinary untyped Markdown in the same tree becomes a validation problem |
+| `.okf/` | Explicit machine-discoverable knowledge beside code | Hidden in ordinary browsing; discovery must be explicit |
+| Repository root | A dedicated knowledge-only repository | `README.md`, `CONTRIBUTING.md`, and `AGENTS.md` are not automatically outside the corpus |
+| `bundles/<name>/` or component-local roots | Distinct scopes, audiences, or owners | Needs explicit resolution; do not flatten a container of bundles into one root |
+
+A whole-root rename keeps relative concept IDs but changes registry paths and
+external links. Moving a record inside a root *changes its ID* and requires
+updating links and consumers.
+
+When more than one candidate exists, list them and choose explicitly. Do not
+prefer `knowledge/` merely because of its name.
+
+## Choose a starting layout
+
+Worked examples live in [`examples/`](examples/). Each README states
+purpose, navigation, and the validation profile that currently matches it.
+
+| If the corpus is… | Start from | Profile to check today |
+| --- | --- | --- |
+| A few records, no taxonomy yet | [`examples/minimal`](examples/minimal/) | `base` |
+| A software project’s work archive | [`examples/software-archive`](examples/software-archive/) | `strict` |
+| An engineering handbook / practice library | [`examples/engineering-handbook`](examples/engineering-handbook/) | `base` |
+| Operations and runbooks | [`examples/operations`](examples/operations/) | `base` |
+| Datasets, tables, metrics | [`examples/data-catalog`](examples/data-catalog/) | `base` |
+
+`strict` is Okmate’s owners-and-evidence profile. It currently also requires
+a fixed product type list and `domain/` tags. Handbook, operations, and data
+types are valid OKF; check them with `base` until you opt into that extra
+policy. See [`compatibility.md`](compatibility.md).
+
+## Current `okmate init`
+
+`okmate init [path]` prints a create-only plan. `--apply` writes. The
+default path is `knowledge`.
+
+- Default scaffold: root `index.md`, `log.md`, and six type-first collection
+  indexes (`architecture`, `decisions`, `status`, `plans`, `research`,
+  `audits`).
+- `--bare`: only `index.md` and `log.md`.
+- `--register` / `--id`: optional local registry entry. `--id` must be unique.
+- `--agents`: optional create-only agent routing files at the git toplevel.
+- `--title`: heading for the root index.
+
+The bundle can live at `docs`, `.okf`, or another path; pass that path as
+`okmate init <path>`. Generated agent text currently still mentions
+`knowledge/` in places; treat the path you passed as the real root, and run
+`okmate check <path>` on that directory. `--bare` is the way to avoid empty
+product collections you do not need.
+
+```sh
+okmate init
+okmate init --apply
+okmate init . --bare --apply
+okmate init docs --bare --apply
+okmate init --apply --register --id my-bundle
+okmate check knowledge --profile strict
+okmate check path/to/bundle --profile base
+```
+
+## Evidence without copying this repository
+
+A minimal record needs a `type` and a body. Title, description, owners,
+citations, and human verification are evidence you add when the claim
+requires them—not fields to invent so a template looks complete.
+
+When you do cite a claim, keep the footnote id and `sources[].id` in sync.
+Preserve unknown metadata; do not strip fields another tool stored.
+
+## Maintenance
+
+- Indexes are navigation, not an alphabetic dump. Preserve authored grouping
+  and questions.
+- Stale dates and verification events describe the record, not the folder.
+- Validate the profile you actually mean: format errors, missing evidence,
+  and local style advice are different kinds of finding. Today, `base` is
+  closer to portable OKF and `strict` mixes evidence with Okmate vocabulary.
+  Limits of the current reader are listed in [`compatibility.md`](compatibility.md).

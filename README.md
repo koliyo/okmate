@@ -43,8 +43,10 @@ Settings live under `~/.okmate/` (`OKMATE_CONFIG`, `OKMATE_CACHE`,
 okmate init
 okmate init --apply
 okmate init . --bare --apply
+okmate init docs --bare --apply
 okmate init --apply --register --id my-bundle
 okmate check knowledge --profile strict --format json
+okmate check docs/examples/minimal --profile base
 okmate inspect catalog knowledge
 okmate inspect concept architecture/system-overview knowledge
 okmate inspect graph knowledge
@@ -56,6 +58,30 @@ okmate view knowledge --no-window
 okmate roots --format json --no-sync
 okmate sync
 ```
+
+## Authoring a bundle
+
+Checked-in guide: [`docs/authoring.md`](docs/authoring.md). Worked examples
+are under [`docs/examples/`](docs/examples/). Current reader limits are in
+[`docs/compatibility.md`](docs/compatibility.md).
+
+`okmate init [path]` prints a create-only plan; `--apply` writes. The
+default path is `knowledge`. The default scaffold is root `index.md`,
+`log.md`, and six type-first collection indexes. `--bare` writes only
+`index.md` and `log.md`. The bundle may live at `docs/`, `.okf/`, or
+another path; pass that path to `init`, `check`, `inspect`, `search`,
+`build`, and `view`. `--register` / `--id` and `--agents` stay optional.
+
+`--profile strict` is Okmate’s owners-and-evidence profile (used by this
+repository’s `knowledge/`). `--profile base` is closer to portable OKF and
+is the documented check for the handbook, operations, and data examples.
+`base` is not yet a fully tolerant interchange reader; see the
+compatibility inventory.
+
+Canonical OKF specification:
+[GoogleCloudPlatform/open-knowledge-format](https://github.com/GoogleCloudPlatform/open-knowledge-format).
+The older `knowledge-catalog/okf` tree is a frozen pointer to that
+repository.
 
 `check`, `inspect`, `search`, and `build` stay single-root. Agents list
 resolved folders first:

@@ -4,11 +4,19 @@ title: Initialize a new OKF bundle from the okmate CLI
 description: Ship `okmate init` as a create-only, plan-then-apply scaffold for a local OKF v0.2 tree that `check` already understands, without a TUI studio, concept `new`, or git remotes.
 tags: [domain/okmate, domain/okf, concern/authoring, concern/developer-experience, concern/tooling]
 status: draft
-generated: { by: process:cursor, at: 2026-09-10T19:40:00Z }
+generated: { by: process:cursor, at: 2026-09-12T09:00:44Z }
 stale_after: 2026-12-10
 authority: exploratory
 owners: [human:nils]
 sources:
+  - id: implementation
+    resource: ../../../src/init.rs
+    title: Implemented init scaffold, apply, registration, and agent extras
+    author: process:git
+  - id: heterogeneous
+    resource: heterogeneous-bundle-authoring.md
+    title: Follow-up plan for heterogeneous bundle authoring
+    author: process:cursor
   - id: gaps
     resource: ../../research/okmate/okf-tool-gaps.md
     title: OKMate feature gaps versus the OKF tool ecosystem
@@ -157,9 +165,20 @@ routing beside the git toplevel.[^cli][^gaps][^config][^readme]
   `actor`.[^decision]
 - Do not mix unrelated working-tree changes into phase commits.
 
-## Current behavior
+## Implementation snapshot, 2026-09-12
 
-`okmate` has no `init` / `new`. Scaffolding is hand-written Markdown.
+`okmate init` is now implemented: dry-run/`--apply`, `--bare`, optional
+registration, and agent extras are present in the CLI and `src/init.rs`.
+The phased design below is retained as the initial implementation plan;
+this snapshot does not certify phase completion or hosted CI. The
+[heterogeneous authoring plan](/plans/okmate/heterogeneous-bundle-authoring.md)
+proposes follow-up changes to the default collections, generated paths,
+and policy support.[^implementation][^heterogeneous]
+
+## Original design baseline (historical)
+
+At the time of the initial design, `okmate` had no `init` / `new`.
+Scaffolding was hand-written Markdown.
 `check` defaults to path `knowledge`. A bundle root is an `index.md`
 whose frontmatter contains `okf_version`. Settings can add a directory
 root after the tree exists. Authoring research still assumes a git
@@ -324,3 +343,5 @@ provenance warnings separately from errors.
 [^workbench]: `--apply` / `--check`; create-only; optional agent files.
 [^okfcli]: `okf init ./my-bundle` empty tree.
 [^openknowledge]: `scaffold` versus agent `setup`.
+[^implementation]: Current code confirms the command exists; it supersedes the historical absence claim.
+[^heterogeneous]: New exploratory follow-up, with no phase started.

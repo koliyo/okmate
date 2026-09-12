@@ -47,3 +47,10 @@ That preview is Askama HTML for the bundle. It is not this product site.
 Add or edit Markdown under `knowledge/` with OKF YAML. Keep the body inert:
 no Rocdown declarations. After a substantive edit, run `okmate check` again
 on that same root.
+
+That `knowledge/` tree is this repository’s type-first archive. To start a
+different bundle (handbook, operations, data catalog, or a path other than
+`knowledge/`), use
+[`docs/authoring.md`](https://github.com/koliyo/okmate/blob/main/docs/authoring.md)
+and `okmate init [path]`. `--bare` skips the six product collections.
+

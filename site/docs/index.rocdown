@@ -2,7 +2,7 @@
     layout: "docs",
     meta: {
         title: "Docs",
-        description: "Human manual for OKMate: install, first bundle, git ownership, multiple bundles, CLI, desktop, and OKF.",
+        description: "Human manual for OKMate: install, first bundle, authoring, git ownership, multiple bundles, CLI, desktop, and OKF.",
     },
 }
 
@@ -14,6 +14,7 @@ the human manual. Visiting agents should start at [Agents](/agents/).
 :card-grid.begin
     :link-card[page: "docs/install", title: "Install", summary: "Homebrew cask, cargo, the macOS app zip, and autoupdate."]
     :link-card[page: "docs/first-bundle", title: "First bundle", summary: "Open the in-repo knowledge tree and run check, inspect, and search."]
+    :link-card[page: "docs/authoring", title: "Authoring", summary: "Choose a bundle path, types, and check profile; worked examples in the repo."]
     :link-card[page: "docs/git-ownership", title: "Git ownership", summary: "Writable directories versus read-only git snapshots."]
     :link-card[page: "docs/multiple-bundles", title: "Multiple bundles", summary: "List roots, then run one-root commands."]
     :link-card[page: "docs/cli", title: "CLI", summary: "check, inspect, search, build, view, roots, and sync."]

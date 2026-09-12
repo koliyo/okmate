@@ -12,6 +12,7 @@ knowledge root at a time.
 
 - Agents setup: /agents/ (install, skill, JSON CLI)
 - Human docs: /docs/
+- Authoring a bundle: /docs/authoring/
 - Install (app, Homebrew, cargo, macOS bundle from source): /docs/install/
 - OKF format vs `okf` crate vs `okmate`: /docs/okf/
 - Project status and limits: /project/status/
@@ -65,6 +66,7 @@ Place `--profile` before `catalog`, `concept`, or `graph`.
 - /docs/ — Human manual
 - /docs/install/ — Zip, Homebrew, cargo, macOS app from source, autoupdate
 - /docs/first-bundle/ — In-repo `knowledge/` walkthrough
+- /docs/authoring/ — Bundle path, types, examples; canonical `docs/authoring.md`
 - /docs/git-ownership/ — Writable directories vs read-only git snapshots
 - /docs/multiple-bundles/ — `roots` then one-path commands
 - /docs/cli/ — Command table

@@ -5,6 +5,12 @@ Independent bullets under the same `## YYYY-MM-DD` heading combine instead of
 conflicting. Add a new list item; do not reword another session's bullet in
 the same change.
 
+## 2026-09-12
+
+- Published a checked-in OKF authoring guide, five contrasting example bundles, and a fixture-backed inventory of current format versus Okmate Strict versus reader-limit diagnostics. Exploratory Phase 1 of [heterogeneous authoring](/plans/okmate/heterogeneous-bundle-authoring.md); do not log complete until hosted CI succeeds.
+- Corrected the original init plan's absence claim with a dated implementation snapshot and a link to the heterogeneous-authoring follow-up; retained its initial phased design without claiming hosted-CI completion.
+- Investigated all five registered bundles and public OKF authoring patterns; added paired [research](/research/okmate/heterogeneous-bundle-authoring.md) and [plan](/plans/okmate/heterogeneous-bundle-authoring.md) for purpose-specific structure, developer-knowledge handbook navigation, arbitrary bundle paths, and separate format/evidence/style support. Exploratory; no tooling or bundle migration phase started.
+
 ## 2026-09-11
 
 - Added Phase 4 to the document tab gestures plan: stable document titles and OKF type-color dots, including Cmd-clicked background tabs. Exploratory; do not log complete until hosted CI succeeds.
