@@ -3,12 +3,12 @@
     <channel>
         <title>OKMate</title>
         <item>
-            <title>0.3.6</title>
-            <pubDate>Fri, 11 Sep 2026 11:50:56 +0000</pubDate>
-            <sparkle:version>0.3.6</sparkle:version>
-            <sparkle:shortVersionString>0.3.6</sparkle:shortVersionString>
+            <title>0.3.8</title>
+            <pubDate>Sat, 12 Sep 2026 11:39:56 +0000</pubDate>
+            <sparkle:version>0.3.8</sparkle:version>
+            <sparkle:shortVersionString>0.3.8</sparkle:shortVersionString>
             <sparkle:minimumSystemVersion>12.0</sparkle:minimumSystemVersion>
-            <enclosure url="https://github.com/koliyo/okmate/releases/download/v0.3.6/OKMate.zip" length="6761656" type="application/octet-stream" sparkle:edSignature="8o5eBWsq4NROZfVgNtExVvvO9yHhGEocYndCx2Q7k3YOtk6dlAL9KV+bJW06jOLtHH1j9CbnWO90XMp1Cq70Dg=="/>
+            <enclosure url="https://github.com/koliyo/okmate/releases/download/v0.3.8/OKMate.zip" length="6874783" type="application/octet-stream" sparkle:edSignature="WlcTqbeKewOGA/OiCtcgsJx6XdE4admHx4+hjkDviry/OlZ4Np6GxGGjx/fQXPtPUbLuzGtnDx0ZJo8+0l9kBw=="/>
         </item>
     </channel>
 </rss>
