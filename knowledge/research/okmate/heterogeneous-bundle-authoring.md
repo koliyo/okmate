@@ -4,7 +4,7 @@ title: Structuring heterogeneous OKF bundles
 description: A survey of all five registered roots and public OKF examples supports purpose-specific navigation, open concept vocabularies, arbitrary bundle paths, and a minimal init scaffold with optional authoring templates.
 tags: [domain/okmate, domain/okf, concern/authoring, concern/architecture, concern/tooling]
 status: draft
-generated: { by: process:cursor, at: 2026-09-12T10:20:00Z }
+generated: { by: process:cursor, at: 2026-09-12T12:40:00Z }
 stale_after: 2026-12-12
 authority: exploratory
 owners: [human:nils]
@@ -144,6 +144,9 @@ sources:
   - id: plan
     resource: ../../plans/okmate/heterogeneous-bundle-authoring.md
     title: Documentation and tooling improvement plan
+  - id: alts
+    resource: bundle-restructure-alternatives.md
+    title: Per-root restructure alternatives and identity costs
 ---
 
 # Structuring heterogeneous OKF bundles
@@ -326,7 +329,10 @@ This is an illustrative destination, not a requested migration or a starter
 that creates empty folders. Keep the existing type-first research archive while
 adding topic indexes if it works well enough. At eleven records, a rewritten
 front door may be sufficient. Grow topics such as testing or software design
-only when there is content and recurring retrieval demand.
+only when there is content and recurring retrieval demand. Ranked keep /
+front-door / move options for each registered root are in the follow-up
+[restructure alternatives](/research/okmate/bundle-restructure-alternatives.md)
+report.[^alts][^plan]
 
 ## Practices visible in the public ecosystem
 
@@ -454,6 +460,7 @@ owners, compatibility rules, tests, and bounded exits. No implementation phase,
 bundle migration, registration, or human approval is claimed by this report.[^plan]
 
 [^survey]: Read-only baseline and isolated fixture results at the stated date; exact root revisions and diagnostic totals are preserved above.
+[^alts]: Per-root alternatives; not authorization to move sibling files.
 [^developer]: Root navigation includes six type collections, three currently empty.
 [^developer-readme]: Repository purpose and small tooling scope; product facts remain elsewhere.
 [^developer-tools]: Existing environment, backup, and cache research.

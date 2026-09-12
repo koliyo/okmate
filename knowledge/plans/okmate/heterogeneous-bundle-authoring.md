@@ -4,7 +4,7 @@ title: Support heterogeneous OKF bundle authoring
 description: Separate portable reading, evidence checks, and local authoring style; make init minimal and path-correct, add optional conventions and templates, and improve discovery and documentation without migrating existing bundles by default.
 tags: [domain/okmate, domain/okf, concern/authoring, concern/architecture, concern/tooling]
 status: draft
-generated: { by: process:cursor, at: 2026-09-12T11:30:00Z }
+generated: { by: process:cursor, at: 2026-09-12T12:40:00Z }
 stale_after: 2026-12-12
 authority: exploratory
 owners: [human:nils]
@@ -12,6 +12,9 @@ sources:
   - id: research
     resource: ../../research/okmate/heterogeneous-bundle-authoring.md
     title: Registry inventory, public examples, and implementation findings
+  - id: alts
+    resource: ../../research/okmate/bundle-restructure-alternatives.md
+    title: Per-root restructure alternatives and identity costs
   - id: authoring-guide
     resource: ../../../docs/authoring.md
     title: Checked-in authoring guide
@@ -81,7 +84,8 @@ approved: Git writes stay; discovery lists versioned roots without
 preferring `knowledge/`.[^discovery-draft]
 Phase 5 implements that discovery contract in this revision. Phase 6 recorded
 a fixture curation prototype and per-bundle assessments; sibling registered
-roots were not edited.
+roots were not edited. Ranked keep / front-door / move options live in
+[restructure alternatives](/research/okmate/bundle-restructure-alternatives.md).[^alts]
 Hosted CI is not claimed. The [research report](/research/okmate/heterogeneous-bundle-authoring.md) records
 all five registered roots, public examples, exact local revisions, compatibility
 findings, and the proposed developer-knowledge model. The original
@@ -392,6 +396,7 @@ on the relevant revision. Record behavior changes and results in the knowledge
 log, preserving previous sessions' entries.[^skill]
 
 [^research]: Full inventory, source review, public comparisons, and reproducible behavior observations.
+[^alts]: Ranked keep / front-door / move options; not a migration authorization.
 [^init]: Existing scaffold is implemented; defaults and extras need follow-up changes.
 [^cli]: Preserve explicit command compatibility while introducing named templates.
 [^init-tests]: Extend path and content coverage rather than only file-existence assertions.
