@@ -11,5 +11,5 @@
 * [Memanto integration setup and OKF usage](memanto-integration.md) - On-prem Moorcheh + Ollama; `migrate okf` into a derived index; `memory sync --okf` exports the other way. Census: [knowledge systems](/research/okf/knowledge-systems-built-on-okf.md).
 * [Extended multi-bundle viewer](extended-multi-bundle.md) - Registry versus single-bundle Askama site; nav modes, dashboard recents, collection hover, merged log.
 * [Viewer click-path latency and large chrome pages](viewer-responsiveness.md) - Pre-change click stall and post-change `okmate timings` baseline (this machine).
-* [Leptos instead of Askama and Datastar](leptos.md) - SSR-only templating versus islands or hydrate; keep the current hypermedia stack.
-* [Client-side JavaScript for the Datastar viewer](datastar-client-js.md) - Keep vanilla ES modules; no TypeScript toolchain; enhance chrome outside the morph. Plan: [datastar-client-js](/plans/okmate/datastar-client-js.md).
+* [Leptos instead of Askama and Datastar](leptos.md) - Historical SSR/islands/hydrate comparison, qualified by the revised client-shell research.
+* [Datastar fit and client-shell architecture](datastar-client-js.md) - Current shell-state evidence; vanilla versus component ownership; bounded Svelte/TypeScript evaluation, packaging and static-export tradeoffs. Earlier cleanup plan: [datastar-client-js](/plans/okmate/datastar-client-js.md).

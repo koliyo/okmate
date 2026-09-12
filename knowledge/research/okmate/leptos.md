@@ -1,14 +1,18 @@
 ---
 type: Research Report
 title: Leptos as an okmate viewer instead of Askama and Datastar
-description: Leptos 0.8 can emit the same HTML strings Askama does, but the product people mean by leptos.dev is a WASM hydrate or islands app that fights okmate’s single native binary, static `/{id}/` tree, and server-owned hypermedia contract.
+description: Historical Leptos comparison under the original hypermedia constraints, qualified by the revised client-shell research; WASM build cost does not inherently require a new host or loss of static export.
 tags: [domain/okmate, concern/architecture, concern/rendering, concern/tooling]
 status: draft
-generated: { by: process:cursor, at: 2026-09-11T08:10:00Z }
+generated: { by: process:cursor, at: 2026-09-12T12:29:06Z }
 stale_after: 2026-11-28
 authority: exploratory
 owners: [human:nils]
 sources:
+  - id: shell-revision
+    resource: datastar-client-js.md
+    title: Revised Datastar fit and client-shell architecture
+    author: process:cursor
   - id: leptos-site
     resource: https://leptos.dev
     title: Leptos product site
@@ -136,7 +140,22 @@ sources:
 
 # Leptos as an okmate viewer instead of Askama and Datastar
 
-## Claim
+## Revision note — 2026-09-12
+
+The [revised client-shell research](/research/okmate/datastar-client-js.md)
+qualifies this comparison. Sections below preserve the 2026-09-11 analysis under
+the extraction plan's chosen scope; they are historical reasoning, not a current
+implementation census or permanent constraints. In particular, its JS sizes and
+MutationObserver description are outdated.[^shell-revision]
+
+Client components need not compile `okf` to WASM, require a different desktop
+host, or remove Askama static export. Embedded compiled assets can preserve one
+native distribution. Those are architecture choices; dual native/WASM compilation
+and integration remain real costs. Local shell state is also distinct from a
+client copy of the knowledge domain. Consult the revised report for the current
+comparison and its unmeasured experiment proposal.[^shell-revision]
+
+## Historical claim — 2026-09-11
 
 [Leptos](https://leptos.dev) is a full-stack Rust web framework whose default product is **server HTML plus a `wasm32-unknown-unknown` client**.[^leptos-site] Okmate is a **single native binary** that compiles Askama templates, serves them with Axum, morphs `#okmate-main` / `#okmate-toc` with Datastar, and optionally loads that origin in `h35-desktop`. Those are different answers to “who owns the next click.”[^leptos-crate][^readme][^cargo][^pages]
 
@@ -144,7 +163,7 @@ Using Leptos as an Askama substitute (`ssr` only, `render_to_string`, no WASM) i
 
 This record is exploratory. It does not mint a Decision and it is not an implementation plan.
 
-## Current setup (what would be replaced)
+## Historical implementation snapshot — 2026-09-11
 
 The published stack is Askama 0.16, Axum 0.8, official Datastar 0.4, and optional `h35-desktop`. The only in-repo Rust library is `okf`. CLI-only tests omit the webview: `cargo test -p okmate --no-default-features`.[^readme][^cargo][^overview][^ci]
 
@@ -238,7 +257,7 @@ Designer-readable markup: Askama templates are already HTML. Leptos RSX is close
 
 Sharing one UI language with a future WASM-heavy app: okmate’s window is a localhost HTML origin behind `h35-desktop`, not a CSR bundle. Switching hosts to Tauri to “use Leptos properly” is a third rewrite.[^desktop][^h35]
 
-## Recommendation
+## Historical recommendation — 2026-09-11
 
 Keep Askama + Axum + Datastar + `h35-desktop`. Do not adopt Leptos B or C unless the product goal changes to “Rust-in-the-browser chrome” and the project accepts dual compile, a WASM payload in `OKMate.app`, and a new static-export story.
 
@@ -276,3 +295,5 @@ An implementation plan, a Decision, a spike crate, or measurements of Leptos SSR
 [^resp-plan]: Non-goal: replacing Askama or Datastar; live preview does not write every page; landmarks stay `#okmate-*`.
 [^resp-research]: Click stall was reload/load, not Askama; small fragment render ~1 ms.
 [^h35]: Host owns window chrome and IPC; page origin owns document chrome; Datastar lives in the origin if used.
+
+[^shell-revision]: Current source review, corrected feasibility claims, and exploratory component-shell comparison.
