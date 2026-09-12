@@ -60,3 +60,14 @@ def test_knowledge_checks_when_index_exists(tmp_path: Path) -> None:
     assert steps
     assert "check" in steps[0].argv
     assert "knowledge" in steps[0].argv
+
+
+def test_hosted_ci_does_not_run_knowledge() -> None:
+    root = Path(__file__).resolve().parents[2]
+    ci = (root / ".github" / "workflows" / "ci.yml").read_text(encoding="utf-8")
+    knowledge = (root / ".github" / "workflows" / "knowledge.yml").read_text(encoding="utf-8")
+    assert "okmate-ops ci knowledge" not in ci
+    assert "okmate-ops ci test" in ci
+    assert "okmate-ops ci knowledge" in knowledge
+    assert "Check knowledge bundle" in knowledge
+

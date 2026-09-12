@@ -1,41 +1,115 @@
-from io import StringIO
+import json
 
-from okmate_ops.ghutil import wait_for_check
+from okmate_ops.ghutil import CI_WORKFLOW, wait_for_existing_ci, wait_for_workflow_run
+
+SUCCESS = json.dumps(
+    [
+        {
+            "databaseId": 1,
+            "status": "completed",
+            "conclusion": "success",
+            "createdAt": "2026-01-01T00:00:00Z",
+        }
+    ]
+)
+IN_PROGRESS = json.dumps(
+    [
+        {
+            "databaseId": 2,
+            "status": "in_progress",
+            "conclusion": "",
+            "createdAt": "2026-01-01T00:00:00Z",
+        }
+    ]
+)
+FAILED = json.dumps(
+    [
+        {
+            "databaseId": 3,
+            "status": "completed",
+            "conclusion": "failure",
+            "createdAt": "2026-01-01T00:00:00Z",
+        }
+    ]
+)
 
 
-def test_wait_for_check_rewrites_one_line() -> None:
-    replies = ["", "in_progress pending", "completed success"]
-    out = StringIO()
-    wait_for_check(
-        repo="koliyo/okmate",
+def test_ci_workflow_is_ci_yml() -> None:
+    assert CI_WORKFLOW == "ci.yml"
+
+
+def test_wait_for_workflow_run_success() -> None:
+    seen: list[list[str]] = []
+
+    def gh(args: list[str]) -> str:
+        seen.append(args)
+        return SUCCESS
+
+    wait_for_workflow_run(sha="abc", gh=gh, sleep=lambda s: None)
+    assert seen[0][0:2] == ["run", "list"]
+    assert seen[0][seen[0].index("--workflow") + 1] == "ci.yml"
+    assert "knowledge.yml" not in seen[0]
+
+
+def test_wait_for_workflow_run_watches_in_progress() -> None:
+    replies = [IN_PROGRESS, SUCCESS]
+    watched: list[int] = []
+
+    def gh(args: list[str]) -> str:
+        if args[:2] == ["run", "list"]:
+            return replies.pop(0)
+        raise AssertionError(args)
+
+    wait_for_workflow_run(
         sha="abc",
-        check="Test",
-        gh=lambda args: replies.pop(0),
-        sleep=lambda seconds: None,
-        out=out,
+        gh=gh,
+        sleep=lambda s: None,
+        watch=watched.append,
     )
-    written = out.getvalue()
-    assert "waiting" in written
-    assert "in_progress pending" in written
-    assert "passed" in written
-    assert "Status:" not in written
+    assert watched == [2]
 
 
-def test_wait_for_check_failed_keeps_single_line() -> None:
-    out = StringIO()
+def test_wait_for_workflow_run_fails_on_failure() -> None:
     try:
-        wait_for_check(
-            repo="koliyo/okmate",
+        wait_for_workflow_run(
             sha="abc",
-            check="Test",
-            gh=lambda args: "completed cancelled",
-            sleep=lambda seconds: None,
-            out=out,
+            gh=lambda args: FAILED,
+            sleep=lambda s: None,
         )
     except SystemExit as exc:
-        assert "cancelled" in str(exc)
+        assert "failure" in str(exc)
     else:
         raise AssertionError("expected SystemExit")
-    written = out.getvalue()
-    assert "failed (cancelled)" in written
-    assert "Status:" not in written
+
+
+def test_wait_for_workflow_run_fails_when_missing() -> None:
+    try:
+        wait_for_workflow_run(
+            sha="abc",
+            gh=lambda args: "[]",
+            sleep=lambda s: None,
+        )
+    except SystemExit as exc:
+        assert "has not run on abc" in str(exc)
+        assert "ci.yml" in str(exc)
+    else:
+        raise AssertionError("expected SystemExit")
+
+
+def test_wait_for_existing_ci_falls_back_to_parent() -> None:
+    shas: list[str] = []
+
+    def gh(args: list[str]) -> str:
+        sha = args[args.index("--commit") + 1]
+        shas.append(sha)
+        if sha == "child":
+            return "[]"
+        return SUCCESS
+
+    wait_for_existing_ci(
+        "child",
+        parent_sha="parent",
+        gh=gh,
+        sleep=lambda s: None,
+    )
+    assert shas == ["child", "parent"]

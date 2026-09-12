@@ -34,10 +34,8 @@ jobs:
       - uses: actions/checkout@v7
       - uses: dtolnay/rust-toolchain@stable
       - uses: Swatinem/rust-cache@v2
-      - name: Test engine and app
-        run: cargo test -p okf && cargo test -p okmate --no-default-features
-      - name: Check knowledge bundle
-        run: cargo run -q --no-default-features -p okmate -- check knowledge --profile strict --format terminal
       - uses: astral-sh/setup-uv@v7
+      - name: Test engine and app
+        run: uv run --no-dev okmate-ops ci test
       - name: Test okmate-ops
         run: uv run --directory okmate-ops --group dev pytest

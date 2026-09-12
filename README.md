@@ -220,10 +220,13 @@ Do not treat this README as an architecture decision.
    that creates an immutable `v*` tag. Pass `--force` only to move an
    existing `v*` (local and `origin`). `--dry-run` prints the resolved
    tag and whether crate files already match, then exits. For a versioned
-   tag it writes `X.Y.Z` to `Cargo.toml`, `okf/Cargo.toml`, and
-   `Cargo.lock`, pushes that commit to the target branch, waits for
-   hosted **Test** on the version commit, then pushes the tag and updates
-   `Casks/okmate.rb` on `koliyo/homebrew-okmate`. Set
+   tag it waits for an existing hosted `ci.yml` run on the source SHA
+   (lint, engine/app tests, and okmate-ops pytest; Knowledge is a sibling
+   workflow and is not a ship gate), then writes `X.Y.Z` to `Cargo.toml`,
+   `okf/Cargo.toml`, and `Cargo.lock`, pushes that commit to the target
+   branch, and pushes the tag and updates `Casks/okmate.rb` on
+   `koliyo/homebrew-okmate`. The cut job does not start CI and does not lint.
+   Set
    `BUNDLE_VERSION` only when Sparkle's compare version must move separately
    from Cargo (every `v*` must increase it).
 2. Wait for the **Release** workflow on that tag (signing secrets must be
@@ -236,8 +239,9 @@ Do not treat this README as an architecture decision.
    `v*` release.
 
 The same cut can run from **Actions → Cut release** (`workflow_dispatch`).
-That job calls `okmate-ops release` on Ubuntu, waits for hosted **Test**,
-then pushes the tag so **Release** still packages from the tag. Versioned
+That job calls `okmate-ops release` on Ubuntu, waits for the existing
+hosted `ci.yml` run, then pushes the tag so **Release** still packages
+from the tag. Versioned
 cuts need repository secret `HOMEBREW_TAP_TOKEN` (write access to
 `koliyo/homebrew-okmate`). That secret is a repo secret, not a `release`
 environment secret: **Cut release** runs from `main`, and `main` is not

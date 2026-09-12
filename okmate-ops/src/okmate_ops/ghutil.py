@@ -1,76 +1,108 @@
 from __future__ import annotations
 
+import json
 import subprocess
-import sys
 import time
-from typing import IO, Callable
+from typing import Callable
 
-from tqdm import tqdm
-
-DEFAULT_CHECKS = ("Code Formatting & Lints", "Test")
-DEFAULT_BAR_WINDOW_S = 600.0
+CI_WORKFLOW = "ci.yml"
+IN_PROGRESS = frozenset({"queued", "in_progress", "waiting", "requested", "pending"})
 
 
-def parse_check_line(result: str) -> tuple[str, str] | None:
-    line = result.strip().splitlines()[0] if result.strip() else ""
-    if not line:
-        return None
-    status, _, conclusion = line.partition(" ")
-    return status, conclusion or "pending"
+def parse_workflow_runs(raw: str) -> list[dict]:
+    if not raw.strip():
+        return []
+    data = json.loads(raw)
+    if not isinstance(data, list):
+        return []
+    return data
 
 
-def wait_for_check(
+def wait_for_workflow_run(
     *,
-    repo: str,
     sha: str,
-    check: str,
+    workflow: str = CI_WORKFLOW,
     gh: Callable[..., str],
     sleep: Callable[[float], None],
+    watch: Callable[[int], None] | None = None,
     deadline_s: float | None = None,
-    out: IO[str] | None = None,
 ) -> None:
     started = time.monotonic()
-    stream = out or sys.stdout
-    window = deadline_s if deadline_s is not None else DEFAULT_BAR_WINDOW_S
-    bar = tqdm(
-        total=int(window),
-        desc=check,
-        unit="s",
-        file=stream,
-        ascii=True,
-        ncols=80,
-        mininterval=0,
-        dynamic_ncols=False,
-        bar_format="{desc}: {bar} {elapsed} {postfix}",
-    )
-    try:
-        while True:
-            if deadline_s is not None and time.monotonic() - started > deadline_s:
-                raise SystemExit(f"timed out waiting for {check}")
-            raw = gh(
-                [
-                    "api",
-                    f"repos/{repo}/commits/{sha}/check-runs",
-                    "--jq",
-                    f'.check_runs[] | select(.name == "{check}") | .status + " " + (.conclusion // "pending")',
-                ]
-            )
-            parsed = parse_check_line(raw)
-            if parsed is None:
-                bar.set_postfix_str("waiting", refresh=True)
+    print(f"Waiting for: {workflow} on {sha}", flush=True)
+    while True:
+        if deadline_s is not None and time.monotonic() - started > deadline_s:
+            raise SystemExit(f"timed out waiting for {workflow}")
+        raw = gh(
+            [
+                "run",
+                "list",
+                "--commit",
+                sha,
+                "--workflow",
+                workflow,
+                "--json",
+                "databaseId,status,conclusion,createdAt",
+                "--limit",
+                "20",
+            ]
+        )
+        runs = parse_workflow_runs(raw)
+        runs.sort(key=lambda run: run.get("createdAt") or "", reverse=True)
+        if any(
+            run.get("status") == "completed" and run.get("conclusion") == "success"
+            for run in runs
+        ):
+            print(f"  {workflow} passed", flush=True)
+            return
+        inflight = [run for run in runs if run.get("status") in IN_PROGRESS]
+        if inflight:
+            run_id = int(inflight[0]["databaseId"])
+            print(f"  watching run {run_id}", flush=True)
+            if watch is not None:
+                watch(run_id)
             else:
-                status, conclusion = parsed
-                if status == "completed":
-                    if conclusion == "success":
-                        bar.set_postfix_str("passed", refresh=True)
-                        return
-                    bar.set_postfix_str(f"failed ({conclusion})", refresh=True)
-                    raise SystemExit(f"{check} failed ({conclusion})")
-                bar.set_postfix_str(f"{status} {conclusion}", refresh=True)
-            sleep(10)
-            bar.update(10)
-    finally:
-        bar.close()
+                gh(["run", "watch", str(run_id), "--exit-status"])
+            sleep(0)
+            continue
+        completed = [run for run in runs if run.get("status") == "completed"]
+        if completed:
+            conclusion = completed[0].get("conclusion") or "failure"
+            raise SystemExit(f"{workflow} failed ({conclusion})")
+        raise SystemExit(
+            f"CI has not run on {sha}; wait for the push or dispatch {workflow} yourself"
+        )
+
+
+def wait_for_existing_ci(
+    sha: str,
+    *,
+    parent_sha: str | None = None,
+    gh: Callable[..., str],
+    sleep: Callable[[float], None],
+    watch: Callable[[int], None] | None = None,
+    deadline_s: float | None = None,
+) -> None:
+    try:
+        wait_for_workflow_run(
+            sha=sha,
+            workflow=CI_WORKFLOW,
+            gh=gh,
+            sleep=sleep,
+            watch=watch,
+            deadline_s=deadline_s,
+        )
+    except SystemExit as exc:
+        if parent_sha is None or not str(exc).startswith("CI has not run on"):
+            raise
+        print(f"no {CI_WORKFLOW} on {sha}; waiting on parent {parent_sha}", flush=True)
+        wait_for_workflow_run(
+            sha=parent_sha,
+            workflow=CI_WORKFLOW,
+            gh=gh,
+            sleep=sleep,
+            watch=watch,
+            deadline_s=deadline_s,
+        )
 
 
 def gh_run(args: list[str], check: bool = True) -> subprocess.CompletedProcess:

@@ -13,21 +13,24 @@ commands.
 
 1. Work from the repository root and inspect `git status --short` before
    drawing CI provenance conclusions or editing workflows.
-2. Hosted workflow: `.github/workflows/ci.yml`
-   - Triggers: push to `main`, pull requests, `workflow_dispatch`
-   - Job `Code Formatting & Lints` on `ubuntu-latest`: `okmate-ops ci lint`
-     (`cargo fmt`, `cargo clippy --workspace --all-targets --no-default-features -D warnings`)
-   - Job `Test` on `ubuntu-latest`: `cargo test -p okf && cargo test -p okmate --no-default-features`
+2. Hosted workflows:
+   - `.github/workflows/ci.yml`
+     - Triggers: push to `main`, pull requests, `workflow_dispatch`
+     - Job `Code Formatting & Lints` on `ubuntu-latest`: `okmate-ops ci lint`
+     - Job `Test` on `ubuntu-latest`: `okmate-ops ci test` plus okmate-ops pytest
+   - `.github/workflows/knowledge.yml`
+     - Same triggers as `ci.yml`. Runs `okmate-ops ci knowledge`. Not a
+       ship gate; Cut release does not wait for it.
 3. When `okmate-ops` is present, replay the same jobs locally with
    `uv run okmate-ops ci`.
 4. `gh` talks to `https://api.github.com`. In a sandbox, run `gh` unsandboxed.
 5. Hosted release workflows:
    - `.github/workflows/cut-release.yml` — `workflow_dispatch` only.
-     Runs `okmate-ops release` (same version commit → Test → tag → tap
-     path as localhost). After a `GITHUB_TOKEN` push, it dispatches
-     `ci.yml` (token pushes do not start `on: push` workflows) and
-     waits for those checks. After the tag push it dispatches
-     `release.yml` from that tag (same token rule). Versioned cuts need repository secret
+     Runs `okmate-ops release` (wait for existing `ci.yml` on the source
+     SHA → version commit → tag → tap). Does not start CI and does not
+     wait for `knowledge.yml`. After the tag push it dispatches
+     `release.yml` from that tag (`GITHUB_TOKEN` tag pushes do not start
+     `on: tags` workflows). Versioned cuts need repository secret
      `HOMEBREW_TAP_TOKEN`. Do not attach this job to the `release`
      environment; `main` is not allowed to deploy there.
    - `.github/workflows/release.yml` — tag push (`v*`, `dev`) or
