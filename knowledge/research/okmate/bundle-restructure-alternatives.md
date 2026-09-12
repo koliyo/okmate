@@ -4,7 +4,7 @@ title: Restructure alternatives for registered OKF bundles
 description: For the five registered roots, prefer navigation and new citing records over concept moves; Okmate and Rocci stay type-first, developer-knowledge gets a question front door, H35 and rocci-spotify wait for content.
 tags: [domain/okmate, domain/okf, concern/authoring, concern/architecture]
 status: draft
-generated: { by: process:cursor, at: 2026-09-12T12:40:00Z }
+generated: { by: process:cursor, at: 2026-09-12T11:50:00Z }
 stale_after: 2026-12-12
 authority: exploratory
 owners: [human:nils]
@@ -15,6 +15,9 @@ sources:
   - id: plan
     resource: ../../plans/okmate/heterogeneous-bundle-authoring.md
     title: Support heterogeneous OKF bundle authoring
+  - id: exec
+    resource: ../../plans/okmate/bundle-restructure-alternatives.md
+    title: Apply preferred restructure alternatives on registered bundles
   - id: prototype
     resource: ../../status/heterogeneous-bundle-curation.md
     title: Fixture handbook questions and retrieval
@@ -80,7 +83,9 @@ Do not apply one folder template to the five registered roots. Prefer
 **keep IDs and change the front door** over moving files. Physical
 restructures are later alternatives with identity costs, not the default
 next step. This report does not authorize migrations or edit sibling
-working trees.[^inventory][^plan][^catalog]
+working trees.[^inventory][^plan][^catalog] An
+[implementation plan](/plans/okmate/bundle-restructure-alternatives.md)
+follows the preferred sequence; writing it does not start a phase.[^exec]
 
 ## Method and counts
 
@@ -238,6 +243,7 @@ needs a per-ID path map produced in that bundle’s own git, not in this
 report.[^prototype][^catalog]
 
 [^inventory]: Morning survey fit table and developer-knowledge model.
+[^exec]: Preferred A–D on live bundles; class E behind a review gate.
 [^plan]: Phase 6: proposals, not migrations; identity checklist for later moves.
 [^prototype]: Fixture A–C prototype; sibling roots were not opened for edits.
 [^authoring]: Path is identity; types and folders are independent; distill don’t retitle.

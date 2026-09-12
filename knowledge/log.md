@@ -8,6 +8,7 @@ the same change.
 ## 2026-09-12
 
 - Added current-map question bullets on the [root index](/index.md) to architecture, the authoring-host decision, status curation, heterogeneous authoring, and restructure research. Type collections retained. Local Exit evidence only.
+- Drafted [apply preferred restructure alternatives](/plans/okmate/bundle-restructure-alternatives.md) from the alternatives research (front doors and distilled guides first; concept moves behind a review gate). Exploratory; writing the plan does not start a phase.
 - Drafted [restructure alternatives](/research/okmate/bundle-restructure-alternatives.md) for the five registered roots (keep type-first archives, question front doors, wait-for-content ops maps; physical moves last). Exploratory; does not authorize sibling migrations.
 - Recorded a fixture [curation prototype](/status/heterogeneous-bundle-curation.md): frozen handbook questions, preserved example concept IDs, retrieval hit rate 1.0, and per-bundle assessments without migrating sibling roots. Exploratory Phase 6 of [heterogeneous authoring](/plans/okmate/heterogeneous-bundle-authoring.md); do not log complete until hosted CI succeeds.
 - Added read-only `okmate discover` and container `view` resolution by versioned `okf_version` indexes, without preferring `knowledge/` or flattening mixed corpora. Exploratory Phase 5 of [heterogeneous authoring](/plans/okmate/heterogeneous-bundle-authoring.md); do not log complete until hosted CI succeeds.

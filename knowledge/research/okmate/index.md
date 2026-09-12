@@ -1,6 +1,6 @@
 # Okmate
 
-* [Restructure alternatives for registered OKF bundles](bundle-restructure-alternatives.md) - Per-root keep / front-door / move options and identity costs; not a migration. Inventory: [heterogeneous authoring](heterogeneous-bundle-authoring.md). Prototype: [curation status](/status/heterogeneous-bundle-curation.md).
+* [Restructure alternatives for registered OKF bundles](bundle-restructure-alternatives.md) - Per-root keep / front-door / move options and identity costs; not a migration. Inventory: [heterogeneous authoring](heterogeneous-bundle-authoring.md). Prototype: [curation status](/status/heterogeneous-bundle-curation.md). Plan: [apply alternatives](/plans/okmate/bundle-restructure-alternatives.md).
 * [Structuring heterogeneous OKF bundles](heterogeneous-bundle-authoring.md) - All five registered roots, developer-knowledge as a handbook, public patterns, directory names, and init/profile limitations. Plan: [heterogeneous authoring](/plans/okmate/heterogeneous-bundle-authoring.md). Follow-up alternatives: [restructure alternatives](bundle-restructure-alternatives.md).
 * [OKMate product website](website.md) - Rocdown public site versus OKF review HTML; dual human/agent IA; `/llms.txt` and `/agents/` entry. Plan: [website](/plans/okmate/website.md).
 * [Review-queue authoring, prompt query, and colocated code](review-queue-authoring.md) - Agents author from prompts; Ask is bundle-only; Author cwd is the git repo that contains `knowledge/`. Plan: [verify-promote](/plans/okmate/verify-promote.md).

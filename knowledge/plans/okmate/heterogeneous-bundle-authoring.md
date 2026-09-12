@@ -4,7 +4,7 @@ title: Support heterogeneous OKF bundle authoring
 description: Separate portable reading, evidence checks, and local authoring style; make init minimal and path-correct, add optional conventions and templates, and improve discovery and documentation without migrating existing bundles by default.
 tags: [domain/okmate, domain/okf, concern/authoring, concern/architecture, concern/tooling]
 status: draft
-generated: { by: process:cursor, at: 2026-09-12T12:40:00Z }
+generated: { by: process:cursor, at: 2026-09-12T11:50:00Z }
 stale_after: 2026-12-12
 authority: exploratory
 owners: [human:nils]
@@ -86,6 +86,9 @@ Phase 5 implements that discovery contract in this revision. Phase 6 recorded
 a fixture curation prototype and per-bundle assessments; sibling registered
 roots were not edited. Ranked keep / front-door / move options live in
 [restructure alternatives](/research/okmate/bundle-restructure-alternatives.md).[^alts]
+Live-bundle execution of those preferred alternatives is a separate
+[implementation plan](/plans/okmate/bundle-restructure-alternatives.md); this
+plan does not start those phases.
 Hosted CI is not claimed. The [research report](/research/okmate/heterogeneous-bundle-authoring.md) records
 all five registered roots, public examples, exact local revisions, compatibility
 findings, and the proposed developer-knowledge model. The original
