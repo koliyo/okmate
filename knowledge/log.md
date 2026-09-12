@@ -7,6 +7,7 @@ the same change.
 
 ## 2026-09-12
 
+- Recorded a fixture [curation prototype](/status/heterogeneous-bundle-curation.md): frozen handbook questions, preserved example concept IDs, retrieval hit rate 1.0, and per-bundle assessments without migrating sibling roots. Exploratory Phase 6 of [heterogeneous authoring](/plans/okmate/heterogeneous-bundle-authoring.md); do not log complete until hosted CI succeeds.
 - Added read-only `okmate discover` and container `view` resolution by versioned `okf_version` indexes, without preferring `knowledge/` or flattening mixed corpora. Exploratory Phase 5 of [heterogeneous authoring](/plans/okmate/heterogeneous-bundle-authoring.md); do not log complete until hosted CI succeeds.
 - Approved a revised [authoring-host decision](/decisions/git-repository-bundles.md): Git working trees for writes; bounded marker discovery without preferring `knowledge/`; explicit paths and registry stay first. Exploratory Phase 5 of [heterogeneous authoring](/plans/okmate/heterogeneous-bundle-authoring.md) implements it; do not log complete until hosted CI succeeds.
 - Added `okmate concept` and `okmate index` as dry-run-first authoring (type templates, named evidence inputs, nearest-index additions that preserve authored grouping). Exploratory Phase 4 of [heterogeneous authoring](/plans/okmate/heterogeneous-bundle-authoring.md); do not log complete until hosted CI succeeds.

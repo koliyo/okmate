@@ -2,7 +2,7 @@
 
 Application, desktop preview, agent setup, and product site.
 
-* [Support heterogeneous OKF bundle authoring](heterogeneous-bundle-authoring.md) - Minimal and selectable init, correct paths, separate evidence/style checks, local conventions, discovery, and measured curation. Research: [bundle structure](/research/okmate/heterogeneous-bundle-authoring.md). Exploratory; Phases 1–5 in this revision; discovery decision approved.
+* [Support heterogeneous OKF bundle authoring](heterogeneous-bundle-authoring.md) - Minimal and selectable init, correct paths, separate evidence/style checks, local conventions, discovery, and measured curation. Research: [bundle structure](/research/okmate/heterogeneous-bundle-authoring.md). Exploratory; Phases 1–6 in this revision; discovery decision approved.
 * [Initialize a new OKF bundle](init-bundle.md) - Original design for the now-implemented `init` scaffold, registration, and agent extras; phase completion is not certified here. Follow-up: [heterogeneous authoring](heterogeneous-bundle-authoring.md).
 * [Implementation structure](implementation-structure.md) - Split oversized modules, shrink the okf public surface, type page kinds, take session I/O off the GET path. No new features. Audit: [implementation-structure](/audits/okmate/implementation-structure.md). Exploratory; no phase started.
 * [Verify and promote from the review UI](verify-promote.md) - Loopback Verify/Promote, git working tree; bundle inference must follow the approved discovery decision (no `knowledge/` privilege). Research: [review-queue authoring](/research/okmate/review-queue-authoring.md). Exploratory; no phase started.

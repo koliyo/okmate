@@ -8,7 +8,7 @@ description: Rebuild a development machine from a saved package list.
 
 ## Prerequisites
 
-A previously exported package manifest and network access to the same taps.
+A previously exported saved package manifest and network access to the same taps.
 
 ## Steps
 

@@ -7,7 +7,7 @@ command; the expected result is part of the example.
 | --- | --- | --- | --- | --- |
 | [minimal](minimal/) | Small standalone corpus with no taxonomy | Root index → scope | `base` | 0 errors, 0 warnings |
 | [software-archive](software-archive/) | Type-first product work archive | Architecture / Decisions indexes | `strict` | 0 errors, 0 warnings |
-| [engineering-handbook](engineering-handbook/) | Topic and question-oriented practice library | Root questions → explanations and guides | `base` | 0 errors, 0 warnings |
+| [engineering-handbook](engineering-handbook/) | Topic and question-oriented practice library | Frozen root questions → explanations, guides, dated research, audits | `base` | 0 errors, 0 warnings |
 | [operations](operations/) | Service map and runbooks | Root → services / runbooks | `base` | 0 errors, 0 warnings |
 | [data-catalog](data-catalog/) | Datasets, tables, and a metric | Root → datasets / tables / metrics | `base` | 0 errors, 0 warnings |
 
@@ -15,6 +15,10 @@ command; the expected result is part of the example.
 okmate check docs/examples/minimal --profile base
 okmate check docs/examples/software-archive --profile strict
 okmate check docs/examples/engineering-handbook --profile base
+okmate benchmark docs/examples/engineering-handbook/retrieval.toml \
+  docs/examples/engineering-handbook --profile base
+okmate benchmark docs/examples/software-archive/retrieval.toml \
+  docs/examples/software-archive --profile strict
 okmate check docs/examples/operations --profile base
 okmate check docs/examples/data-catalog --profile base
 ```

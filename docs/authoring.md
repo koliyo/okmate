@@ -85,6 +85,9 @@ Keep dated investigations as research or audits. When a finding is still
 useful, write a maintained guide that links to that evidence and states
 when it applies. Do not retitle a 2024 model comparison as timeless
 practice, and do not mark guidance verified merely because it was moved.
+The [engineering handbook example](examples/engineering-handbook/) is a
+checked-in prototype of that split, with frozen root questions and a
+retrieval file.
 
 ## Resource versus source
 

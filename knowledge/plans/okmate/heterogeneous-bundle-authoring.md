@@ -4,7 +4,7 @@ title: Support heterogeneous OKF bundle authoring
 description: Separate portable reading, evidence checks, and local authoring style; make init minimal and path-correct, add optional conventions and templates, and improve discovery and documentation without migrating existing bundles by default.
 tags: [domain/okmate, domain/okf, concern/authoring, concern/architecture, concern/tooling]
 status: draft
-generated: { by: process:cursor, at: 2026-09-12T10:20:00Z }
+generated: { by: process:cursor, at: 2026-09-12T11:30:00Z }
 stale_after: 2026-12-12
 authority: exploratory
 owners: [human:nils]
@@ -79,8 +79,9 @@ Phase 4 added dry-run concept creation and nearest-index updates.
 The [authoring-host decision](/decisions/git-repository-bundles.md) is
 approved: Git writes stay; discovery lists versioned roots without
 preferring `knowledge/`.[^discovery-draft]
-Phase 5 implements that discovery contract in this revision. Phase 6 has
-not started.
+Phase 5 implements that discovery contract in this revision. Phase 6 recorded
+a fixture curation prototype and per-bundle assessments; sibling registered
+roots were not edited.
 Hosted CI is not claimed. The [research report](/research/okmate/heterogeneous-bundle-authoring.md) records
 all five registered roots, public examples, exact local revisions, compatibility
 findings, and the proposed developer-knowledge model. The original
@@ -375,8 +376,9 @@ and remaining uncertainty before recommending physical restructuring.
 Phases 1–2 provide immediate documentation and init improvements. Phase 3 is
 required before advertising warning-free heterogeneous governance. Phase 4
 builds on that policy model. Phase 5 can be delivered independently after its
-discovery contract is settled. Phase 6 requires a separate curation request;
-the present task only writes research and this plan.
+discovery contract is settled. Phase 6 requires a separate curation request unless the user asks to
+continue; this revision's Phase 6 used temporary fixtures and did not
+edit sibling bundles.
 
 For code changes run the repository gates: formatting, workspace Clippy with no
 default features, `cargo test -p okf`, `cargo test -p okmate --no-default-features`,
