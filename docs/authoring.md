@@ -44,6 +44,25 @@ for what it will not contain.
 If two groups cannot share owners, release cadence, or secrecy, they are two
 bundles, not two folders in one root.
 
+## Find a bundle in a repository
+
+A versioned bundle root is a directory whose `index.md` declares
+`okf_version`. Collection indexes without that marker are not bundles.
+Directory names (`knowledge/`, `docs/`, `.okf/`) are not identity.
+
+```sh
+okmate discover .
+okmate discover docs --format json
+okmate view docs
+```
+
+`discover` never writes registry entries. Pass an explicit bundle path to
+`check`, `inspect`, `search`, `build`, `concept`, and `index`. If a
+container has several versioned roots, `view` lists them and requires a
+choice; it does not flatten them into one corpus or pick `knowledge/`
+because of the name. Mixed-scope preview keeps each root labeled
+(separated navigation is the default).
+
 ## Collection, type, and authority
 
 These axes are independent. Do not encode all three in the folder name.

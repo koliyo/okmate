@@ -102,7 +102,7 @@ impl Workspace {
     ) -> Result<ViewTarget> {
         let configured = Self::from_config_roots(config_path, options, cache_parent)?;
         if let Some(path) = path {
-            let target = okf::resolve_preview_path(path)?;
+            let target = crate::discover::resolve_container(path)?;
             let workspace = match configured {
                 Some(workspace) => {
                     workspace.ensure_root(&target.root, options, Some(cache_parent))?

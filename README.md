@@ -31,6 +31,7 @@ Settings live under `~/.okmate/` (`OKMATE_CONFIG`, `OKMATE_CACHE`,
 | `okmate init [path]` | Scaffold a new OKF bundle (dry-run plan; `--apply` writes; `--register` / `--agents` optional) |
 | `okmate concept [root]` | Propose a concept from a type template (`--id`, `--type`; `--apply` writes) |
 | `okmate index [root]` | Propose nearest-index link additions (`--apply` writes; does not reorder authored grouping) |
+| `okmate discover [path]` | List versioned OKF roots under a container (`--format terminal\|json`; never registers) |
 | `okmate check [root]` | Validate a bundle (`--format terminal\|json`, `--profile`) |
 | `okmate inspect catalog\|concept\|graph` | Engine JSON inspect |
 | `okmate search <query> [root]` | Metadata and heading search JSON |
@@ -93,7 +94,11 @@ Canonical OKF specification:
 The older `knowledge-catalog/okf` tree is a frozen pointer to that
 repository.
 
-`check`, `inspect`, `search`, and `build` stay single-root. Agents list
+`check`, `inspect`, `search`, and `build` stay single-root. `okmate discover`
+lists versioned `okf_version` roots under a repository or folder; it does
+not prefer `knowledge/` or register what it finds. `okmate view` on an
+explicit bundle path is unchanged; on a non-bundle container it selects
+the unique candidate or lists every hit. Agents list
 resolved folders first:
 
 ```sh

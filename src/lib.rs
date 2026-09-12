@@ -7,6 +7,7 @@ pub mod config;
 mod conventions;
 #[cfg(feature = "desktop")]
 pub mod desktop;
+pub mod discover;
 pub mod goto_match;
 mod html_util;
 pub mod http;

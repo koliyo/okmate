@@ -4,7 +4,7 @@ title: OKMate system overview
 description: OKMate is a standalone OKF application; the portable engine lives in okf/ and the okmate binary owns CLI, HTML, and desktop preview.
 tags: [domain/okmate, domain/okf, concern/architecture]
 status: draft
-generated: { by: process:cursor, at: 2026-08-30T09:40:00Z }
+generated: { by: process:cursor, at: 2026-09-12T10:20:00Z }
 stale_after: 2026-11-26
 authority: descriptive
 owners: [human:nils]
@@ -19,6 +19,11 @@ sources:
     title: Portable OKF engine
     author: process:git
     last_modified: 2026-08-26
+  - id: host
+    resource: ../decisions/git-repository-bundles.md
+    title: Git working trees as the v1 authoring host
+    author: process:cursor
+    last_modified: 2026-09-12
 ---
 
 # OKMate system overview
@@ -53,7 +58,10 @@ binary (`okmate check knowledge --profile base`). This repository uses
 | Local CI replay, release, PR checkout | `okmate-ops` |
 
 `check`, `inspect`, `search`, and `build` stay single-root. Agents list
-resolved folders first with `okmate roots --format paths`.[^readme]
+resolved folders first with `okmate roots --format paths`. Read-only
+discovery of versioned roots in a repository is a separate listing;
+it does not prefer `knowledge/` or flatten a container of bundles.[^host]
 
 [^readme]: Current repository overview, CLI, and settings paths.
 [^okf-readme]: Engine scope and profile names.
+[^host]: Git writes; bounded marker discovery; no `knowledge/` privilege.

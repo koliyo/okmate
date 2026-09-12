@@ -4,7 +4,7 @@ title: Support heterogeneous OKF bundle authoring
 description: Separate portable reading, evidence checks, and local authoring style; make init minimal and path-correct, add optional conventions and templates, and improve discovery and documentation without migrating existing bundles by default.
 tags: [domain/okmate, domain/okf, concern/authoring, concern/architecture, concern/tooling]
 status: draft
-generated: { by: process:cursor, at: 2026-09-12T13:00:00Z }
+generated: { by: process:cursor, at: 2026-09-12T10:20:00Z }
 stale_after: 2026-12-12
 authority: exploratory
 owners: [human:nils]
@@ -53,7 +53,7 @@ sources:
     title: Original init implementation plan
   - id: discovery-draft
     resource: ../../decisions/git-repository-bundles.md
-    title: Unapproved authoring host and discovery design
+    title: Approved authoring host and discovery contract
   - id: website
     resource: website.md
     title: Planned public documentation surface
@@ -76,7 +76,11 @@ Phase 3 split portable format reading, an opt-in Evidence profile, and
 application-side `okmate.toml` style findings; `check`/`view` still
 default to Strict.[^validation][^load]
 Phase 4 added dry-run concept creation and nearest-index updates.
-Later phases have not started.
+The [authoring-host decision](/decisions/git-repository-bundles.md) is
+approved: Git writes stay; discovery lists versioned roots without
+preferring `knowledge/`.[^discovery-draft]
+Phase 5 implements that discovery contract in this revision. Phase 6 has
+not started.
 Hosted CI is not claimed. The [research report](/research/okmate/heterogeneous-bundle-authoring.md) records
 all five registered roots, public examples, exact local revisions, compatibility
 findings, and the proposed developer-knowledge model. The original
@@ -311,10 +315,9 @@ reported as candidates with their evidence; do not automatically claim a
 collection index proves a separate bundle.[^preview][^load][^config]
 
 When multiple candidates remain, list them and require explicit selection;
-do not privilege `knowledge/`. Reconcile this with the unapproved
-[discovery draft](/decisions/git-repository-bundles.md) before adopting a changed
-authoring-host policy. This phase does not require replacing that draft's Git
-write boundary.[^discovery-draft]
+do not privilege `knowledge/`. Follow the approved
+[authoring-host decision](/decisions/git-repository-bundles.md): keep the
+Git write boundary; do not revive one-level `knowledge/` inference.[^discovery-draft]
 
 In mixed-scope workspaces, preserve root labels and offer separated navigation
 as the predictable view. Merged paths are a display choice, not semantic
@@ -397,7 +400,7 @@ log, preserving previous sessions' entries.[^skill]
 [^nav]: Equal collection paths currently merge in the merged display mode.
 [^skill]: Canonical authoring, provenance, validation, and completion-log rules.
 [^initial-plan]: Initial implementation design, not current evidence that init is absent.
-[^discovery-draft]: Still exploratory; do not silently promote the preference for knowledge-directory candidates.
+[^discovery-draft]: Approved: Git writes; bounded marker discovery; no `knowledge/` privilege.
 [^website]: Public documentation can publish the guide without becoming a dependency for local usage.
 [^readme]: Ownership and current repository validation commands.
 [^authoring-guide]: Checked-in guide for scope, types, paths, and current init.

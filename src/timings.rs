@@ -215,7 +215,7 @@ fn load_options(options: &TimingsOptions) -> LoadOptions {
 
 fn resolve_specs(path: Option<&Path>) -> Result<Vec<(String, PathBuf)>> {
     if let Some(path) = path {
-        let target = okf::resolve_preview_path(path)?;
+        let target = crate::discover::resolve_container(path)?;
         return Ok(vec![(id_from_path(&target.root), target.root)]);
     }
     let target = Workspace::for_view(

@@ -43,7 +43,7 @@ pub use benchmark::{
 pub use diagnostic::{Diagnostic, DiagnosticLayer, Severity, SourceLocation};
 pub use graph::published_href;
 pub use parse_cache::{PARSE_CACHE_VERSION, ParseCache};
-pub use preview::{PreviewTarget, resolve_preview_path};
+pub use preview::{PreviewTarget, is_bundle_root_index, resolve_preview_path};
 pub use review::{ActionKind, ConceptAction, classify_concept_action};
 pub use search::{concept_is_stale, concept_trust_tier};
 pub use validate::{latest_human_verification, metadata_string_array, string_field};

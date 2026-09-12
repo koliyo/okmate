@@ -122,6 +122,17 @@ enum Commands {
         #[arg(long, value_enum, default_value_t = CheckFormat::Terminal)]
         format: CheckFormat,
     },
+    /// List versioned OKF roots under a repository or container. Never registers.
+    Discover {
+        #[arg(default_value = ".")]
+        path: PathBuf,
+        #[arg(long, value_enum, default_value_t = CheckFormat::Terminal)]
+        format: CheckFormat,
+        #[arg(long, default_value_t = crate::discover::DEFAULT_MAX_DEPTH)]
+        max_depth: u32,
+        #[arg(long, default_value_t = crate::discover::DEFAULT_MAX_VISITS)]
+        max_visits: u32,
+    },
     /// Print normalized concepts or the bundle graph as JSON.
     Inspect {
         #[command(subcommand)]
@@ -391,6 +402,17 @@ pub fn run() -> Result<()> {
         } => crate::authoring::run_index(crate::authoring::IndexOptions {
             root,
             apply,
+            format,
+        }),
+        Commands::Discover {
+            path,
+            format,
+            max_depth,
+            max_visits,
+        } => crate::discover::run(crate::discover::DiscoverOptions {
+            start: path,
+            max_depth,
+            max_visits,
             format,
         }),
         Commands::Inspect { target, profile } => {

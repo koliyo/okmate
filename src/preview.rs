@@ -301,14 +301,14 @@ async fn prepare_settings_host(options: ViewOptions) -> Result<PreparedView> {
 
 pub fn resolve_target(path: Option<&Path>) -> Result<okf::PreviewTarget> {
     if let Some(path) = path {
-        return okf::resolve_preview_path(path);
+        return crate::discover::resolve_container(path);
     }
     if let Some(bundle) = load_session().bundle.filter(|path| path.is_dir()) {
         return Ok(okf::PreviewTarget::bundle(bundle));
     }
     let default = PathBuf::from("knowledge");
     if default.is_dir() {
-        return okf::resolve_preview_path(&default);
+        return crate::discover::resolve_container(&default);
     }
     bail!("pass a knowledge bundle path, or open one first so ~/.okmate/state remembers it");
 }

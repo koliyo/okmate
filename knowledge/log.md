@@ -7,6 +7,8 @@ the same change.
 
 ## 2026-09-12
 
+- Added read-only `okmate discover` and container `view` resolution by versioned `okf_version` indexes, without preferring `knowledge/` or flattening mixed corpora. Exploratory Phase 5 of [heterogeneous authoring](/plans/okmate/heterogeneous-bundle-authoring.md); do not log complete until hosted CI succeeds.
+- Approved a revised [authoring-host decision](/decisions/git-repository-bundles.md): Git working trees for writes; bounded marker discovery without preferring `knowledge/`; explicit paths and registry stay first. Exploratory Phase 5 of [heterogeneous authoring](/plans/okmate/heterogeneous-bundle-authoring.md) implements it; do not log complete until hosted CI succeeds.
 - Added `okmate concept` and `okmate index` as dry-run-first authoring (type templates, named evidence inputs, nearest-index additions that preserve authored grouping). Exploratory Phase 4 of [heterogeneous authoring](/plans/okmate/heterogeneous-bundle-authoring.md); do not log complete until hosted CI succeeds.
 - Split portable format reading, an opt-in Evidence profile, and optional `<bundle>/okmate.toml` style findings; `check`/`view` still default to Strict and new init agent instructions select `--profile evidence`. Exploratory Phase 3 of [heterogeneous authoring](/plans/okmate/heterogeneous-bundle-authoring.md); do not log complete until hosted CI succeeds.
 - Made `okmate init` default to a minimal scaffold, added `--template software-project` / `--collection` / `--template-file`, and preflighted path-correct agent extras before writes. Exploratory Phase 2 of [heterogeneous authoring](/plans/okmate/heterogeneous-bundle-authoring.md); do not log complete until hosted CI succeeds.

@@ -22,7 +22,7 @@ Operations: `load`, `load_timed`, `load_with_cache`, `check`, `inspect`, `inspec
 
 AST and reports: `Bundle`, `Concept`, `Index`, `Log`, `Edge`, `Heading`, `HeadingSection`, `Link`, `Span`, `Profile`, `LoadOptions`, `LoadResult`, `LoadTimings`, `InspectKind`, `KnowledgeFilter`, `TrustTier`, `CheckReport`, `BuildSummary`, `Diagnostic`, `DiagnosticLayer`, `Severity`, `SourceLocation`, retrieval report types.
 
-Helpers callers already need: `string_field`, `metadata_string_array`, `latest_human_verification`, `classify_concept_action`, `ActionKind`, `ConceptAction`, `ParseCache`, `PARSE_CACHE_VERSION`, `published_href`, `resolve_preview_path`, `PreviewTarget`, `concept_trust_tier`, `concept_is_stale`.
+Helpers callers already need: `string_field`, `metadata_string_array`, `latest_human_verification`, `classify_concept_action`, `ActionKind`, `ConceptAction`, `ParseCache`, `PARSE_CACHE_VERSION`, `published_href`, `resolve_preview_path`, `PreviewTarget`, `is_bundle_root_index`, `concept_trust_tier`, `concept_is_stale`. Directory scan policy, registry IDs, and `okmate discover` live in the application crate.
 
 Parse, git, and civil-date internals stay crate-private.
 

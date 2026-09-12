@@ -329,6 +329,17 @@ fn test_okf_rejects_declarations_and_raw_html() {
 }
 
 #[test]
+fn bundle_root_index_requires_okf_version() {
+    assert!(okf::is_bundle_root_index(
+        "---\nokf_version: \"0.2\"\n---\n\n# Knowledge\n"
+    ));
+    assert!(!okf::is_bundle_root_index("# Collection\n\nQuestions.\n"));
+    assert!(!okf::is_bundle_root_index(
+        "---\ntype: Explanation\ntitle: Note\n---\n\n# Note\n"
+    ));
+}
+
+#[test]
 fn resolve_preview_path_opens_bundle_and_concept() {
     let root = temp("preview");
     fs::write(

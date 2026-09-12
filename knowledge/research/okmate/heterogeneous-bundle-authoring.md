@@ -4,7 +4,7 @@ title: Structuring heterogeneous OKF bundles
 description: A survey of all five registered roots and public OKF examples supports purpose-specific navigation, open concept vocabularies, arbitrary bundle paths, and a minimal init scaffold with optional authoring templates.
 tags: [domain/okmate, domain/okf, concern/authoring, concern/architecture, concern/tooling]
 status: draft
-generated: { by: process:cursor, at: 2026-09-12T09:00:44Z }
+generated: { by: process:cursor, at: 2026-09-12T10:20:00Z }
 stale_after: 2026-12-12
 authority: exploratory
 owners: [human:nils]
@@ -378,12 +378,14 @@ IDs but changes registry paths and possibly external references. Moving records
 inside a root changes their IDs and requires updating links and consumers.[^developer-readme][^load][^roots]
 
 In current Okmate, an explicitly supplied `.okf/` is readable: hidden child
-entries are skipped during discovery, not the supplied root itself. Conversely,
-loading a repository directory does not discover its child bundles: directory
-input is treated as the bundle. A container can therefore be misread as one
-large corpus; nested versioned indexes are rejected as non-root frontmatter.
-The proposed one-level repo discovery rule, including preferring `knowledge`,
-is still an unapproved design, not the behavior of `resolve_preview_path`.[^load][^preview][^discovery-draft]
+entries are skipped during discovery, not the supplied root itself.
+`okf::resolve_preview_path` still treats a directory argument as that
+root and does not scan children. Application `okmate discover` and
+container `view` walk versioned `okf_version` indexes with bounds, list
+ambiguity, and do not prefer `knowledge/` or flatten mixed corpora.
+The survey-time one-level repo discovery rule, including preferring
+`knowledge`, is superseded by the approved
+[authoring-host decision](/decisions/git-repository-bundles.md).[^load][^preview][^discovery-draft]
 
 Recommend explicit root/registry identity first; when offering discovery, list
 candidates and report ambiguity. Do not select `knowledge/` merely because its
@@ -475,7 +477,7 @@ bundle migration, registration, or human approval is claimed by this report.[^pl
 [^nav]: Merged collection identity uses the collection path.
 [^colors]: Type colors use a string hash, not the Strict type list.
 [^old-init]: Original design is historical where contradicted by the implemented CLI.
-[^discovery-draft]: Proposed one-level discovery has not become this function's contract.
+[^discovery-draft]: Survey-time one-level `knowledge/` preference; superseded by the approved authoring-host decision.
 [^studio-index]: Inspected local product topology and extension declarations.
 [^studio-create]: Peer-documented static minimal generator; not executed in this survey.
 [^studio-profile]: Peer-documented advisory policy context separate from validation.
