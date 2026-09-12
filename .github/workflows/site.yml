@@ -20,8 +20,6 @@ permissions:
   contents: read
 
 env:
-  # Pinned rocci revision that provides `rocdown` (rocci-rocdown-cli).
-  ROCCI_REV: 05a4179665c2b55d7d41450cd3e52c36859822f2
   ROC_NIGHTLY_DATE: "2026-09-03"
   ROC_NIGHTLY_SHA: 62fcb65
 
@@ -31,25 +29,31 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
-      - name: Checkout pinned rocci
-        uses: actions/checkout@v7
-        with:
-          repository: koliyo/rocci
-          ref: ${{ env.ROCCI_REV }}
-          path: .ci/rocci
-      - name: Checkout h35-desktop sibling
-        run: git clone --depth 1 https://github.com/koliyo/h35-desktop.git "${GITHUB_WORKSPACE}/.ci/h35-desktop"
-      - name: Install Linux desktop build deps
+      - name: Install Linux desktop runtime deps
         run: |
           sudo apt-get update
           sudo apt-get install -y --no-install-recommends \
-            build-essential pkg-config libssl-dev \
-            libgtk-3-dev libwebkit2gtk-4.1-dev \
-            libayatana-appindicator3-dev librsvg2-dev libsqlite3-dev
-      - uses: dtolnay/rust-toolchain@stable
-      - uses: Swatinem/rust-cache@v2
-        with:
-          workspaces: .ci/rocci
+            libgtk-3-0 libwebkit2gtk-4.1-0 \
+            libayatana-appindicator3-1 librsvg2-2 libsqlite3-0
+      - name: Install newest released rocdown
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          dest="$HOME/.local/rocci-release"
+          link_dir="$HOME/.local/bin"
+          mkdir -p "$dest" "$link_dir"
+          tag="$(gh release view --repo koliyo/rocci --json tagName --jq .tagName)"
+          gh release download --repo koliyo/rocci "$tag" \
+            --pattern 'rocci-*-x86_64-unknown-linux-gnu.tar.gz' \
+            --dir "$dest"
+          tar -xzf "$dest"/rocci-*-x86_64-unknown-linux-gnu.tar.gz -C "$dest"
+          rocdown_bin="$(find "$dest" -type f -name rocdown | head -n 1)"
+          test -n "$rocdown_bin"
+          chmod +x "$rocdown_bin"
+          ln -sf "$rocdown_bin" "$link_dir/rocdown"
+          echo "$link_dir" >> "$GITHUB_PATH"
+          echo "Installed rocdown from koliyo/rocci $tag"
       - name: Install pinned Roc nightly
         run: |
           set -euo pipefail
@@ -67,10 +71,6 @@ jobs:
           ln -sf "$prefix/roc" "$link_dir/roc"
           echo "$link_dir" >> "$GITHUB_PATH"
           "$link_dir/roc" version
-      - name: Build pinned rocdown
-        run: |
-          cargo build -q --release -p rocci-rocdown-cli --manifest-path .ci/rocci/Cargo.toml
-          echo "${GITHUB_WORKSPACE}/.ci/rocci/target/release" >> "$GITHUB_PATH"
       - name: Check and build site
         run: |
           rocdown check site
