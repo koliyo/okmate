@@ -4,14 +4,14 @@ title: Nest large OKF collections under okf, okmate, and ops
 description: Keep type-first top-level folders; nest plans, research, and audits into okf, okmate, and ops. Do not nest by lifecycle. Concept ID remains the path.
 tags: [domain/okf, domain/okmate, concern/architecture, concern/authoring]
 status: draft
-generated: { by: process:cursor, at: 2026-08-26T16:30:00Z }
+generated: { by: process:cursor, at: 2026-09-12T10:00:00Z }
 stale_after: 2026-11-26
 authority: exploratory
 owners: [human:nils]
 sources:
   - id: okf-spec
     resource: https://github.com/GoogleCloudPlatform/knowledge-catalog/blob/main/okf/SPEC.md
-    title: Open Knowledge Format v0.2 specification
+    title: Frozen knowledge-catalog snapshot of OKF v0.2 (canonical spec moved to GoogleCloudPlatform/open-knowledge-format)
     author: organization:google-cloud
   - id: overview
     resource: ../architecture/system-overview.md

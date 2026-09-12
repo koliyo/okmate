@@ -40,10 +40,10 @@ pub use ast::{
 pub use benchmark::{
     RetrievalBenchmark, RetrievalQuestion, RetrievalQuestionResult, RetrievalReport,
 };
-pub use diagnostic::{Diagnostic, Severity, SourceLocation};
+pub use diagnostic::{Diagnostic, DiagnosticLayer, Severity, SourceLocation};
 pub use graph::published_href;
 pub use parse_cache::{PARSE_CACHE_VERSION, ParseCache};
-pub use preview::{PreviewTarget, resolve_preview_path};
+pub use preview::{PreviewTarget, is_bundle_root_index, resolve_preview_path};
 pub use review::{ActionKind, ConceptAction, classify_concept_action};
 pub use search::{concept_is_stale, concept_trust_tier};
 pub use validate::{latest_human_verification, metadata_string_array, string_field};
@@ -152,7 +152,7 @@ pub fn load_with_cache(
     logs.sort_by(|a, b| a.path.cmp(&b.path));
     validate_unique_ids(&concepts, &mut diagnostics);
     validate_route_collisions(&concepts, &indexes, &mut diagnostics);
-    if options.profile == Profile::Strict {
+    if options.profile.requires_product_vocabulary() {
         validate_index_membership(&concepts, &indexes, &mut diagnostics);
     }
     let parse = parse_started.elapsed();
@@ -165,7 +165,7 @@ pub fn load_with_cache(
         let provenance_started = Instant::now();
         validate_lifecycle_and_sources(&root, &concepts, &mut diagnostics);
         Some(provenance_started.elapsed())
-    } else if options.profile == Profile::Strict {
+    } else if options.profile.requires_evidence() {
         validate_lifecycle_and_sources_with(&root, &concepts, &mut diagnostics, false);
         Some(Duration::ZERO)
     } else {

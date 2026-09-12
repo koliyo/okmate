@@ -29,6 +29,9 @@ Settings live under `~/.okmate/` (`OKMATE_CONFIG`, `OKMATE_CACHE`,
 | Command | Purpose |
 | --- | --- |
 | `okmate init [path]` | Scaffold a new OKF bundle (dry-run plan; `--apply` writes; `--register` / `--agents` optional) |
+| `okmate concept [root]` | Propose a concept from a type template (`--id`, `--type`; `--apply` writes) |
+| `okmate index [root]` | Propose nearest-index link additions (`--apply` writes; does not reorder authored grouping) |
+| `okmate discover [path]` | List versioned OKF roots under a container (`--format terminal\|json`; never registers) |
 | `okmate check [root]` | Validate a bundle (`--format terminal\|json`, `--profile`) |
 | `okmate inspect catalog\|concept\|graph` | Engine JSON inspect |
 | `okmate search <query> [root]` | Metadata and heading search JSON |
@@ -42,9 +45,12 @@ Settings live under `~/.okmate/` (`OKMATE_CONFIG`, `OKMATE_CACHE`,
 ```sh
 okmate init
 okmate init --apply
+okmate init --template software-project --apply
 okmate init . --bare --apply
+okmate init docs --apply
 okmate init --apply --register --id my-bundle
 okmate check knowledge --profile strict --format json
+okmate check docs/examples/minimal --profile base
 okmate inspect catalog knowledge
 okmate inspect concept architecture/system-overview knowledge
 okmate inspect graph knowledge
@@ -57,7 +63,42 @@ okmate roots --format json --no-sync
 okmate sync
 ```
 
-`check`, `inspect`, `search`, and `build` stay single-root. Agents list
+## Authoring a bundle
+
+Checked-in guide: [`docs/authoring.md`](docs/authoring.md). Worked examples
+are under [`docs/examples/`](docs/examples/). Current reader limits are in
+[`docs/compatibility.md`](docs/compatibility.md).
+
+`okmate init [path]` prints a create-only plan; `--apply` writes. The
+default path is `knowledge`. **The default scaffold is now minimal**
+(`index.md` and `log.md` only). That is a compatibility change: the
+previous six collection indexes are
+`okmate init --template software-project`. `--bare` remains an alias for
+`--template minimal`. Optional `--collection DIR` (repeatable) and
+`--template-file <local.toml>` add or replace collections without
+fetching remote templates. The bundle may live at `docs/`, `.okf/`, or
+another path; pass that path to `init`, `check`, `inspect`, `search`,
+`build`, and `view`. `--register` / `--id` and `--agents` stay optional.
+Generated agent files use the actual bundle path.
+
+`--profile strict` is Okmate’s owners-and-evidence profile plus this
+repository’s preferred types and `domain/` tags (used by `knowledge/`).
+`--profile evidence` asks for the same evidence fields without that
+vocabulary. `--profile base` is the portable reader. `check` and `view`
+still default to `strict`; newly generated init agent instructions select
+`--profile evidence` explicitly. See the
+[compatibility inventory](docs/compatibility.md).
+
+Canonical OKF specification:
+[GoogleCloudPlatform/open-knowledge-format](https://github.com/GoogleCloudPlatform/open-knowledge-format).
+The older `knowledge-catalog/okf` tree is a frozen pointer to that
+repository.
+
+`check`, `inspect`, `search`, and `build` stay single-root. `okmate discover`
+lists versioned `okf_version` roots under a repository or folder; it does
+not prefer `knowledge/` or register what it finds. `okmate view` on an
+explicit bundle path is unchanged; on a non-bundle container it selects
+the unique candidate or lists every hit. Agents list
 resolved folders first:
 
 ```sh

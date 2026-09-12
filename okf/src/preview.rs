@@ -93,7 +93,7 @@ fn enclosing_bundle_root(file: &Path) -> Result<Option<PathBuf>> {
     Ok(None)
 }
 
-fn is_bundle_root_index(source: &str) -> bool {
+pub fn is_bundle_root_index(source: &str) -> bool {
     let Ok(Some(frontmatter)) = split_frontmatter(source, false) else {
         return false;
     };

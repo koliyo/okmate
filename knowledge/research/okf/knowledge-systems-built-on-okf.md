@@ -4,18 +4,18 @@ title: Knowledge systems built on Open Knowledge Format
 description: A 2026 ecosystem census distinguishes OKF-canonical knowledge systems from database-backed projections, bundle consumers, operational profiles, and supporting tools.
 tags: [domain/okf, concern/agents, concern/ecosystem, concern/governance, concern/retrieval]
 status: draft
-generated: { by: process:cursor, at: 2026-08-30T10:20:00Z }
+generated: { by: process:cursor, at: 2026-09-12T10:00:00Z }
 stale_after: 2026-11-29
 authority: exploratory
 owners: [human:nils]
 sources:
   - id: okf-spec
     resource: https://github.com/GoogleCloudPlatform/knowledge-catalog/blob/main/okf/SPEC.md
-    title: Open Knowledge Format v0.2 specification
+    title: Frozen knowledge-catalog snapshot of OKF v0.2 (canonical spec moved to GoogleCloudPlatform/open-knowledge-format)
     author: organization:google-cloud
   - id: reference
     resource: https://github.com/GoogleCloudPlatform/knowledge-catalog/blob/main/okf/README.md
-    title: Google Cloud OKF reference agent and visualizer
+    title: Frozen knowledge-catalog OKF reference (canonical repository is GoogleCloudPlatform/open-knowledge-format)
     author: organization:google-cloud
   - id: census-1
     resource: https://api.github.com/search/repositories?q=topic%3Aopen-knowledge-format&per_page=100&page=1

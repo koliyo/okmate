@@ -26,6 +26,7 @@ items = [
     "docs/index",
     "docs/install",
     "docs/first-bundle",
+    "docs/authoring",
     "docs/git-ownership",
     "docs/multiple-bundles",
     "docs/cli",

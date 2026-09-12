@@ -1,10 +1,10 @@
 ---
 type: Implementation Plan
 title: Verify and promote from the review UI
-description: Ship loopback verify and promote on live preview for git working trees, inferring the OKF bundle from a one-level okf_version index.md search, without Markdown editors or vendor agent APIs.
+description: Ship loopback verify and promote on live preview for git working trees, resolving the OKF bundle with the approved bounded marker discovery (no knowledge/ privilege), without Markdown editors or vendor agent APIs.
 tags: [domain/okmate, domain/okf, concern/review, concern/authoring, concern/developer-experience]
 status: draft
-generated: { by: process:cursor, at: 2026-08-28T17:50:00Z }
+generated: { by: process:cursor, at: 2026-09-12T10:20:00Z }
 stale_after: 2026-11-28
 authority: exploratory
 owners: [human:nils]
@@ -18,7 +18,7 @@ sources:
     resource: ../../decisions/git-repository-bundles.md
     title: Git working trees as the v1 authoring host
     author: process:cursor
-    last_modified: 2026-08-28
+    last_modified: 2026-09-12
   - id: review-engine
     resource: ../../../okf/src/review.rs
     title: classify_concept_action ActionKind
@@ -78,13 +78,15 @@ sources:
 This plan executes the verify/promote slice of
 [review-queue authoring research](/research/okmate/review-queue-authoring.md)
 under [git working trees as the v1 authoring host](/decisions/git-repository-bundles.md).
-It does not start a phase by being written. The record is exploratory.[^research][^decision]
+That decision now lists versioned roots without preferring `knowledge/`;
+this plan must not revive one-level inference. It does not start a phase
+by being written. The record is exploratory.[^research][^decision]
 
 ## Goal
 
 On live `okmate view`, a reviewer can **Verify** (append a `human:` event)
 and **Promote** (`draft` → `stable`) for a concept in a git working tree.
-The OKF bundle path is inferred. After a successful POST the queue and
+The OKF bundle path follows the approved discovery contract. After a successful POST the queue and
 concept meta remorph from a fresh classify. No Markdown editor. No agent
 process.[^research][^review-engine][^settings-http]
 
@@ -95,8 +97,9 @@ process.[^research][^review-engine][^settings-http]
 - Spawning `agent`, `claude`, `codex`, `pi`, or any vendor SDK / HTTP
   completions API.
 - Writable fetched git-cache roots (`GitRoot` snapshots).
-- Recursing the repo for `index.md` beyond the toplevel and its immediate
-  children.
+- Adding a second discovery policy inside `okf`, preferring `knowledge/`,
+  or flattening a container of bundles. Reuse the application
+  [authoring-host decision](/decisions/git-repository-bundles.md).
 - Changing `classify_concept_action`.
 - Git commit/push of the mutation (the working tree file changes; the
   human commits).
@@ -111,9 +114,10 @@ process.[^research][^review-engine][^settings-http]
   validate, write, re-read, morph a stable id.[^settings-http][^http]
 - Authoring only if `git_repository_root` is `Some`. Hide buttons when
   git is missing; POST still 403/409 if reached.[^validate][^decision]
-- Infer bundle with `okf_version` on `index.md`, not every collection
-  index. Scan repo root + one directory level. Prefer a unique child
-  named `knowledge` when several match.[^preview-okf][^decision]
+- Resolve the bundle with versioned `okf_version` indexes per the approved
+  authoring-host decision: bounded marker discovery in the application,
+  unique candidate or an explicit choice, never preferring
+  `knowledge/`.[^preview-okf][^decision]
 - Append `verified`; never replace the list; never write `human:` from a
   process. Actor comes from settings, not `git user.name`.[^skill][^research]
 - Promote is a separate control, default off the Verify path. Refuse
@@ -126,44 +130,38 @@ process.[^research][^review-engine][^settings-http]
 ## Current behavior
 
 Queue and concept pages display `ActionKind` only. The sole mutating POST
-is `/__okmate/settings`. `okmate view` on a directory treats that
-directory as the bundle root and does not infer `knowledge/` from a git
-toplevel. `is_bundle_root_index` already exists but is private to preview
-path resolution.[^http][^queue][^article][^preview-okf]
+is `/__okmate/settings`. `okmate view` on a directory that is already a
+versioned bundle uses that root. On a container that is not a bundle,
+application discovery lists versioned children and requires a unique
+choice (it does not prefer `knowledge/`). `is_bundle_root_index` is
+exported for that marker; scan policy stays in the
+application.[^http][^queue][^article][^preview-okf]
 
 ## Phases
 
 ### Phase 1 — Discover bundle in a git checkout
 
-**Bound:** Public `okf` helpers:
+**Bound:** Do not add a competing inference rule. Heterogeneous-authoring
+Phase 5 owns `okmate discover` and container `view` resolution. This phase
+only confirms verify/promote uses that contract: git working tree required;
+explicit bundle path unchanged; a non-bundle container yields the unique
+versioned child or lists every hit; never prefer `knowledge/`. Reuse
+`okf::is_bundle_root_index` for the marker; keep scan policy in the
+application.
 
-- `is_bundle_root_index(source: &str) -> bool` (move from `preview.rs`)
-- `fn discover_bundles(git_toplevel: &Path) -> Vec<PathBuf>`
-  — candidates: `git_toplevel/index.md` and `git_toplevel/<child>/index.md`
-  for each non-hidden immediate subdirectory (skip names starting with
-  `.`). No recursion.
-- `fn resolve_bundle(git_toplevel: &Path) -> Result<PathBuf>`
-  — 0 → error; 1 → that path; many → if exactly one file_name is
-  `knowledge`, that path, else error listing all.
+**Out of bound:** Settings UI, verify POST, changing `GitRoot` fetch,
+engine-owned registry/scan policy.
 
-`okmate view <dir>`: if `dir` is a git toplevel and not itself a bundle
-root, use `resolve_bundle`. If `dir` is already a bundle (root index has
-`okf_version`), keep current behavior. `git_repository_root` stays the
-git test.
-
-**Out of bound:** Settings UI, verify POST, changing `GitRoot` fetch.
-
-**Tests:** temp git repos (and a non-git dir) covering: `knowledge/`
-child; bundle at repo root; `plans/index.md` collection ignored;
-two bundles without a `knowledge/` name → error; `knowledge/` plus
-another hit → `knowledge/`; hidden `.foo/index.md` ignored.
+**Tests:** temp git repos (and a non-git dir) covering: unique child;
+bundle at repo root; `plans/index.md` collection ignored; two bundles
+including a `knowledge/` name → error listing both; hidden `.foo/index.md`
+ignored; hidden `.okf/` found when present.
 
 **Exit:** `cargo test -p okf` and `cargo test -p okmate --no-default-features`
 and `cargo fmt --all -- --check`.
 
-**Owner:** `okf/src/preview.rs` (or a small `okf/src/discover.rs`),
-`okf/src/lib.rs` re-exports, `src/preview.rs` / `src/workspace.rs` view
-resolution.
+**Owner:** consume `src/discover.rs` / `src/workspace.rs` view resolution;
+do not revive one-level `okf` discovery.
 
 ### Phase 2 — Surgical verify and promote writes
 
@@ -236,7 +234,8 @@ preview only).
 
 **Out of bound:** SSE jobs, agent argv, batch verify.
 
-**Tests:** Axum oneshot on a temp git repo with inferred `knowledge/`:
+**Tests:** Axum oneshot on a temp git repo with an explicit or uniquely
+discovered bundle:
 verify appends and queue no longer lists InitialVerification; second
 verify with stale hash 409; promote without verify 400; exploratory
 promote 400; non-loopback 403; `build` fixture has no
@@ -252,12 +251,13 @@ promote 400; non-loopback 403; `build` fixture has no
 
 ### Phase 5 — Dogfood on this repository
 
-**Bound:** README or settings copy: pick the git project folder; bundle
-is inferred. Run `okmate view` from this repo root (not `knowledge/`)
-and confirm the window opens the inferred bundle. Manual check is not
-the Exit; add a CLI or unit test that `resolve_bundle` on a clone of
-this layout finds `knowledge/`. Optional: `okmate view` with no args
-uses cwd’s git toplevel + infer when `./knowledge` is not passed.
+**Bound:** README or settings copy: pick the git project folder or an
+explicit bundle path. Run `okmate view knowledge` from this repo (the
+checkout is a container of several example roots; do not expect `view .`
+to pick `knowledge/`). Manual check is not the Exit; add a test that
+discovery on this layout lists `knowledge/` among other versioned roots
+and does not auto-select it. Optional: `okmate view` with no args may
+keep the explicit `./knowledge` default when that directory exists.
 
 **Out of bound:** Changing default `check knowledge` CLI paths.
 
@@ -280,7 +280,7 @@ okmate check knowledge --profile strict --format terminal
 Report lifecycle and provenance warnings separately from errors.
 
 [^research]: Verify vs Promote inputs; CAS; no human: from agents; CLI not API.
-[^decision]: Git-only authoring; one-level okf_version discovery; CLI harness later.
+[^decision]: Git-only authoring; bounded marker discovery; no `knowledge/` privilege; CLI harness later.
 [^review-engine]: InitialVerification vs PendingPromotion vs Exploratory.
 [^preview-okf]: Bundle root index predicate.
 [^validate]: git toplevel and latest human verification.

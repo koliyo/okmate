@@ -1,7 +1,7 @@
 use serde_json::Value;
 
 use crate::ast::Concept;
-use crate::diagnostic::{Diagnostic, Severity};
+use crate::diagnostic::Diagnostic;
 use crate::search::concept_is_stale;
 use crate::validate::string_field;
 
@@ -42,13 +42,11 @@ pub fn classify_concept_action(
         .filter(|d| d.path == concept.path)
         .collect();
 
-    let has_errors = concept_diagnostics
-        .iter()
-        .any(|d| d.severity == Severity::Error);
+    let has_errors = concept_diagnostics.iter().any(|d| d.is_blocking());
     if has_errors {
         let detail = concept_diagnostics
             .iter()
-            .filter(|diagnostic| diagnostic.severity == Severity::Error)
+            .filter(|diagnostic| diagnostic.is_blocking())
             .map(|diagnostic| format!("{}: {}", diagnostic.code, diagnostic.message))
             .collect::<Vec<_>>()
             .join(" · ");

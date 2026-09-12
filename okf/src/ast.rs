@@ -5,7 +5,7 @@ use anyhow::Result;
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 
-use crate::diagnostic::{Diagnostic, Severity, SourceLocation};
+use crate::diagnostic::{Diagnostic, SourceLocation};
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, Default, Serialize, Deserialize)]
 pub struct Span {
@@ -42,7 +42,26 @@ impl Span {
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum Profile {
     Base,
+    Evidence,
     Strict,
+}
+
+impl Profile {
+    pub fn as_str(self) -> &'static str {
+        match self {
+            Self::Base => "base",
+            Self::Evidence => "evidence",
+            Self::Strict => "strict",
+        }
+    }
+
+    pub fn requires_evidence(self) -> bool {
+        matches!(self, Self::Evidence | Self::Strict)
+    }
+
+    pub fn requires_product_vocabulary(self) -> bool {
+        matches!(self, Self::Strict)
+    }
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -55,7 +74,7 @@ impl LoadOptions {
     pub fn new(profile: Profile) -> Self {
         Self {
             profile,
-            provenance: profile == Profile::Strict,
+            provenance: profile.requires_evidence(),
         }
     }
 
@@ -175,9 +194,7 @@ pub struct Bundle {
 
 impl Bundle {
     pub fn has_errors(&self) -> bool {
-        self.diagnostics
-            .iter()
-            .any(|diagnostic| diagnostic.severity == Severity::Error)
+        self.diagnostics.iter().any(Diagnostic::is_blocking)
     }
 }
 
@@ -187,9 +204,7 @@ pub struct CheckReport {
 
 impl CheckReport {
     pub fn has_errors(&self) -> bool {
-        self.diagnostics
-            .iter()
-            .any(|diagnostic| diagnostic.severity == Severity::Error)
+        self.diagnostics.iter().any(Diagnostic::is_blocking)
     }
 
     pub fn terminal(&self) -> String {

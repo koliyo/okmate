@@ -1,10 +1,13 @@
 //! OKMate library: CLI and later HTTP/desktop surfaces over the portable `okf` engine.
 
+pub mod authoring;
 pub mod bundle;
 pub mod cli;
 pub mod config;
+mod conventions;
 #[cfg(feature = "desktop")]
 pub mod desktop;
+pub mod discover;
 pub mod goto_match;
 mod html_util;
 pub mod http;
@@ -36,6 +39,7 @@ pub enum CheckFormat {
 #[derive(Clone, Copy, Debug, ValueEnum)]
 pub enum ProfileArg {
     Base,
+    Evidence,
     Strict,
 }
 
@@ -43,6 +47,7 @@ impl From<ProfileArg> for Profile {
     fn from(value: ProfileArg) -> Self {
         match value {
             ProfileArg::Base => Self::Base,
+            ProfileArg::Evidence => Self::Evidence,
             ProfileArg::Strict => Self::Strict,
         }
     }
@@ -66,7 +71,11 @@ impl From<TrustTierArg> for okf::TrustTier {
 }
 
 pub fn check(root: &Path, profile: Profile) -> Result<CheckReport> {
-    okf::check(root, profile)
+    let mut bundle = okf::load(root, profile)?;
+    conventions::apply(&mut bundle);
+    Ok(CheckReport {
+        diagnostics: bundle.diagnostics,
+    })
 }
 
 pub fn print_check(report: &CheckReport, format: CheckFormat) -> Result<()> {

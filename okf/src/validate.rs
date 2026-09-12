@@ -51,7 +51,7 @@ pub fn validate_metadata(
     let at = Some(location(source, span));
     match metadata.get("type").and_then(Value::as_str) {
         Some(value) if !value.trim().is_empty() => {
-            if profile == Profile::Strict && !PROFILE_TYPES.contains(&value) {
+            if profile.requires_product_vocabulary() && !PROFILE_TYPES.contains(&value) {
                 diagnostics.push(Diagnostic::warning(
                     "OKF2002",
                     relative,
@@ -82,13 +82,15 @@ pub fn validate_metadata(
         }
     }
     if let Some(stale_after) = metadata.get("stale_after")
-        && !stale_after.as_str().is_some_and(is_date)
+        && !stale_after
+            .as_str()
+            .is_some_and(|value| civil_date(value).is_some())
     {
         diagnostics.push(Diagnostic::error(
             "OKF1006",
             relative,
             at.clone(),
-            "stale_after must use YYYY-MM-DD",
+            "stale_after must use YYYY-MM-DD or RFC 3339",
         ));
     }
     if let Some(tags) = metadata.get("tags")
@@ -118,37 +120,68 @@ pub fn validate_metadata(
         ));
     }
     if let Some(verified) = metadata.get("verified")
-        && !verified.as_array().is_some_and(|events| {
-            events.iter().all(|event| {
-                event.as_object().is_some_and(|object| {
-                    object.get("by").is_some_and(Value::is_string)
-                        && object
-                            .get("at")
-                            .and_then(Value::as_str)
-                            .is_some_and(|value| parse_timestamp(value).is_some())
-                })
-            })
-        })
+        && !verified_is_valid(verified)
     {
         diagnostics.push(Diagnostic::error(
             "OKF1010",
             relative,
             at.clone(),
-            "verified must be a list of mappings with string `by` and RFC 3339 `at`",
+            "verified must be a mapping or list of mappings with string `by` and RFC 3339 `at`",
         ));
     }
-    for key in metadata.keys() {
-        if !STANDARD_FIELDS.contains(&key.as_str()) {
-            diagnostics.push(Diagnostic::warning(
-                "OKF2001",
+    if profile != Profile::Base {
+        for key in metadata.keys() {
+            if !STANDARD_FIELDS.contains(&key.as_str()) {
+                diagnostics.push(Diagnostic::warning(
+                    "OKF2001",
+                    relative,
+                    at.clone(),
+                    format!("unknown metadata field `{key}` is preserved"),
+                ));
+            }
+        }
+    }
+    if profile.requires_evidence() {
+        for required in ["title", "description", "generated"] {
+            if !metadata.contains_key(required) {
+                diagnostics.push(Diagnostic::evidence_error(
+                    "OKF2003",
+                    relative,
+                    at.clone(),
+                    format!("{} profile requires `{required}`", profile.as_str()),
+                ));
+            }
+        }
+        match metadata.get("authority").and_then(Value::as_str) {
+            Some("normative" | "descriptive" | "exploratory" | "historical") => {}
+            Some(_) => diagnostics.push(Diagnostic::evidence_error(
+                "OKF2006",
                 relative,
                 at.clone(),
-                format!("unknown metadata field `{key}` is preserved"),
+                "authority must be normative, descriptive, exploratory, or historical",
+            )),
+            None => diagnostics.push(Diagnostic::evidence_error(
+                "OKF2003",
+                relative,
+                at.clone(),
+                format!("{} profile requires `authority`", profile.as_str()),
+            )),
+        }
+        if !metadata.get("owners").is_some_and(|owners| {
+            owners
+                .as_array()
+                .is_some_and(|owners| !owners.is_empty() && owners.iter().all(Value::is_string))
+        }) {
+            diagnostics.push(Diagnostic::evidence_error(
+                "OKF2003",
+                relative,
+                at.clone(),
+                format!("{} profile requires string-list `owners`", profile.as_str()),
             ));
         }
     }
-    if profile == Profile::Strict {
-        for required in ["title", "description", "status", "generated"] {
+    if profile.requires_product_vocabulary() {
+        for required in ["status"] {
             if !metadata.contains_key(required) {
                 diagnostics.push(Diagnostic::error(
                     "OKF2003",
@@ -187,33 +220,6 @@ pub fn validate_metadata(
                     ));
                 }
             }
-        }
-        match metadata.get("authority").and_then(Value::as_str) {
-            Some("normative" | "descriptive" | "exploratory" | "historical") => {}
-            Some(_) => diagnostics.push(Diagnostic::error(
-                "OKF2006",
-                relative,
-                at.clone(),
-                "authority must be normative, descriptive, exploratory, or historical",
-            )),
-            None => diagnostics.push(Diagnostic::error(
-                "OKF2003",
-                relative,
-                at.clone(),
-                "strict profile requires `authority`",
-            )),
-        }
-        if !metadata.get("owners").is_some_and(|owners| {
-            owners
-                .as_array()
-                .is_some_and(|owners| !owners.is_empty() && owners.iter().all(Value::is_string))
-        }) {
-            diagnostics.push(Diagnostic::error(
-                "OKF2003",
-                relative,
-                at,
-                "strict profile requires string-list `owners`",
-            ));
         }
     }
 }
@@ -392,9 +398,8 @@ pub fn validate_lifecycle_and_sources_with(
     for concept in concepts {
         if let (Some(today), Some(stale_after)) = (
             today.as_deref(),
-            string_field(&concept.metadata, "stale_after"),
-        ) && is_date(stale_after)
-            && stale_after < today
+            string_field(&concept.metadata, "stale_after").and_then(civil_date),
+        ) && stale_after < today
         {
             diagnostics.push(Diagnostic::warning(
                 "OKF4004",
@@ -520,10 +525,14 @@ pub fn validate_lifecycle_and_sources_with(
 }
 
 pub fn latest_human_verification(metadata: &BTreeMap<String, Value>) -> Option<(i64, &str)> {
-    metadata
-        .get("verified")?
-        .as_array()?
-        .iter()
+    let verified = metadata.get("verified")?;
+    let events: Vec<&Value> = if let Some(events) = verified.as_array() {
+        events.iter().collect()
+    } else {
+        vec![verified]
+    };
+    events
+        .into_iter()
         .filter_map(Value::as_object)
         .filter(|event| {
             event
@@ -598,20 +607,52 @@ pub fn string_field<'a>(metadata: &'a BTreeMap<String, Value>, key: &str) -> Opt
 }
 
 pub fn is_date(value: &str) -> bool {
-    let bytes = value.as_bytes();
-    if !(bytes.len() == 10
-        && bytes[4] == b'-'
+    value.len() == 10 && civil_date(value).is_some()
+}
+
+pub fn civil_date(value: &str) -> Option<&str> {
+    if value.len() < 10 {
+        return None;
+    }
+    let date = &value[..10];
+    let bytes = date.as_bytes();
+    if !(bytes[4] == b'-'
         && bytes[7] == b'-'
         && bytes
             .iter()
             .enumerate()
             .all(|(index, byte)| index == 4 || index == 7 || byte.is_ascii_digit()))
     {
-        return false;
+        return None;
     }
-    let month = value[5..7].parse::<u8>().unwrap_or(0);
-    let day = value[8..10].parse::<u8>().unwrap_or(0);
-    (1..=12).contains(&month) && (1..=31).contains(&day)
+    let month = date[5..7].parse::<u8>().unwrap_or(0);
+    let day = date[8..10].parse::<u8>().unwrap_or(0);
+    if !(1..=12).contains(&month) || !(1..=31).contains(&day) {
+        return None;
+    }
+    if value.len() == 10 || parse_timestamp(value).is_some() {
+        Some(date)
+    } else {
+        None
+    }
+}
+
+fn verified_event_is_valid(event: &Value) -> bool {
+    event.as_object().is_some_and(|object| {
+        object.get("by").is_some_and(Value::is_string)
+            && object
+                .get("at")
+                .and_then(Value::as_str)
+                .is_some_and(|value| parse_timestamp(value).is_some())
+    })
+}
+
+fn verified_is_valid(value: &Value) -> bool {
+    if let Some(events) = value.as_array() {
+        events.iter().all(verified_event_is_valid)
+    } else {
+        verified_event_is_valid(value)
+    }
 }
 
 pub fn parse_timestamp(value: &str) -> Option<i64> {

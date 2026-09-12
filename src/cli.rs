@@ -8,6 +8,22 @@ use crate::{
     CheckFormat, ProfileArg, TrustTierArg, benchmark, check, inspect, print_check, search,
 };
 
+#[derive(Clone, Copy, Debug, ValueEnum)]
+enum InitTemplateArg {
+    Minimal,
+    #[value(name = "software-project")]
+    SoftwareProject,
+}
+
+impl From<InitTemplateArg> for crate::init::InitTemplate {
+    fn from(value: InitTemplateArg) -> Self {
+        match value {
+            InitTemplateArg::Minimal => Self::Minimal,
+            InitTemplateArg::SoftwareProject => Self::SoftwareProject,
+        }
+    }
+}
+
 #[derive(Parser)]
 #[command(
     name = "okmate",
@@ -39,9 +55,18 @@ enum Commands {
         /// Heading for the root index (`# Title`).
         #[arg(long, default_value = "Knowledge")]
         title: String,
-        /// Only `index.md` and `log.md`; omit collection indexes.
+        /// Content template. Default is `minimal` (`index.md` and `log.md`).
+        #[arg(long, value_enum)]
+        template: Option<InitTemplateArg>,
+        /// Alias for `--template minimal`.
         #[arg(long)]
         bare: bool,
+        /// Extra collection directory relative to the bundle (repeatable).
+        #[arg(long = "collection", value_name = "DIR")]
+        collections: Vec<String>,
+        /// Local TOML template with `[[collections]]` entries. Not fetched or executed.
+        #[arg(long = "template-file", value_name = "TOML")]
+        template_file: Option<PathBuf>,
         /// Write the planned files. Default is a dry-run.
         #[arg(long)]
         apply: bool,
@@ -56,6 +81,57 @@ enum Commands {
         agents: bool,
         #[arg(long, value_enum, default_value_t = CheckFormat::Terminal)]
         format: CheckFormat,
+    },
+    /// Propose a new concept from a type template. Pass `--apply` to write.
+    Concept {
+        #[arg(default_value = "knowledge")]
+        root: PathBuf,
+        /// Concept id (path without `.md`), for example `guides/onboarding`.
+        #[arg(long)]
+        id: String,
+        /// Concept type, for example `Explanation` or `Runbook`.
+        #[arg(long = "type")]
+        kind: String,
+        #[arg(long)]
+        title: Option<String>,
+        #[arg(long)]
+        description: Option<String>,
+        #[arg(long)]
+        authority: Option<String>,
+        #[arg(long = "owner")]
+        owners: Vec<String>,
+        #[arg(long = "tag")]
+        tags: Vec<String>,
+        #[arg(long)]
+        status: Option<String>,
+        #[arg(long = "generated-by")]
+        generated_by: Option<String>,
+        #[arg(long)]
+        apply: bool,
+        #[arg(long, value_enum, default_value_t = ProfileArg::Base)]
+        profile: ProfileArg,
+        #[arg(long, value_enum, default_value_t = CheckFormat::Terminal)]
+        format: CheckFormat,
+    },
+    /// Propose index link additions without rewriting authored grouping.
+    Index {
+        #[arg(default_value = "knowledge")]
+        root: PathBuf,
+        #[arg(long)]
+        apply: bool,
+        #[arg(long, value_enum, default_value_t = CheckFormat::Terminal)]
+        format: CheckFormat,
+    },
+    /// List versioned OKF roots under a repository or container. Never registers.
+    Discover {
+        #[arg(default_value = ".")]
+        path: PathBuf,
+        #[arg(long, value_enum, default_value_t = CheckFormat::Terminal)]
+        format: CheckFormat,
+        #[arg(long, default_value_t = crate::discover::DEFAULT_MAX_DEPTH)]
+        max_depth: u32,
+        #[arg(long, default_value_t = crate::discover::DEFAULT_MAX_VISITS)]
+        max_visits: u32,
     },
     /// Print normalized concepts or the bundle graph as JSON.
     Inspect {
@@ -268,7 +344,10 @@ pub fn run() -> Result<()> {
         Commands::Init {
             path,
             title,
+            template,
             bare,
+            collections,
+            template_file,
             apply,
             register,
             id,
@@ -277,12 +356,64 @@ pub fn run() -> Result<()> {
         } => crate::init::run(crate::init::InitOptions {
             path,
             title,
+            template: template.map(Into::into),
+            collections,
+            template_file,
             bare,
             apply,
             format,
             register,
             id,
             agents,
+        }),
+        Commands::Concept {
+            root,
+            id,
+            kind,
+            title,
+            description,
+            authority,
+            owners,
+            tags,
+            status,
+            generated_by,
+            apply,
+            profile,
+            format,
+        } => crate::authoring::run_concept(crate::authoring::ConceptOptions {
+            root,
+            id,
+            kind,
+            title,
+            description,
+            authority,
+            owners,
+            tags,
+            status,
+            generated_by,
+            apply,
+            profile: profile.into(),
+            format,
+        }),
+        Commands::Index {
+            root,
+            apply,
+            format,
+        } => crate::authoring::run_index(crate::authoring::IndexOptions {
+            root,
+            apply,
+            format,
+        }),
+        Commands::Discover {
+            path,
+            format,
+            max_depth,
+            max_visits,
+        } => crate::discover::run(crate::discover::DiscoverOptions {
+            start: path,
+            max_depth,
+            max_visits,
+            format,
         }),
         Commands::Inspect { target, profile } => {
             let json = match target {

@@ -1,6 +1,6 @@
 use std::collections::BTreeMap;
 
-use okf::{Bundle, Concept, Diagnostic, Severity, TrustTier};
+use okf::{Bundle, Concept, Diagnostic, DiagnosticLayer, Severity, TrustTier};
 
 use crate::workspace::{Workspace, WorkspaceMember};
 
@@ -34,6 +34,7 @@ pub struct LogDay {
 #[derive(Clone, Debug, Default)]
 pub struct DiagnosticRow {
     pub severity: String,
+    pub layer: String,
     pub code: String,
     pub path: String,
     pub message: String,
@@ -79,7 +80,12 @@ pub fn governance_stats(workspace: &Workspace) -> Vec<StatCard> {
     let mut stale = 0;
     let mut diagnostics = 0;
     for member in workspace.members() {
-        diagnostics += member.bundle.diagnostics.len();
+        diagnostics += member
+            .bundle
+            .diagnostics
+            .iter()
+            .filter(|diagnostic| diagnostic.layer != DiagnosticLayer::Style)
+            .count();
         for concept in &member.bundle.concepts {
             total += 1;
             let status = okf::string_field(&concept.metadata, "status").unwrap_or("draft");
@@ -292,6 +298,7 @@ pub fn diagnostic_rows(workspace: &Workspace) -> Vec<DiagnosticRow> {
                         Severity::Error => "Error".into(),
                         Severity::Warning => "Warning".into(),
                     },
+                    layer: diagnostic.layer.as_str().to_string(),
                     code: diagnostic.code.to_string(),
                     path: diagnostic.path.clone(),
                     message: diagnostic.message.clone(),

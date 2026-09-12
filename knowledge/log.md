@@ -5,6 +5,19 @@ Independent bullets under the same `## YYYY-MM-DD` heading combine instead of
 conflicting. Add a new list item; do not reword another session's bullet in
 the same change.
 
+## 2026-09-12
+
+- Drafted [restructure alternatives](/research/okmate/bundle-restructure-alternatives.md) for the five registered roots (keep type-first archives, question front doors, wait-for-content ops maps; physical moves last). Exploratory; does not authorize sibling migrations.
+- Recorded a fixture [curation prototype](/status/heterogeneous-bundle-curation.md): frozen handbook questions, preserved example concept IDs, retrieval hit rate 1.0, and per-bundle assessments without migrating sibling roots. Exploratory Phase 6 of [heterogeneous authoring](/plans/okmate/heterogeneous-bundle-authoring.md); do not log complete until hosted CI succeeds.
+- Added read-only `okmate discover` and container `view` resolution by versioned `okf_version` indexes, without preferring `knowledge/` or flattening mixed corpora. Exploratory Phase 5 of [heterogeneous authoring](/plans/okmate/heterogeneous-bundle-authoring.md); do not log complete until hosted CI succeeds.
+- Approved a revised [authoring-host decision](/decisions/git-repository-bundles.md): Git working trees for writes; bounded marker discovery without preferring `knowledge/`; explicit paths and registry stay first. Exploratory Phase 5 of [heterogeneous authoring](/plans/okmate/heterogeneous-bundle-authoring.md) implements it; do not log complete until hosted CI succeeds.
+- Added `okmate concept` and `okmate index` as dry-run-first authoring (type templates, named evidence inputs, nearest-index additions that preserve authored grouping). Exploratory Phase 4 of [heterogeneous authoring](/plans/okmate/heterogeneous-bundle-authoring.md); do not log complete until hosted CI succeeds.
+- Split portable format reading, an opt-in Evidence profile, and optional `<bundle>/okmate.toml` style findings; `check`/`view` still default to Strict and new init agent instructions select `--profile evidence`. Exploratory Phase 3 of [heterogeneous authoring](/plans/okmate/heterogeneous-bundle-authoring.md); do not log complete until hosted CI succeeds.
+- Made `okmate init` default to a minimal scaffold, added `--template software-project` / `--collection` / `--template-file`, and preflighted path-correct agent extras before writes. Exploratory Phase 2 of [heterogeneous authoring](/plans/okmate/heterogeneous-bundle-authoring.md); do not log complete until hosted CI succeeds.
+- Published a checked-in OKF authoring guide, five contrasting example bundles, and a fixture-backed inventory of current format versus Okmate Strict versus reader-limit diagnostics. Exploratory Phase 1 of [heterogeneous authoring](/plans/okmate/heterogeneous-bundle-authoring.md); do not log complete until hosted CI succeeds.
+- Corrected the original init plan's absence claim with a dated implementation snapshot and a link to the heterogeneous-authoring follow-up; retained its initial phased design without claiming hosted-CI completion.
+- Investigated all five registered bundles and public OKF authoring patterns; added paired [research](/research/okmate/heterogeneous-bundle-authoring.md) and [plan](/plans/okmate/heterogeneous-bundle-authoring.md) for purpose-specific structure, developer-knowledge handbook navigation, arbitrary bundle paths, and separate format/evidence/style support. Exploratory; no tooling or bundle migration phase started.
+
 ## 2026-09-11
 
 - Added Phase 4 to the document tab gestures plan: stable document titles and OKF type-color dots, including Cmd-clicked background tabs. Exploratory; do not log complete until hosted CI succeeds.

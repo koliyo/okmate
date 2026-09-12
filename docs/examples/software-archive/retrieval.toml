@@ -1,0 +1,9 @@
+version = 1
+top_k = 5
+minimum_hit_rate = 1.0
+
+[[questions]]
+id = "product-contract"
+question = "Where is the owning product contract?"
+query = "portable engine parses OKF"
+expected_concepts = ["architecture/system-overview"]

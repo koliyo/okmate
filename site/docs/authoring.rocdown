@@ -1,0 +1,31 @@
+@page {
+    layout: "docs",
+    meta: {
+        title: "Authoring a bundle",
+        description: "Choose a bundle path, types, and validation profile. Canonical text is the checked-in docs/authoring.md guide.",
+    },
+}
+
+# Authoring a bundle
+
+The canonical guide is
+[`docs/authoring.md`](https://github.com/koliyo/okmate/blob/main/docs/authoring.md)
+in the repository. This page exists so the docs lane can find it without
+duplicating that text. Worked examples:
+
+- [minimal](https://github.com/koliyo/okmate/tree/main/docs/examples/minimal)
+- [software-archive](https://github.com/koliyo/okmate/tree/main/docs/examples/software-archive)
+- [engineering-handbook](https://github.com/koliyo/okmate/tree/main/docs/examples/engineering-handbook)
+- [operations](https://github.com/koliyo/okmate/tree/main/docs/examples/operations)
+- [data-catalog](https://github.com/koliyo/okmate/tree/main/docs/examples/data-catalog)
+
+Check each example with the profile named in
+[`docs/examples/README.md`](https://github.com/koliyo/okmate/blob/main/docs/examples/README.md).
+Format, evidence, and local style:
+[`docs/compatibility.md`](https://github.com/koliyo/okmate/blob/main/docs/compatibility.md).
+
+`okmate init [path]` is create-only. Default path `knowledge`; default
+scaffold is minimal (`index.md` and `log.md`). The previous six
+collections are `--template software-project`. `--bare` is an alias for
+minimal. Pass `docs`, `.okf`, or another directory when that is the
+bundle root. See the [CLI](/docs/cli/) page and the repository README.

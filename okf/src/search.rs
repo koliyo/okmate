@@ -5,7 +5,7 @@ use serde_json::Value;
 
 use crate::ast::{Bundle, Concept, KnowledgeFilter, TrustTier};
 use crate::validate::{
-    is_date, latest_human_verification, metadata_string_array, parse_timestamp, string_field,
+    civil_date, latest_human_verification, metadata_string_array, parse_timestamp, string_field,
 };
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize)]
@@ -200,5 +200,7 @@ pub fn concept_is_stale(metadata: &BTreeMap<String, Value>) -> bool {
     let Some(today) = crate::validate::current_utc_date() else {
         return false;
     };
-    string_field(metadata, "stale_after").is_some_and(|date| is_date(date) && date < today.as_str())
+    string_field(metadata, "stale_after")
+        .and_then(civil_date)
+        .is_some_and(|date| date < today.as_str())
 }

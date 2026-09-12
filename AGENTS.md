@@ -6,6 +6,8 @@
   untracked work; do not clean or rewrite it to simplify a task.
 - Read the root `README.md` and `okf/README.md` before changing a public
   contract.
+- For starting or reshaping a knowledge bundle (path, types, examples,
+  current `init` and check profiles), read [`docs/authoring.md`](docs/authoring.md).
 - For architecture, decisions, implementation status, and known limitations,
   start at `knowledge/index.md` and the relevant knowledge record when that
   bundle exists.

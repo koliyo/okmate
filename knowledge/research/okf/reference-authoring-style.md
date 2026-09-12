@@ -4,14 +4,14 @@ title: Reference authoring style for OKF
 description: Prefer document-local keyed claim citations, retain useful source registers, and promote reused evidence into reference concepts selectively.
 tags: [domain/okf, concern/evidence, concern/authoring]
 status: draft
-generated: { by: process:cursor, at: 2026-09-11T08:07:00Z }
+generated: { by: process:cursor, at: 2026-09-12T10:00:00Z }
 stale_after: 2026-12-11
 authority: exploratory
 owners: [human:nils]
 sources:
   - id: spec
     resource: https://raw.githubusercontent.com/GoogleCloudPlatform/knowledge-catalog/main/okf/SPEC.md
-    title: OKF v0.2 specification
+    title: Frozen knowledge-catalog snapshot of OKF v0.2 (canonical spec moved to GoogleCloudPlatform/open-knowledge-format)
     author: organization:google-cloud
   - id: load
     resource: ../../../okf/src/load.rs

@@ -1,0 +1,33 @@
+version = 1
+top_k = 5
+minimum_hit_rate = 1.0
+
+[[questions]]
+id = "steer-task"
+question = "How should I steer delegated work?"
+query = "bounded goal reviewable path"
+expected_concepts = ["agentic-development/task-steering"]
+
+[[questions]]
+id = "evaluate-results"
+question = "How should I evaluate agent results?"
+query = "evaluate agent results success check"
+expected_concepts = ["agentic-development/evaluate-results"]
+
+[[questions]]
+id = "restore-environment"
+question = "How do I restore a development environment?"
+query = "saved package manifest"
+expected_concepts = ["developer-environments/restore-from-manifest"]
+
+[[questions]]
+id = "find-evidence"
+question = "Where did these conclusions come from?"
+query = "bounded list of evidence this handbook cites"
+expected_concepts = ["reference/source-register"]
+
+[[questions]]
+id = "audit-not-advice"
+question = "What was observed on this machine?"
+query = "observed backup configuration on one development host"
+expected_concepts = ["audits/backup-snapshot"]

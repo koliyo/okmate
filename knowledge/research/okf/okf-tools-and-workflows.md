@@ -4,7 +4,7 @@ title: State-of-the-art OKF tools and workflows
 description: Emerging OKF tools converge on portable Markdown, agent-native deterministic interfaces, separate conformance and curation, evidence review, rebuildable retrieval, and authenticated machine access.
 tags: [domain/okf, domain/rocs-okf, concern/agents, concern/review, concern/retrieval, concern/security]
 status: draft
-generated: { by: process:codex, at: 2026-08-28T15:30:00Z }
+generated: { by: process:codex, at: 2026-09-12T10:00:00Z }
 stale_after: 2026-11-28
 authority: exploratory
 owners: [human:nils]
@@ -16,11 +16,11 @@ sources:
     last_modified: 2026-08-17
   - id: okf-spec
     resource: https://github.com/GoogleCloudPlatform/knowledge-catalog/blob/main/okf/SPEC.md
-    title: Open Knowledge Format v0.2 specification
+    title: Frozen knowledge-catalog snapshot of OKF v0.2 (canonical spec moved to GoogleCloudPlatform/open-knowledge-format)
     author: organization:google-cloud
   - id: okf-reference
     resource: https://github.com/GoogleCloudPlatform/knowledge-catalog/blob/main/okf/README.md
-    title: Google Cloud OKF reference agent and visualizer
+    title: Frozen knowledge-catalog OKF reference (canonical repository is GoogleCloudPlatform/open-knowledge-format)
     author: organization:google-cloud
   - id: okfcli
     resource: https://github.com/okfcli/okf

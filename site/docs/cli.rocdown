@@ -15,6 +15,10 @@ canonical list.
 ## Everyday commands
 
 ```sh
+okmate init
+okmate init --apply
+okmate init --template software-project --apply
+okmate init . --bare --apply
 okmate check knowledge --profile strict --format json
 okmate inspect catalog knowledge
 okmate inspect concept architecture/system-overview knowledge

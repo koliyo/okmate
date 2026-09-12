@@ -73,6 +73,10 @@ targeted record and source reads over loading the entire JSON catalog.
 
 ## Author or revise records
 
+This table is **this repository’s** `knowledge/` convention. For a new or
+non-Okmate bundle, start from [`docs/authoring.md`](../../../docs/authoring.md)
+instead of copying these folders.
+
 1. Choose a type collection and area based on the claim's purpose and
    authority, not merely the file being discussed. Prefer bundle-root
    `/path.md` links. Inspect accepts a unique filename stem as well as

@@ -78,3 +78,9 @@ fn check_json_matches_okf_on_invalid_bundle() {
 fn check_strict_keeps_git_provenance_on() {
     assert!(okf::LoadOptions::new(Profile::Strict).provenance);
 }
+
+#[test]
+fn check_evidence_keeps_git_provenance_on() {
+    assert!(okf::LoadOptions::new(Profile::Evidence).provenance);
+    assert!(!okf::LoadOptions::new(Profile::Base).provenance);
+}

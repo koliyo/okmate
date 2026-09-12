@@ -20,15 +20,29 @@ Dependencies:
 
 Operations: `load`, `load_timed`, `load_with_cache`, `check`, `inspect`, `inspect_filtered`, `search`, `build`, `build_artifacts`, `benchmark_retrieval`.
 
-AST and reports: `Bundle`, `Concept`, `Index`, `Log`, `Edge`, `Heading`, `HeadingSection`, `Link`, `Span`, `Profile`, `LoadOptions`, `LoadResult`, `LoadTimings`, `InspectKind`, `KnowledgeFilter`, `TrustTier`, `CheckReport`, `BuildSummary`, `Diagnostic`, `Severity`, `SourceLocation`, retrieval report types.
+AST and reports: `Bundle`, `Concept`, `Index`, `Log`, `Edge`, `Heading`, `HeadingSection`, `Link`, `Span`, `Profile`, `LoadOptions`, `LoadResult`, `LoadTimings`, `InspectKind`, `KnowledgeFilter`, `TrustTier`, `CheckReport`, `BuildSummary`, `Diagnostic`, `DiagnosticLayer`, `Severity`, `SourceLocation`, retrieval report types.
 
-Helpers callers already need: `string_field`, `metadata_string_array`, `latest_human_verification`, `classify_concept_action`, `ActionKind`, `ConceptAction`, `ParseCache`, `PARSE_CACHE_VERSION`, `published_href`, `resolve_preview_path`, `PreviewTarget`, `concept_trust_tier`, `concept_is_stale`.
+Helpers callers already need: `string_field`, `metadata_string_array`, `latest_human_verification`, `classify_concept_action`, `ActionKind`, `ConceptAction`, `ParseCache`, `PARSE_CACHE_VERSION`, `published_href`, `resolve_preview_path`, `PreviewTarget`, `is_bundle_root_index`, `concept_trust_tier`, `concept_is_stale`. Directory scan policy, registry IDs, and `okmate discover` live in the application crate.
 
 Parse, git, and civil-date internals stay crate-private.
 
 ## Core Features
 
-- **Multi-Profile Validation**: `Profile::Base` (portable OKF specification) and `Profile::Strict` (evidence, verification, and owners).
+- **Multi-Profile Validation**: `Profile::Base` (portable OKF),
+  `Profile::Evidence` (title, description, generation, owners, authority),
+  and `Profile::Strict` (evidence plus this product’s preferred types/tags).
+  `Base` accepts `okf_version` `0.1` and `0.2`, normalizes a `verified`
+  mapping, accepts RFC 3339 `stale_after`, warns on extra root-index keys,
+  and does not treat HTML comments as authoring errors. Unsafe HTML is
+  still rejected and stripped from `article_html`. See
+  [`docs/compatibility.md`](../docs/compatibility.md) and
+  [`okf/tests/fixtures/compatibility/`](tests/fixtures/compatibility/).
+  Application-side `<bundle>/okmate.toml` style findings are not produced
+  by this crate.
+- **Authoring**: Bundle path, collection layout, and concept types are
+  producer choices. A checked-in guide and contrasting examples live in
+  [`docs/authoring.md`](../docs/authoring.md). Canonical spec:
+  [open-knowledge-format](https://github.com/GoogleCloudPlatform/open-knowledge-format).
 - **Load timings**: `load_timed` returns ordinary `Duration` breakdowns (`discover`, `parse`, `graph`, and `provenance` when git provenance runs) beside the `Bundle`. `LoadOptions` selects the profile and whether provenance runs. `ParseCache` reuses unchanged documents across loads, including from a caller-provided directory via `load_dir` / `save_dir`. `okf` does not depend on CLI snapshot types and does not choose config paths.
 - **Graph Resolution**: Strict and fuzzy concept ID matching, fragment checking, and directed edge construction. Authored `/path.md` links are bundle-root; `article_html` rewrites in-bundle Markdown hrefs to published `/{id}/` routes while `concept.links` keep the source URLs. `okf:` hrefs are classified like `mailto:` (not intra-bundle paths, not OKF3001).
 - **Search & Chunking**: Semantic search indexing by metadata and headings with BM25/lexical matching.
