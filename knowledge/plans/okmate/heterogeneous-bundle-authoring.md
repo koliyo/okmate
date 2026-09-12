@@ -4,7 +4,7 @@ title: Support heterogeneous OKF bundle authoring
 description: Separate portable reading, evidence checks, and local authoring style; make init minimal and path-correct, add optional conventions and templates, and improve discovery and documentation without migrating existing bundles by default.
 tags: [domain/okmate, domain/okf, concern/authoring, concern/architecture, concern/tooling]
 status: draft
-generated: { by: process:cursor, at: 2026-09-12T12:30:00Z }
+generated: { by: process:cursor, at: 2026-09-12T13:00:00Z }
 stale_after: 2026-12-12
 authority: exploratory
 owners: [human:nils]
@@ -75,6 +75,7 @@ bundle paths after a staged check.[^init][^cli]
 Phase 3 split portable format reading, an opt-in Evidence profile, and
 application-side `okmate.toml` style findings; `check`/`view` still
 default to Strict.[^validation][^load]
+Phase 4 added dry-run concept creation and nearest-index updates.
 Later phases have not started.
 Hosted CI is not claimed. The [research report](/research/okmate/heterogeneous-bundle-authoring.md) records
 all five registered roots, public examples, exact local revisions, compatibility

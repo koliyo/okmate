@@ -82,6 +82,46 @@ enum Commands {
         #[arg(long, value_enum, default_value_t = CheckFormat::Terminal)]
         format: CheckFormat,
     },
+    /// Propose a new concept from a type template. Pass `--apply` to write.
+    Concept {
+        #[arg(default_value = "knowledge")]
+        root: PathBuf,
+        /// Concept id (path without `.md`), for example `guides/onboarding`.
+        #[arg(long)]
+        id: String,
+        /// Concept type, for example `Explanation` or `Runbook`.
+        #[arg(long = "type")]
+        kind: String,
+        #[arg(long)]
+        title: Option<String>,
+        #[arg(long)]
+        description: Option<String>,
+        #[arg(long)]
+        authority: Option<String>,
+        #[arg(long = "owner")]
+        owners: Vec<String>,
+        #[arg(long = "tag")]
+        tags: Vec<String>,
+        #[arg(long)]
+        status: Option<String>,
+        #[arg(long = "generated-by")]
+        generated_by: Option<String>,
+        #[arg(long)]
+        apply: bool,
+        #[arg(long, value_enum, default_value_t = ProfileArg::Base)]
+        profile: ProfileArg,
+        #[arg(long, value_enum, default_value_t = CheckFormat::Terminal)]
+        format: CheckFormat,
+    },
+    /// Propose index link additions without rewriting authored grouping.
+    Index {
+        #[arg(default_value = "knowledge")]
+        root: PathBuf,
+        #[arg(long)]
+        apply: bool,
+        #[arg(long, value_enum, default_value_t = CheckFormat::Terminal)]
+        format: CheckFormat,
+    },
     /// Print normalized concepts or the bundle graph as JSON.
     Inspect {
         #[command(subcommand)]
@@ -314,6 +354,44 @@ pub fn run() -> Result<()> {
             register,
             id,
             agents,
+        }),
+        Commands::Concept {
+            root,
+            id,
+            kind,
+            title,
+            description,
+            authority,
+            owners,
+            tags,
+            status,
+            generated_by,
+            apply,
+            profile,
+            format,
+        } => crate::authoring::run_concept(crate::authoring::ConceptOptions {
+            root,
+            id,
+            kind,
+            title,
+            description,
+            authority,
+            owners,
+            tags,
+            status,
+            generated_by,
+            apply,
+            profile: profile.into(),
+            format,
+        }),
+        Commands::Index {
+            root,
+            apply,
+            format,
+        } => crate::authoring::run_index(crate::authoring::IndexOptions {
+            root,
+            apply,
+            format,
         }),
         Commands::Inspect { target, profile } => {
             let json = match target {

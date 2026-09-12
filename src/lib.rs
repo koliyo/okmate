@@ -1,5 +1,6 @@
 //! OKMate library: CLI and later HTTP/desktop surfaces over the portable `okf` engine.
 
+pub mod authoring;
 pub mod bundle;
 pub mod cli;
 pub mod config;

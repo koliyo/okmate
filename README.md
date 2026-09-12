@@ -29,6 +29,8 @@ Settings live under `~/.okmate/` (`OKMATE_CONFIG`, `OKMATE_CACHE`,
 | Command | Purpose |
 | --- | --- |
 | `okmate init [path]` | Scaffold a new OKF bundle (dry-run plan; `--apply` writes; `--register` / `--agents` optional) |
+| `okmate concept [root]` | Propose a concept from a type template (`--id`, `--type`; `--apply` writes) |
+| `okmate index [root]` | Propose nearest-index link additions (`--apply` writes; does not reorder authored grouping) |
 | `okmate check [root]` | Validate a bundle (`--format terminal\|json`, `--profile`) |
 | `okmate inspect catalog\|concept\|graph` | Engine JSON inspect |
 | `okmate search <query> [root]` | Metadata and heading search JSON |

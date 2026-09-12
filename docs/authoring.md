@@ -177,6 +177,32 @@ okmate check path/to/bundle --profile evidence
 okmate check path/to/bundle --profile base
 ```
 
+## Ongoing records and indexes
+
+`okmate concept` and `okmate index` are dry-run first. `--apply` writes.
+They do not invent owners, citations, or human verification. Default
+`--profile base` so a handbook type is legal without Okmate product
+vocabulary.
+
+```sh
+okmate concept knowledge --type Explanation --id guides/onboarding
+okmate concept knowledge --type Explanation --id guides/onboarding --title Onboarding --apply
+okmate concept knowledge --type Runbook --id runbooks/restore --profile evidence \
+  --title Restore --description "Recover a host." --authority descriptive \
+  --owner human:nils --generated-by process:okmate --apply
+okmate index knowledge
+okmate index knowledge --apply
+```
+
+`--profile evidence` or `strict` fails with named missing flags instead of
+filling them in. Index updates append missing nearest-directory links and
+report unresolved `.md` hrefs. They do not reorder authored grouping or
+replace a question-oriented index with an alphabetic dump.
+
+Body templates exist for Explanation, How-to Guide, Reference, Research
+Report, Audit, Runbook, Dataset/Table/Metric, and Workflow. Types and
+folders stay independent.
+
 ## Evidence without copying this repository
 
 A minimal record needs a `type` and a body. Title, description, owners,

@@ -1,6 +1,6 @@
 use std::collections::BTreeMap;
 use std::fs;
-use std::path::{Component, Path};
+use std::path::{Component, Path, PathBuf};
 
 use okf::{Bundle, Diagnostic, string_field};
 
@@ -88,7 +88,89 @@ pub fn apply(bundle: &mut Bundle) {
             }
         }
     }
+    let mut extras = Vec::new();
+    style_layout(bundle, &mut extras);
+    bundle.diagnostics.extend(extras);
     sort_diagnostics(&mut bundle.diagnostics);
+}
+
+fn style_layout(bundle: &Bundle, diagnostics: &mut Vec<Diagnostic>) {
+    empty_scaffold_dirs(&bundle.root, Path::new(""), diagnostics);
+    duplicate_overviews(bundle, diagnostics);
+}
+
+fn empty_scaffold_dirs(root: &Path, relative: &Path, diagnostics: &mut Vec<Diagnostic>) {
+    let dir = if relative.as_os_str().is_empty() {
+        root.to_path_buf()
+    } else {
+        root.join(relative)
+    };
+    let Ok(entries) = fs::read_dir(&dir) else {
+        return;
+    };
+    let mut names = Vec::new();
+    for entry in entries.flatten() {
+        names.push(entry.file_name());
+    }
+    names.sort();
+    let mut markdown = Vec::new();
+    for name in &names {
+        if name.as_encoded_bytes().starts_with(b".") {
+            continue;
+        }
+        let path = dir.join(name);
+        if path.is_dir() {
+            let child = if relative.as_os_str().is_empty() {
+                PathBuf::from(name)
+            } else {
+                relative.join(name)
+            };
+            empty_scaffold_dirs(root, &child, diagnostics);
+        } else if path.extension().and_then(|extension| extension.to_str()) == Some("md") {
+            markdown.push(name.to_string_lossy().replace('\\', "/"));
+        }
+    }
+    if relative.as_os_str().is_empty() {
+        return;
+    }
+    let only_index = markdown.len() == 1 && markdown[0] == "index.md";
+    if only_index {
+        let display = relative.to_string_lossy().replace('\\', "/");
+        diagnostics.push(Diagnostic::style_warning(
+            "OKMATE5004",
+            format!("{display}/index.md"),
+            format!("collection `{display}/` has an index and no records"),
+        ));
+    }
+}
+
+fn duplicate_overviews(bundle: &Bundle, diagnostics: &mut Vec<Diagnostic>) {
+    let mut headings: BTreeMap<String, Vec<String>> = BTreeMap::new();
+    for index in &bundle.indexes {
+        let Some(heading) = index.headings.first() else {
+            continue;
+        };
+        let text = heading.text.trim();
+        if text.is_empty() {
+            continue;
+        }
+        headings
+            .entry(text.to_string())
+            .or_default()
+            .push(index.path.clone());
+    }
+    for (text, paths) in headings {
+        if paths.len() < 2 {
+            continue;
+        }
+        for path in paths {
+            diagnostics.push(Diagnostic::style_warning(
+                "OKMATE5005",
+                path,
+                format!("heuristic: multiple indexes share the heading `{text}`"),
+            ));
+        }
+    }
 }
 
 struct Conventions {

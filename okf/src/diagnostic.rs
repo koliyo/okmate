@@ -182,6 +182,8 @@ pub const DIAGNOSTIC_CODES: &[&str] = &[
     "OKMATE5001",
     "OKMATE5002",
     "OKMATE5003",
+    "OKMATE5004",
+    "OKMATE5005",
 ];
 
 pub fn intern_diagnostic_code(code: &str) -> Option<&'static str> {
