@@ -39,13 +39,13 @@ A **bundle** is one root directory of OKF files (for example this repo’s
 
 ## Profiles
 
-`Profile::Base` is portable OKF. `Profile::Strict` adds owners and evidence,
-and currently also this product’s preferred types and `domain/` tags.
-This repository’s knowledge tree uses `--profile strict`. Handbook,
-operations, and data examples in
+`Profile::Base` is portable OKF. `Profile::Evidence` adds owners and
+generation without product type names. `Profile::Strict` adds this
+product’s preferred types and `domain/` tags. This repository’s knowledge
+tree uses `--profile strict`. Handbook, operations, and data examples in
 [`docs/examples/`](https://github.com/koliyo/okmate/tree/main/docs/examples)
-check with `--profile base`. Current reader limits (v0.1, `verified` shape,
-root-index extensions, HTML comments) are inventoried in
+check with `--profile base`. `check` and `view` still default to `strict`.
+Current diagnostics:
 [`docs/compatibility.md`](https://github.com/koliyo/okmate/blob/main/docs/compatibility.md).
 
 The older Google `knowledge-catalog/okf` directory is **frozen** and points

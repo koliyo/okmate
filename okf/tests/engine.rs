@@ -39,6 +39,12 @@ fn test_okf_profile_matrix() {
         "Base profile should accept minimal record"
     );
 
+    let evidence_bundle = load(&root, Profile::Evidence).expect("load evidence");
+    assert!(
+        evidence_bundle.has_errors(),
+        "evidence profile should reject minimal record lacking owners"
+    );
+
     let strict_bundle = load(&root, Profile::Strict).expect("load strict");
     assert!(
         strict_bundle.has_errors(),
@@ -459,6 +465,10 @@ fn load_timed_records_nonzero_parse_on_tiny_fixture() {
     );
     assert_eq!(loaded.bundle.concepts.len(), 1);
     assert_eq!(loaded.timings.provenance, None);
+
+    let evidence =
+        load_timed(&root, LoadOptions::new(Profile::Evidence)).expect("load timed evidence");
+    assert!(evidence.timings.provenance.is_some());
 
     let strict = load_timed(&root, LoadOptions::new(Profile::Strict)).expect("load timed strict");
     assert!(strict.timings.provenance.is_some());

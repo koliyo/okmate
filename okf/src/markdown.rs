@@ -57,6 +57,7 @@ pub fn parse_markdown_body(
     };
 
     walker.walk(root);
+    neutralize_raw_html(root);
     rewrite_article_links(root, relative);
 
     // Extract heading sections for search indexing
@@ -94,6 +95,7 @@ pub fn parse_markdown_body(
     let mut article_html = String::new();
     let _ = comrak::format_html_with_plugins(root, &options, &mut article_html, &plugins);
     article_html = inject_heading_ids(&article_html, &walker.headings);
+    article_html = strip_html_comments(article_html);
 
     MarkdownOutput {
         headings: walker.headings,
@@ -148,26 +150,30 @@ impl<'a> MarkdownWalker<'a> {
                 self.defined_footnotes.insert(definition.name.clone());
             }
             NodeValue::HtmlBlock(block) => {
-                self.diagnostics.push(Diagnostic::error(
-                    "OKF2009",
-                    self.relative,
-                    Some(self.lines.location(self.source, span)),
-                    format!(
-                        "raw HTML is forbidden in knowledge records: `{}`",
-                        block.literal.trim()
-                    ),
-                ));
+                if !is_html_comment(&block.literal) {
+                    self.diagnostics.push(Diagnostic::error(
+                        "OKF2009",
+                        self.relative,
+                        Some(self.lines.location(self.source, span)),
+                        format!(
+                            "raw HTML is forbidden in knowledge records: `{}`",
+                            block.literal.trim()
+                        ),
+                    ));
+                }
             }
             NodeValue::HtmlInline(html) => {
-                self.diagnostics.push(Diagnostic::error(
-                    "OKF2009",
-                    self.relative,
-                    Some(self.lines.location(self.source, span)),
-                    format!(
-                        "raw HTML is forbidden in knowledge records: `{}`",
-                        html.trim()
-                    ),
-                ));
+                if !is_html_comment(html) {
+                    self.diagnostics.push(Diagnostic::error(
+                        "OKF2009",
+                        self.relative,
+                        Some(self.lines.location(self.source, span)),
+                        format!(
+                            "raw HTML is forbidden in knowledge records: `{}`",
+                            html.trim()
+                        ),
+                    ));
+                }
             }
             NodeValue::Text(text) => {
                 self.footnote_ids.extend(footnote_labels(text));
@@ -370,4 +376,36 @@ pub fn reject_declarations(
             ));
         }
     }
+}
+
+fn neutralize_raw_html<'a>(node: &'a AstNode<'a>) {
+    {
+        let mut data = node.data.borrow_mut();
+        match &mut data.value {
+            NodeValue::HtmlBlock(block) => block.literal.clear(),
+            NodeValue::HtmlInline(html) => html.clear(),
+            _ => {}
+        }
+    }
+    for child in node.children() {
+        neutralize_raw_html(child);
+    }
+}
+
+fn is_html_comment(html: &str) -> bool {
+    let trimmed = html.trim();
+    trimmed.starts_with("<!--") && trimmed.ends_with("-->")
+}
+
+fn strip_html_comments(mut html: String) -> String {
+    while let Some(start) = html.find("<!--") {
+        match html[start + 4..].find("-->") {
+            Some(relative) => {
+                let end = start + 4 + relative + 3;
+                html.replace_range(start..end, "");
+            }
+            None => break,
+        }
+    }
+    html
 }

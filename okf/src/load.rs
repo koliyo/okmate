@@ -150,7 +150,7 @@ fn parse_concept(
             return;
         }
     };
-    let metadata = match parse_yaml_mapping(frontmatter.yaml.of(source)) {
+    let mut metadata = match parse_yaml_mapping(frontmatter.yaml.of(source)) {
         Ok(metadata) => metadata,
         Err(message) => {
             diagnostics.push(Diagnostic::error(
@@ -164,6 +164,7 @@ fn parse_concept(
             return;
         }
     };
+    normalize_verified(&mut metadata);
     validate_metadata(
         relative,
         source,
@@ -260,16 +261,16 @@ fn parse_index(
                 Ok(metadata) => {
                     for key in metadata.keys() {
                         if key != "okf_version" {
-                            diagnostics.push(Diagnostic::error(
+                            diagnostics.push(Diagnostic::warning(
                                 "OKF1011",
                                 relative,
                                 Some(location(source, frontmatter.yaml)),
-                                format!("root index frontmatter may only contain `okf_version`, found `{key}`"),
+                                format!("root index extension `{key}` is ignored; only `okf_version` is applied"),
                             ));
                         }
                     }
                     match metadata.get("okf_version").and_then(Value::as_str) {
-                        Some("0.2") => version = Some("0.2".to_string()),
+                        Some(value @ ("0.1" | "0.2")) => version = Some(value.to_string()),
                         Some(other) => diagnostics.push(Diagnostic::error(
                             "OKF1012",
                             relative,
@@ -375,4 +376,17 @@ pub(crate) fn relative_path(root: &Path, path: &Path) -> String {
         .unwrap_or(path)
         .to_string_lossy()
         .replace('\\', "/")
+}
+
+fn normalize_verified(metadata: &mut BTreeMap<String, Value>) {
+    let Some(value) = metadata.get("verified") else {
+        return;
+    };
+    if value.as_array().is_some() {
+        return;
+    }
+    if value.as_object().is_some() {
+        let owned = value.clone();
+        metadata.insert("verified".to_string(), Value::Array(vec![owned]));
+    }
 }

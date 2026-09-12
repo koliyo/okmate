@@ -385,10 +385,15 @@ fn load_bundle(
         let mut cache = ParseCache::load_dir(&dir, options.profile);
         let loaded = okf::load_with_cache(path, options, Some(&mut cache))?;
         cache.save_dir(&dir)?;
-        Ok(loaded.bundle)
+        Ok(apply_conventions(loaded.bundle))
     } else {
-        Ok(okf::load_timed(path, options)?.bundle)
+        Ok(apply_conventions(okf::load_timed(path, options)?.bundle))
     }
+}
+
+fn apply_conventions(mut bundle: Bundle) -> Bundle {
+    crate::conventions::apply(&mut bundle);
+    bundle
 }
 
 fn same_dir(left: &Path, right: &Path) -> bool {

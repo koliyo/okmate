@@ -354,7 +354,7 @@ fn agents_apply_writes_and_skips_existing() {
     );
     let skill = fs::read_to_string(repo.join(".agents/skills/manage-knowledge/SKILL.md")).unwrap();
     assert!(
-        skill.contains("okmate check knowledge --profile strict"),
+        skill.contains("okmate check knowledge --profile evidence"),
         "{skill}"
     );
     assert!(!skill.contains("okmate check docs "), "{skill}");
@@ -567,9 +567,9 @@ fn docs_and_nested_roots_render_actual_paths() {
     let nested = repo.join("docs").join("kb");
     let hidden = repo.join(".okf");
     for (target, expected) in [
-        (docs.as_path(), "okmate check docs --profile strict"),
-        (nested.as_path(), "okmate check docs/kb --profile strict"),
-        (hidden.as_path(), "okmate check .okf --profile strict"),
+        (docs.as_path(), "okmate check docs --profile evidence"),
+        (nested.as_path(), "okmate check docs/kb --profile evidence"),
+        (hidden.as_path(), "okmate check .okf --profile evidence"),
     ] {
         let output = Command::new(okmate_bin())
             .arg("init")
@@ -588,7 +588,7 @@ fn docs_and_nested_roots_render_actual_paths() {
             fs::read_to_string(repo.join(".agents/skills/manage-knowledge/SKILL.md")).unwrap();
         assert!(skill.contains(expected), "missing {expected} in {skill}");
         assert!(
-            !skill.contains("okmate check knowledge --profile strict"),
+            !skill.contains("okmate check knowledge --profile evidence"),
             "{skill}"
         );
         let _ = fs::remove_file(repo.join(".agents/skills/manage-knowledge/SKILL.md"));
@@ -617,7 +617,7 @@ fn space_containing_root_is_quoted() {
     );
     let skill = fs::read_to_string(repo.join(".agents/skills/manage-knowledge/SKILL.md")).unwrap();
     assert!(
-        skill.contains("okmate check 'my docs' --profile strict"),
+        skill.contains("okmate check 'my docs' --profile evidence"),
         "{skill}"
     );
     let attrs = fs::read_to_string(repo.join(".gitattributes")).unwrap();

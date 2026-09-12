@@ -7,6 +7,7 @@ the same change.
 
 ## 2026-09-12
 
+- Split portable format reading, an opt-in Evidence profile, and optional `<bundle>/okmate.toml` style findings; `check`/`view` still default to Strict and new init agent instructions select `--profile evidence`. Exploratory Phase 3 of [heterogeneous authoring](/plans/okmate/heterogeneous-bundle-authoring.md); do not log complete until hosted CI succeeds.
 - Made `okmate init` default to a minimal scaffold, added `--template software-project` / `--collection` / `--template-file`, and preflighted path-correct agent extras before writes. Exploratory Phase 2 of [heterogeneous authoring](/plans/okmate/heterogeneous-bundle-authoring.md); do not log complete until hosted CI succeeds.
 - Published a checked-in OKF authoring guide, five contrasting example bundles, and a fixture-backed inventory of current format versus Okmate Strict versus reader-limit diagnostics. Exploratory Phase 1 of [heterogeneous authoring](/plans/okmate/heterogeneous-bundle-authoring.md); do not log complete until hosted CI succeeds.
 - Corrected the original init plan's absence claim with a dated implementation snapshot and a link to the heterogeneous-authoring follow-up; retained its initial phased design without claiming hosted-CI completion.

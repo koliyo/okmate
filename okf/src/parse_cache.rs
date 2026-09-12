@@ -7,9 +7,11 @@ use anyhow::{Context, Result};
 use serde::{Deserialize, Serialize};
 
 use crate::ast::{Concept, Index, Log, Profile};
-use crate::diagnostic::{Diagnostic, Severity, SourceLocation, intern_diagnostic_code};
+use crate::diagnostic::{
+    Diagnostic, DiagnosticLayer, Severity, SourceLocation, intern_diagnostic_code,
+};
 
-pub const PARSE_CACHE_VERSION: u32 = 3;
+pub const PARSE_CACHE_VERSION: u32 = 4;
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize, Deserialize)]
 pub(crate) struct FileFingerprint {
@@ -209,10 +211,7 @@ pub(crate) fn capture_cached(
 }
 
 fn profile_name(profile: Profile) -> &'static str {
-    match profile {
-        Profile::Base => "base",
-        Profile::Strict => "strict",
-    }
+    profile.as_str()
 }
 
 #[derive(Serialize, Deserialize)]
@@ -332,6 +331,8 @@ struct StoredDiagnostic {
     #[serde(skip_serializing_if = "Option::is_none")]
     location: Option<SourceLocation>,
     message: String,
+    #[serde(default)]
+    layer: DiagnosticLayer,
 }
 
 impl StoredDiagnostic {
@@ -342,6 +343,7 @@ impl StoredDiagnostic {
             path: diagnostic.path.clone(),
             location: diagnostic.location.clone(),
             message: diagnostic.message.clone(),
+            layer: diagnostic.layer,
         }
     }
 
@@ -352,6 +354,7 @@ impl StoredDiagnostic {
             path: self.path,
             location: self.location,
             message: self.message,
+            layer: self.layer,
         })
     }
 }

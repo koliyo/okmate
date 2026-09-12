@@ -5,4 +5,4 @@ profile: advisory
 
 # Fixture
 
-Peer tools sometimes store extra root-index keys. This reader rejects them.
+Peer tools sometimes store extra root-index keys. This reader warns and ignores them.

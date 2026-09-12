@@ -78,11 +78,13 @@ another path; pass that path to `init`, `check`, `inspect`, `search`,
 `build`, and `view`. `--register` / `--id` and `--agents` stay optional.
 Generated agent files use the actual bundle path.
 
-`--profile strict` is Okmate’s owners-and-evidence profile (used by this
-repository’s `knowledge/`). `--profile base` is closer to portable OKF and
-is the documented check for the handbook, operations, and data examples.
-`base` is not yet a fully tolerant interchange reader; see the
-compatibility inventory.
+`--profile strict` is Okmate’s owners-and-evidence profile plus this
+repository’s preferred types and `domain/` tags (used by `knowledge/`).
+`--profile evidence` asks for the same evidence fields without that
+vocabulary. `--profile base` is the portable reader. `check` and `view`
+still default to `strict`; newly generated init agent instructions select
+`--profile evidence` explicitly. See the
+[compatibility inventory](docs/compatibility.md).
 
 Canonical OKF specification:
 [GoogleCloudPlatform/open-knowledge-format](https://github.com/GoogleCloudPlatform/open-knowledge-format).

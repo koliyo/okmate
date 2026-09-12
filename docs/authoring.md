@@ -111,15 +111,37 @@ purpose, navigation, and the validation profile that currently matches it.
 | If the corpus is… | Start from | Profile to check today |
 | --- | --- | --- |
 | A few records, no taxonomy yet | [`examples/minimal`](examples/minimal/) | `base` |
-| A software project’s work archive | [`examples/software-archive`](examples/software-archive/) | `strict` |
+| A software project’s work archive | [`examples/software-archive`](examples/software-archive/) | `strict` or `evidence` |
 | An engineering handbook / practice library | [`examples/engineering-handbook`](examples/engineering-handbook/) | `base` |
 | Operations and runbooks | [`examples/operations`](examples/operations/) | `base` |
 | Datasets, tables, metrics | [`examples/data-catalog`](examples/data-catalog/) | `base` |
 
-`strict` is Okmate’s owners-and-evidence profile. It currently also requires
-a fixed product type list and `domain/` tags. Handbook, operations, and data
-types are valid OKF; check them with `base` until you opt into that extra
-policy. See [`compatibility.md`](compatibility.md).
+`base` is the portable reader. `evidence` asks for title, description,
+generation, owners, and authority without a product type list.
+`strict` is Okmate’s owners-and-evidence profile **plus** this
+repository’s preferred types and `domain/` tags. Handbook, operations, and
+data types are valid OKF; check them with `base` (or `evidence` once those
+records actually carry evidence fields). See
+[`compatibility.md`](compatibility.md).
+
+Optional local style lives in `<bundle>/okmate.toml`, not in root
+`index.md`. A missing file means no type/tag/path advice. Example:
+
+```toml
+version = 1
+preferred_types = ["Explanation", "How-to Guide", "Runbook"]
+preferred_tags = ["ops"]
+authoring_guide = "README.md"
+
+[type_paths]
+Explanation = "explanations"
+"How-to Guide" = "how-to"
+Runbook = "runbooks"
+```
+
+Undeclared types (`OKMATE5001`) and path mismatches (`OKMATE5002`) are
+style warnings. They never fail `check`. This file is distinct from
+`~/.okmate/config.toml`.
 
 ## Current `okmate init`
 
@@ -151,6 +173,7 @@ okmate init docs --apply
 okmate init --collection runbooks --apply
 okmate init --apply --register --id my-bundle
 okmate check knowledge --profile strict
+okmate check path/to/bundle --profile evidence
 okmate check path/to/bundle --profile base
 ```
 
@@ -169,6 +192,7 @@ Preserve unknown metadata; do not strip fields another tool stored.
   and questions.
 - Stale dates and verification events describe the record, not the folder.
 - Validate the profile you actually mean: format errors, missing evidence,
-  and local style advice are different kinds of finding. Today, `base` is
-  closer to portable OKF and `strict` mixes evidence with Okmate vocabulary.
-  Limits of the current reader are listed in [`compatibility.md`](compatibility.md).
+  and local style advice are different kinds of finding. `base` is portable
+  OKF, `evidence` adds owners without product vocabulary, and `strict`
+  mixes evidence with Okmate types and `domain/` tags. Details:
+  [`compatibility.md`](compatibility.md).

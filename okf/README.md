@@ -20,7 +20,7 @@ Dependencies:
 
 Operations: `load`, `load_timed`, `load_with_cache`, `check`, `inspect`, `inspect_filtered`, `search`, `build`, `build_artifacts`, `benchmark_retrieval`.
 
-AST and reports: `Bundle`, `Concept`, `Index`, `Log`, `Edge`, `Heading`, `HeadingSection`, `Link`, `Span`, `Profile`, `LoadOptions`, `LoadResult`, `LoadTimings`, `InspectKind`, `KnowledgeFilter`, `TrustTier`, `CheckReport`, `BuildSummary`, `Diagnostic`, `Severity`, `SourceLocation`, retrieval report types.
+AST and reports: `Bundle`, `Concept`, `Index`, `Log`, `Edge`, `Heading`, `HeadingSection`, `Link`, `Span`, `Profile`, `LoadOptions`, `LoadResult`, `LoadTimings`, `InspectKind`, `KnowledgeFilter`, `TrustTier`, `CheckReport`, `BuildSummary`, `Diagnostic`, `DiagnosticLayer`, `Severity`, `SourceLocation`, retrieval report types.
 
 Helpers callers already need: `string_field`, `metadata_string_array`, `latest_human_verification`, `classify_concept_action`, `ActionKind`, `ConceptAction`, `ParseCache`, `PARSE_CACHE_VERSION`, `published_href`, `resolve_preview_path`, `PreviewTarget`, `concept_trust_tier`, `concept_is_stale`.
 
@@ -28,14 +28,17 @@ Parse, git, and civil-date internals stay crate-private.
 
 ## Core Features
 
-- **Multi-Profile Validation**: `Profile::Base` (portable OKF specification)
-  and `Profile::Strict` (evidence, verification, owners, and this product’s
-  preferred types/tags). `Base` is not yet a fully tolerant interchange
-  reader: it accepts only `okf_version: "0.2"`, requires `verified` as a
-  list, requires date-only `stale_after`, and rejects extra root-index
-  keys. HTML comments are diagnosed as raw HTML (`OKF2009`). See
+- **Multi-Profile Validation**: `Profile::Base` (portable OKF),
+  `Profile::Evidence` (title, description, generation, owners, authority),
+  and `Profile::Strict` (evidence plus this product’s preferred types/tags).
+  `Base` accepts `okf_version` `0.1` and `0.2`, normalizes a `verified`
+  mapping, accepts RFC 3339 `stale_after`, warns on extra root-index keys,
+  and does not treat HTML comments as authoring errors. Unsafe HTML is
+  still rejected and stripped from `article_html`. See
   [`docs/compatibility.md`](../docs/compatibility.md) and
   [`okf/tests/fixtures/compatibility/`](tests/fixtures/compatibility/).
+  Application-side `<bundle>/okmate.toml` style findings are not produced
+  by this crate.
 - **Authoring**: Bundle path, collection layout, and concept types are
   producer choices. A checked-in guide and contrasting examples live in
   [`docs/authoring.md`](../docs/authoring.md). Canonical spec:

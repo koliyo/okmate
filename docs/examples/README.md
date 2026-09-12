@@ -22,4 +22,6 @@ okmate check docs/examples/data-catalog --profile base
 `strict` on the handbook, operations, or data examples currently warns
 (`OKF2002`) or errors (`OKF2004`) because those types and tags are outside
 Okmate’s product vocabulary. That is expected; see
-[compatibility.md](../compatibility.md).
+[compatibility.md](../compatibility.md). Use `--profile evidence` when the
+records already carry owners and generation and you want those checks
+without the product type list.

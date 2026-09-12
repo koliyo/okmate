@@ -112,7 +112,7 @@
     <div class="okmate-diagnostics-list">
       {% for item in diagnostics %}
         <div class="okmate-diagnostic-item">
-          <span class="okmate-badge">{% if item.severity == "Error" %}Error{% else %}Warning{% endif %}</span>
+          <span class="okmate-badge">{% if item.severity == "Error" %}Error{% else %}Warning{% endif %}{% if item.layer != "format" %} {{ item.layer }}{% endif %}</span>
           <code>{{ item.code }}</code>
           <strong>{{ item.path }}</strong>: {{ item.message }}
         </div>

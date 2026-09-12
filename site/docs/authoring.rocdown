@@ -21,7 +21,7 @@ duplicating that text. Worked examples:
 
 Check each example with the profile named in
 [`docs/examples/README.md`](https://github.com/koliyo/okmate/blob/main/docs/examples/README.md).
-Current reader limits:
+Format, evidence, and local style:
 [`docs/compatibility.md`](https://github.com/koliyo/okmate/blob/main/docs/compatibility.md).
 
 `okmate init [path]` is create-only. Default path `knowledge`; default

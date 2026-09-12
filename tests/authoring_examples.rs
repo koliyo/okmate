@@ -11,6 +11,7 @@ fn example(name: &str) -> PathBuf {
 fn profile_name(profile: Profile) -> &'static str {
     match profile {
         Profile::Base => "base",
+        Profile::Evidence => "evidence",
         Profile::Strict => "strict",
     }
 }
@@ -43,6 +44,11 @@ fn minimal_passes_base() {
 #[test]
 fn software_archive_passes_strict() {
     assert_clean("software-archive", Profile::Strict);
+}
+
+#[test]
+fn software_archive_passes_evidence() {
+    assert_clean("software-archive", Profile::Evidence);
 }
 
 #[test]

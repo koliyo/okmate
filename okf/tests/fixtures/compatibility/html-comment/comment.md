@@ -5,6 +5,6 @@ title: HTML comment
 
 # HTML comment
 
-An inert comment is still raw HTML to this reader.
+An inert comment is not an authoring error. It is stripped from rendered HTML.
 
-<!-- editor note: not rendered, still diagnosed -->
+<!-- editor note: not rendered -->

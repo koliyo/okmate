@@ -489,6 +489,7 @@ fn tempfile_dir(name: &str) -> Result<PathBuf> {
 fn profile_name(profile: Profile) -> &'static str {
     match profile {
         Profile::Base => "base",
+        Profile::Evidence => "evidence",
         Profile::Strict => "strict",
     }
 }

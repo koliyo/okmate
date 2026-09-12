@@ -127,14 +127,14 @@ pub fn run(opts: InitOptions) -> Result<()> {
     preflight_staged_bundle(&plan)?;
     if opts.apply {
         let written = apply_plan(&plan)?;
-        let report = crate::check(&plan.root, Profile::Strict)?;
+        let report = crate::check(&plan.root, Profile::Evidence)?;
         if report.has_errors() {
             let formatted = report.terminal();
             if !formatted.is_empty() {
                 eprintln!("{formatted}");
             }
             bail!(
-                "initialized bundle failed strict check; files were written under {} and were not registered",
+                "initialized bundle failed evidence check; files were written under {} and were not registered",
                 plan.root.display()
             );
         }
@@ -478,14 +478,14 @@ fn preflight_staged_bundle(plan: &InitPlan) -> Result<()> {
             fs::write(&dest, &file.contents)?;
         }
         copy_existing_markdown(&plan.root, &stage, plan)?;
-        let report = crate::check(&stage, Profile::Strict)?;
+        let report = crate::check(&stage, Profile::Evidence)?;
         if report.has_errors() {
             let formatted = report.terminal();
             if !formatted.is_empty() {
                 eprintln!("{formatted}");
             }
             bail!(
-                "planned bundle failed strict check; no files were written. \
+                "planned bundle failed evidence check; no files were written. \
                  Use a child directory if the target already contains ordinary Markdown \
                  (README, AGENTS, CONTRIBUTING)."
             );
@@ -794,7 +794,7 @@ fn agents_md(bundle_rel: &str) -> String {
         "# Agent instructions\n\
          \n\
          - Keep `{bundle_rel}/**/*.md` inert Markdown with OKF YAML.\n\
-         - After knowledge edits: `okmate check {quoted} --profile strict`.\n\
+         - After knowledge edits: `okmate check {quoted} --profile evidence`.\n\
          - Durable plans, reports, audits, and status belong in `{bundle_rel}/`.\n\
          - Follow `.cursor/rules/write-knowledge.mdc` and\n\
            `.agents/skills/manage-knowledge/SKILL.md`.\n"
@@ -820,7 +820,7 @@ fn write_knowledge_mdc(bundle_rel: &str) -> String {
          Follow `.agents/skills/manage-knowledge/SKILL.md` for retrieve, author, and\n\
          validate. Keep `{bundle_rel}/**/*.md` inert Markdown with OKF YAML.\n\
          \n\
-         After knowledge edits: `okmate check {quoted} --profile strict`.\n\
+         After knowledge edits: `okmate check {quoted} --profile evidence`.\n\
          \n\
          ## Collection by intent\n\
          \n\
@@ -856,17 +856,17 @@ fn manage_skill_md(bundle_rel: &str) -> String {
          ## Validate\n\
          \n\
          ```sh\n\
-         okmate check {quoted} --profile strict\n\
+         okmate check {quoted} --profile evidence\n\
          ```\n\
          \n\
          ## Retrieve\n\
          \n\
          ```sh\n\
-         okmate inspect --profile strict catalog {quoted}\n\
+         okmate inspect --profile evidence catalog {quoted}\n\
          ```\n\
          \n\
          Search authored records with `rg` when the concept ID is unknown. Inspect a\n\
-         known concept with `okmate inspect --profile strict concept CONCEPT_ID {quoted}`.\n\
+         known concept with `okmate inspect --profile evidence concept CONCEPT_ID {quoted}`.\n\
          \n\
          ## Author\n\
          \n\
