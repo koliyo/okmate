@@ -21,14 +21,15 @@ cargo run -q -p rocci-rocdown-cli --manifest-path ../rocci/Cargo.toml -- check s
 
 Do not add Rocci crates to this repository's `Cargo.toml`.
 
-## CI pin
+## CI
 
-GitHub Actions builds and deploys this tree (`.github/workflows/site.yml`).
-That job installs `rocdown` by compiling `rocci-rocdown-cli` from
-`koliyo/rocci` at revision `05a4179665c2b55d7d41450cd3e52c36859822f2`, with
-Roc nightly `2026-08-23` / `fb208ba` (same pin as Rocci's `docker/install-roc.sh`).
-`base_url` is `https://koliyo.github.io/okmate` for when a host is chosen.
-GitHub Pages deploy is off; CI only checks and builds.
+GitHub Actions builds this tree (`.github/workflows/site.yml`). That job
+installs `rocdown` from the latest `koliyo/rocci` GitHub Release Linux
+archive (`rocci-*-x86_64-unknown-linux-gnu.tar.gz`), not by compiling
+`rocci-rocdown-cli`. `rocdown build` still needs Roc on `PATH`; CI pins Roc
+nightly `2026-09-03` / `62fcb65`. `base_url` is
+`https://koliyo.github.io/okmate` for when a host is chosen. GitHub Pages
+deploy is off; CI only checks and builds.
 
 ## Agent index
 
