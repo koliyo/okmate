@@ -31,6 +31,7 @@ Settings live under `~/.okmate/` (`OKMATE_CONFIG`, `OKMATE_CACHE`,
 | `okmate init [path]` | Scaffold a new OKF bundle (dry-run plan; `--apply` writes; `--register` / `--agents` optional) |
 | `okmate concept [root]` | Propose a concept from a type template (`--id`, `--type`; `--apply` writes) |
 | `okmate index [root]` | Propose nearest-index link additions (`--apply` writes; does not reorder authored grouping) |
+| `okmate move [root]` | Propose moving a concept and rewriting path links (`--from`, `--to`; `--apply` writes) |
 | `okmate discover [path]` | List versioned OKF roots under a container (`--format terminal\|json`; never registers) |
 | `okmate check [root]` | Validate a bundle (`--format terminal\|json`, `--profile`) |
 | `okmate inspect catalog\|concept\|graph` | Engine JSON inspect |
@@ -49,7 +50,10 @@ okmate init --template software-project --apply
 okmate init . --bare --apply
 okmate init docs --apply
 okmate init --apply --register --id my-bundle
+okmate move knowledge --from research/foo --to audits/
 okmate check knowledge --profile strict --format json
+okmate check docs/examples/minimal --profile base
+okmate inspect catalog knowledge
 okmate check docs/examples/minimal --profile base
 okmate inspect catalog knowledge
 okmate inspect concept architecture/system-overview knowledge

@@ -37,10 +37,7 @@ pub fn nav_tree(workspace: &Workspace, current: &str, nav_mode: NavMode) -> Vec<
                         ),
                         section_key: member.id.clone(),
                         root: member.id.clone(),
-                        summary: String::new(),
-                        attention: false,
-                        type_color: String::new(),
-                        collection: String::new(),
+                        ..NavNode::default()
                     });
                 }
             }
@@ -116,6 +113,7 @@ fn nav_forest(workspace: &Workspace, current: &str, kind: ForestKind<'_>) -> Vec
                     attention: false,
                     type_color: String::new(),
                     collection: String::new(),
+                    ..NavNode::default()
                 }
             });
         }
@@ -134,6 +132,8 @@ fn nav_forest(workspace: &Workspace, current: &str, kind: ForestKind<'_>) -> Vec
             if let Some(node) = by_path.get_mut(&owner) {
                 let href = workspace.document_href(&member.id, &concept.id);
                 let mut item = colored_leaf(&href, title, current, concept_type_color(concept));
+                item.concept_id = concept.id.clone();
+                item.root_id = member.id.clone();
                 if merged {
                     item.root = member.id.clone();
                 }
@@ -260,6 +260,7 @@ fn colored_leaf(href: &str, title: &str, current: &str, type_color: String) -> N
         attention: false,
         type_color,
         collection: String::new(),
+        ..NavNode::default()
     }
 }
 
@@ -365,6 +366,8 @@ fn finalize_collection(
     node.href = href.clone();
     node.current = current == href || current.starts_with(&href);
     node.open = node.current;
+    node.drop_collection = path.to_string();
+    node.root_id = root_id.to_string();
     node
 }
 
@@ -409,6 +412,8 @@ fn finalize_merged_collection(
     node.open = node.current;
     if owners.len() == 1 {
         node.root = owners[0].clone();
+        node.root_id = owners[0].clone();
+        node.drop_collection = path.to_string();
     }
     node.summary = merged_collection_summary(workspace, path, owners);
     node

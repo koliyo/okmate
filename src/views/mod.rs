@@ -49,6 +49,9 @@ pub struct NavNode {
     pub attention: bool,
     pub type_color: String,
     pub collection: String,
+    pub concept_id: String,
+    pub root_id: String,
+    pub drop_collection: String,
 }
 
 #[derive(Clone, Debug)]
@@ -135,6 +138,7 @@ macro_rules! document_template {
             pub main_scroll: u32,
             pub nav_scroll: u32,
             pub tabs: Vec<DocTab>,
+            pub live: bool,
         }
 
         impl From<Document> for $name {
@@ -174,6 +178,7 @@ macro_rules! document_template {
                     main_scroll: document.main_scroll,
                     nav_scroll: document.nav_scroll,
                     tabs: document.tabs,
+                    live: document.live,
                 }
             }
         }
@@ -225,6 +230,7 @@ pub struct Document {
     pub main_scroll: u32,
     pub nav_scroll: u32,
     pub tabs: Vec<DocTab>,
+    pub live: bool,
 }
 
 #[derive(Clone, Debug, Default)]
@@ -418,27 +424,13 @@ mod tests {
                     href: "/".into(),
                     title: "Dashboard".into(),
                     current: true,
-                    open: false,
-                    children: Vec::new(),
-                    section_key: String::new(),
-                    root: String::new(),
-                    summary: String::new(),
-                    attention: false,
-                    type_color: String::new(),
-                    collection: String::new(),
+                    ..NavNode::default()
                 },
                 NavNode {
                     href: "/review/".into(),
                     title: "Review queue".into(),
                     current: false,
-                    open: false,
-                    children: Vec::new(),
-                    section_key: String::new(),
-                    root: String::new(),
-                    summary: String::new(),
-                    attention: false,
-                    type_color: String::new(),
-                    collection: String::new(),
+                    ..NavNode::default()
                 },
             ],
             toc,
@@ -472,6 +464,7 @@ mod tests {
             main_scroll: 0,
             nav_scroll: 0,
             tabs: Vec::new(),
+            live: false,
         }
     }
 

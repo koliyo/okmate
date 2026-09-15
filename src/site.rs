@@ -30,6 +30,7 @@ const TABLES_JS: &str = include_str!("../assets/tables.js");
 const META_JS: &str = include_str!("../assets/meta.js");
 const PEEK_JS: &str = include_str!("../assets/peek.js");
 const TABS_JS: &str = include_str!("../assets/tabs.js");
+const MOVE_JS: &str = include_str!("../assets/move.js");
 
 #[derive(Serialize)]
 struct NavPage {
@@ -232,6 +233,7 @@ fn document(
         main_scroll: 0,
         nav_scroll: 0,
         tabs: Vec::new(),
+        live: false,
     }
 }
 
@@ -504,7 +506,8 @@ fn write_assets(output: &Path) -> Result<()> {
     fs::write(dir.join("tables.js"), TABLES_JS).context("failed to write tables.js")?;
     fs::write(dir.join("meta.js"), META_JS).context("failed to write meta.js")?;
     fs::write(dir.join("peek.js"), PEEK_JS).context("failed to write peek.js")?;
-    fs::write(dir.join("tabs.js"), TABS_JS).context("failed to write tabs.js")
+    fs::write(dir.join("tabs.js"), TABS_JS).context("failed to write tabs.js")?;
+    fs::write(dir.join("move.js"), MOVE_JS).context("failed to write move.js")
 }
 
 fn nav_pages(workspace: &Workspace) -> Vec<NavPage> {

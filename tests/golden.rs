@@ -33,14 +33,7 @@ fn sample() -> Document {
             href: "/".into(),
             title: "Dashboard".into(),
             current: true,
-            open: false,
-            children: Vec::new(),
-            section_key: String::new(),
-            root: String::new(),
-            summary: String::new(),
-            attention: false,
-            type_color: String::new(),
-            collection: String::new(),
+            ..NavNode::default()
         }],
         toc: vec![TocEntry {
             id: "section".into(),
@@ -84,6 +77,7 @@ fn sample() -> Document {
         main_scroll: 0,
         nav_scroll: 0,
         tabs: Vec::new(),
+        live: false,
     }
 }
 

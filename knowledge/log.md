@@ -5,6 +5,11 @@ Independent bullets under the same `## YYYY-MM-DD` heading combine instead of
 conflicting. Add a new list item; do not reword another session's bullet in
 the same change.
 
+## 2026-09-15
+
+- Implemented [move a concept](/plans/okmate/move-concept.md) Phases 1–2 locally: `okmate move` rewrites hrefs and indexes, live preview drag-and-drop confirms then applies. Exploratory; do not log complete until hosted CI succeeds.
+- Drafted [move a concept](/plans/okmate/move-concept.md): deterministic `okmate move` with index and href rewrites, then live-preview drag-and-drop; unlinked prose stays a note. Exploratory; writing the plan does not start a phase.
+
 ## 2026-09-12
 
 - Revised [Datastar client-shell research](/research/okmate/datastar-client-js.md) against current code: corrected obsolete adapter findings, separated transient shell state from durable knowledge, compared vanilla and component ownership, and qualified historical [Leptos constraints](/research/okmate/leptos.md). Exploratory; no prototype or migration started.

@@ -1,6 +1,6 @@
 {% import "nav_macros.html" as nav_ui %}
 <!DOCTYPE html>
-<html lang="en"{% if html_style != "" %} style="{{ html_style }}"{% endif %}{% if !reading_wrap %} data-okmate-wrap="off"{% endif %}{% if reading_full %} data-okmate-full="on"{% endif %}{% if !reading_nav %} data-okmate-nav="off"{% endif %}{% if !reading_toc %} data-okmate-toc="off"{% endif %}{% if main_scroll > 0 %} data-okmate-main-scroll="{{ main_scroll }}"{% endif %}{% if nav_scroll > 0 %} data-okmate-nav-scroll="{{ nav_scroll }}"{% endif %}>
+<html lang="en"{% if live %} data-okmate-live{% endif %}{% if html_style != "" %} style="{{ html_style }}"{% endif %}{% if !reading_wrap %} data-okmate-wrap="off"{% endif %}{% if reading_full %} data-okmate-full="on"{% endif %}{% if !reading_nav %} data-okmate-nav="off"{% endif %}{% if !reading_toc %} data-okmate-toc="off"{% endif %}{% if main_scroll > 0 %} data-okmate-main-scroll="{{ main_scroll }}"{% endif %}{% if nav_scroll > 0 %} data-okmate-nav-scroll="{{ nav_scroll }}"{% endif %}>
   <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -21,6 +21,7 @@
     <script src="/__okmate/review.js" defer></script>
     <script src="/__okmate/log.js" defer></script>
     <script src="/__okmate/reload.js" defer></script>
+    <script src="/__okmate/move.js" defer></script>
   </head>
   <body>
     <div id="okmate-ds" hidden></div>
@@ -64,6 +65,16 @@
       <form method="dialog" class="okmate-reload-actions">
         <button type="button" id="okmate-reload-later">Later</button>
         <button type="button" id="okmate-reload-confirm">Reload</button>
+      </form>
+    </dialog>
+    <dialog id="okmate-move" class="okmate-reload okmate-move" aria-label="Move concept">
+      <p>Move <code id="okmate-move-from"></code> to</p>
+      <input id="okmate-move-to" type="text" autocomplete="off">
+      <p id="okmate-move-summary" class="okmate-move-summary"></p>
+      <ul id="okmate-move-notes" class="okmate-move-notes"></ul>
+      <form method="dialog" class="okmate-reload-actions">
+        <button type="button" id="okmate-move-cancel">Cancel</button>
+        <button type="button" id="okmate-move-confirm">Move</button>
       </form>
     </dialog>
   </body>

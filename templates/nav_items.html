@@ -12,7 +12,7 @@
   <div class="nav-items">
     {% for item in nav %}
       {% if !item.section_key.is_empty() %}
-        <details class="nav-section" data-okmate-nav-section="{{ item.section_key }}"{% if item.current %} data-okmate-nav-current{% endif %}{% if item.open %} open{% endif %}>
+        <details class="nav-section" data-okmate-nav-section="{{ item.section_key }}"{% if !item.drop_collection.is_empty() %} data-okmate-drop-collection="{{ item.drop_collection }}" data-okmate-drop-root="{{ item.root_id }}"{% endif %}{% if item.current %} data-okmate-nav-current{% endif %}{% if item.open %} open{% endif %}>
           <summary data-nav-depth="0"{% if !item.summary.is_empty() %} aria-description="{{ item.summary }}"{% endif %}>
             <span class="nav-link nav-category{% if item.href.is_empty() %} nav-bundle{% endif %}">{{ item.title }}</span>
             {% if !item.summary.is_empty() %}
@@ -25,7 +25,7 @@
                 {% if child.section_key.is_empty() %}
                   {% call nav_ui::leaf(child, "1") %}{% endcall %}
                 {% else %}
-                  <details class="nav-section" data-okmate-nav-section="{{ child.section_key }}"{% if child.current %} data-okmate-nav-current{% endif %}{% if child.open %} open{% endif %}>
+                  <details class="nav-section" data-okmate-nav-section="{{ child.section_key }}"{% if !child.drop_collection.is_empty() %} data-okmate-drop-collection="{{ child.drop_collection }}" data-okmate-drop-root="{{ child.root_id }}"{% endif %}{% if child.current %} data-okmate-nav-current{% endif %}{% if child.open %} open{% endif %}>
                     <summary data-nav-depth="1"{% if !child.summary.is_empty() %} aria-description="{{ child.summary }}"{% endif %}>
                       <span class="nav-link nav-category">{{ child.title }}</span>
                       {% if !child.summary.is_empty() %}
@@ -38,7 +38,7 @@
                           {% if grandchild.section_key.is_empty() %}
                             {% call nav_ui::leaf(grandchild, "2") %}{% endcall %}
                           {% else %}
-                            <details class="nav-section" data-okmate-nav-section="{{ grandchild.section_key }}"{% if grandchild.current %} data-okmate-nav-current{% endif %}{% if grandchild.open %} open{% endif %}>
+                            <details class="nav-section" data-okmate-nav-section="{{ grandchild.section_key }}"{% if !grandchild.drop_collection.is_empty() %} data-okmate-drop-collection="{{ grandchild.drop_collection }}" data-okmate-drop-root="{{ grandchild.root_id }}"{% endif %}{% if grandchild.current %} data-okmate-nav-current{% endif %}{% if grandchild.open %} open{% endif %}>
                               <summary data-nav-depth="2"{% if !grandchild.summary.is_empty() %} aria-description="{{ grandchild.summary }}"{% endif %}>
                                 <span class="nav-link nav-category">{{ grandchild.title }}</span>
                                 {% if !grandchild.summary.is_empty() %}
@@ -51,7 +51,7 @@
                                     {% if great.section_key.is_empty() %}
                                       {% call nav_ui::leaf(great, "3") %}{% endcall %}
                                     {% else %}
-                                      <details class="nav-section" data-okmate-nav-section="{{ great.section_key }}"{% if great.current %} data-okmate-nav-current{% endif %}{% if great.open %} open{% endif %}>
+                                      <details class="nav-section" data-okmate-nav-section="{{ great.section_key }}"{% if !great.drop_collection.is_empty() %} data-okmate-drop-collection="{{ great.drop_collection }}" data-okmate-drop-root="{{ great.root_id }}"{% endif %}{% if great.current %} data-okmate-nav-current{% endif %}{% if great.open %} open{% endif %}>
                                         <summary data-nav-depth="3"{% if !great.summary.is_empty() %} aria-description="{{ great.summary }}"{% endif %}>
                                           <span class="nav-link nav-category">{{ great.title }}</span>
                                           {% if !great.summary.is_empty() %}

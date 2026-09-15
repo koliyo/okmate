@@ -15,6 +15,7 @@ use serde::Deserialize;
 use tokio::sync::watch;
 use tower_http::services::ServeDir;
 
+mod move_concept;
 mod pages;
 mod prefs;
 mod settings;
@@ -104,6 +105,10 @@ pub fn router(state: AppState) -> Router {
         .route("/__okmate/peek", get(pages::peek))
         .route("/__okmate/prefs", post(prefs::post))
         .route("/__okmate/settings", post(settings::post))
+        .route(
+            "/__okmate/move",
+            get(move_concept::get).post(move_concept::post),
+        )
         .route("/__okmate/events", get(config_events))
         .route("/__okmate/reload-workspace", post(reload_workspace))
         .route("/__okmate/review-window", get(pages::review_window))

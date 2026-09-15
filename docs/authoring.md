@@ -204,7 +204,11 @@ okmate check path/to/bundle --profile base
 `okmate concept` and `okmate index` are dry-run first. `--apply` writes.
 They do not invent owners, citations, or human verification. Default
 `--profile base` so a handbook type is legal without Okmate product
-vocabulary.
+vocabulary. `okmate move` is the same plan-then-`--apply` model: it
+relocates one concept file and rewrites path-based Markdown hrefs,
+collection membership, and relative `sources[].resource` values. It
+does not rewrite unlinked prose, change `type`, or append `log.md`.
+`--to` ending in `/` keeps the filename stem.
 
 ```sh
 okmate concept knowledge --type Explanation --id guides/onboarding
@@ -214,6 +218,8 @@ okmate concept knowledge --type Runbook --id runbooks/restore --profile evidence
   --owner human:nils --generated-by process:okmate --apply
 okmate index knowledge
 okmate index knowledge --apply
+okmate move knowledge --from research/foo --to audits/
+okmate move knowledge --from research/foo --to audits/renamed --apply
 ```
 
 `--profile evidence` or `strict` fails with named missing flags instead of

@@ -118,6 +118,7 @@ pub fn live_document(
     if document.page_kind == crate::views::PageKind::Log {
         crate::views::apply_log_window(&mut document, &query);
     }
+    document.live = true;
     Some(document)
 }
 

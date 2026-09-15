@@ -755,6 +755,32 @@ html[data-okmate-wrap="off"] #okmate-main .okmate-md-table td {
   gap: 0.5rem;
 }
 
+.okmate-move {
+  width: min(34rem, calc(100vw - 2rem));
+}
+.okmate-move input {
+  width: 100%;
+  margin: 0 0 0.75rem;
+  padding: 0.35rem 0.5rem;
+  border: 1px solid var(--rd-border);
+  border-radius: 0.35rem;
+  background: var(--rd-bg);
+  color: var(--rd-fg);
+  font-family: var(--rd-font-mono);
+}
+.okmate-move-summary { color: var(--rd-muted); font-size: 0.9rem; }
+.okmate-move-notes {
+  margin: 0 0 0.85rem;
+  padding-left: 1.1rem;
+  color: var(--rd-muted);
+  font-size: 0.85rem;
+}
+.nav-section.is-drop-target {
+  outline: 2px solid var(--rd-primary);
+  outline-offset: -2px;
+  border-radius: 0.35rem;
+}
+
 .okmate-meta { display: flex; flex-wrap: wrap; gap: 0.4rem; margin: 0 0 1.25rem; }
 .okmate-badge {
   display: inline-flex;

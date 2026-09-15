@@ -191,8 +191,11 @@ fn build_writes_engine_catalog_html_landmarks_and_pages_json() {
     assert!(home.contains("/__okmate/toc.js"), "{home}");
     assert!(home.contains("/__okmate/nav.js"), "{home}");
     assert!(home.contains("/__okmate/reload.js"), "{home}");
+    assert!(home.contains("/__okmate/move.js"), "{home}");
     assert!(home.contains("id=\"okmate-reload\""), "{home}");
+    assert!(!home.contains("data-okmate-live"), "{home}");
     assert!(output.join("__okmate").join("reload.js").is_file());
+    assert!(output.join("__okmate").join("move.js").is_file());
     let nav = fs::read_to_string(output.join("__okmate").join("nav.js")).unwrap();
     assert!(nav.contains("location:"), "{nav}");
     assert!(nav.contains("open_path"), "{nav}");

@@ -2,6 +2,7 @@
 
 Application, desktop preview, agent setup, and product site.
 
+* [Move a concept with link-aware CLI and nav drag-drop](move-concept.md) - Plan-then-apply `okmate move` plus live-preview nav drag-and-drop; unlinked prose stays a note. Research: [tool gaps](/research/okmate/okf-tool-gaps.md). Exploratory; Phases 1–2 in this revision; do not log complete until hosted CI succeeds.
 * [Apply preferred restructure alternatives on registered bundles](bundle-restructure-alternatives.md) - Question front doors, retags, distilled guides, and current-state maps; no default concept moves. Research: [restructure alternatives](/research/okmate/bundle-restructure-alternatives.md). Exploratory; no phase started.
 * [Support heterogeneous OKF bundle authoring](heterogeneous-bundle-authoring.md) - Minimal and selectable init, correct paths, separate evidence/style checks, local conventions, discovery, and measured curation. Research: [bundle structure](/research/okmate/heterogeneous-bundle-authoring.md); [restructure alternatives](/research/okmate/bundle-restructure-alternatives.md). Exploratory; Phases 1–6 in this revision; discovery decision approved. Live-bundle curation: [restructure plan](bundle-restructure-alternatives.md).
 * [Initialize a new OKF bundle](init-bundle.md) - Original design for the now-implemented `init` scaffold, registration, and agent extras; phase completion is not certified here. Follow-up: [heterogeneous authoring](heterogeneous-bundle-authoring.md).

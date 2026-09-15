@@ -171,9 +171,15 @@ async fn live_html_seeds_nav_sections_from_session() {
             .unwrap(),
     )
     .await;
+    assert!(html.contains("data-okmate-nav-section=\"plans\""), "{html}");
+    let section = html
+        .split("data-okmate-nav-section=\"plans\"")
+        .nth(1)
+        .and_then(|rest| rest.split('>').next())
+        .unwrap_or("");
     assert!(
-        html.contains("data-okmate-nav-section=\"plans\" open"),
-        "{html}"
+        section.contains("open"),
+        "plans section should be open: {section}"
     );
     assert!(html.contains("data-okmate-nav-scroll=\"42\""), "{html}");
 }

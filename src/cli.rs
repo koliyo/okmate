@@ -122,6 +122,21 @@ enum Commands {
         #[arg(long, value_enum, default_value_t = CheckFormat::Terminal)]
         format: CheckFormat,
     },
+    /// Propose moving a concept and rewriting path links. Pass `--apply` to write.
+    Move {
+        #[arg(default_value = "knowledge")]
+        root: PathBuf,
+        /// Concept id (path without `.md`), for example `research/foo`.
+        #[arg(long = "from")]
+        from: String,
+        /// Destination id, or a collection ending in `/` to keep the stem.
+        #[arg(long = "to")]
+        to: String,
+        #[arg(long)]
+        apply: bool,
+        #[arg(long, value_enum, default_value_t = CheckFormat::Terminal)]
+        format: CheckFormat,
+    },
     /// List versioned OKF roots under a repository or container. Never registers.
     Discover {
         #[arg(default_value = ".")]
@@ -401,6 +416,19 @@ pub fn run() -> Result<()> {
             format,
         } => crate::authoring::run_index(crate::authoring::IndexOptions {
             root,
+            apply,
+            format,
+        }),
+        Commands::Move {
+            root,
+            from,
+            to,
+            apply,
+            format,
+        } => crate::move_concept::run(crate::move_concept::MoveOptions {
+            root,
+            from,
+            to,
             apply,
             format,
         }),

@@ -12,6 +12,7 @@ pub mod goto_match;
 mod html_util;
 pub mod http;
 pub mod init;
+pub mod move_concept;
 mod nav;
 mod paths;
 pub mod peek;
