@@ -258,6 +258,8 @@ fn peek_script_classifies_comrak_footnote_refs() {
     assert!(js.contains("indexOf(\"fn-\")"), "{js}");
     assert!(js.contains(r#"removeAttribute("title")"#), "{js}");
     assert!(js.contains(r#"setAttribute("role", "tooltip")"#), "{js}");
+    assert!(js.contains(r#"getElementById("okmate-nav")"#), "{js}");
+    assert!(js.contains("navBox.right"), "{js}");
 }
 
 #[test]

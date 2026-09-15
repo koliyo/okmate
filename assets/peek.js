@@ -118,21 +118,39 @@
     activeLink = null;
     if (card) {
       card.hidden = true;
+      card.style.maxWidth = "";
     }
   }
 
   function place(anchor) {
     var el = ensureCard();
     var box = anchor.getBoundingClientRect();
-    var width = el.offsetWidth || 280;
-    var height = el.offsetHeight || 120;
-    var left = Math.round(box.left);
-    var top = Math.round(box.bottom + 8);
-    if (left + width > window.innerWidth - 8) {
-      left = Math.max(8, window.innerWidth - width - 8);
-    }
-    if (top + height > window.innerHeight - 8) {
-      top = Math.max(8, Math.round(box.top - height - 8));
+    var nav = document.getElementById("okmate-nav");
+    var width;
+    var height;
+    var left;
+    var top;
+    if (nav && nav.contains(anchor)) {
+      var navBox = nav.getBoundingClientRect();
+      left = Math.round(navBox.right + 8);
+      el.style.maxWidth = Math.max(0, window.innerWidth - left - 8) + "px";
+      height = el.offsetHeight || 120;
+      top = Math.round(box.top);
+      if (top + height > window.innerHeight - 8) {
+        top = Math.max(8, window.innerHeight - height - 8);
+      }
+    } else {
+      el.style.maxWidth = "";
+      width = el.offsetWidth || 280;
+      height = el.offsetHeight || 120;
+      left = Math.round(box.left);
+      top = Math.round(box.bottom + 8);
+      if (left + width > window.innerWidth - 8) {
+        left = Math.max(8, window.innerWidth - width - 8);
+      }
+      if (top + height > window.innerHeight - 8) {
+        top = Math.max(8, Math.round(box.top - height - 8));
+      }
     }
     el.style.left = left + "px";
     el.style.top = top + "px";
