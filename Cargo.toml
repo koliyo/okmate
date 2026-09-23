@@ -37,7 +37,7 @@ toml = "1.1"
 tower-http = { version = "0.6", features = ["fs"] }
 datastar = { version = "0.4", features = ["axum"] }
 futures-util = { version = "0.3", default-features = false, features = ["std"] }
-h35-desktop = { git = "https://github.com/koliyo/h35-desktop", rev = "9e38d9915a848b0f4f92a28a58265e8ac13a9743", optional = true }
+h35-desktop = { git = "https://github.com/koliyo/h35-desktop", rev = "c465c343bfd5d623b62849c09af9214fe3c5f5c5", optional = true }
 
 [target.'cfg(target_os = "macos")'.dependencies]
 objc2-foundation = { version = "0.3", default-features = false, features = ["std", "NSProcessInfo"] }
