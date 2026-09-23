@@ -1,11 +1,6 @@
 use anyhow::{Context, Result};
 
-const PICK_FOLDER_ALIAS: &str = concat!(
-    "window.__h35FindRoot = '#okmate-main';\n",
-    "window.addEventListener('h35-pick-folder', function (event) {\n",
-    "  window.dispatchEvent(new CustomEvent('okmate-pick-folder', { detail: event.detail }));\n",
-    "});\n",
-);
+const PRODUCT_SCRIPT: &str = "window.__h35FindRoot = '#okmate-main';\n";
 
 const APP_NAME: &str = "OKMate";
 
@@ -48,7 +43,7 @@ pub fn run(options: crate::preview::ViewOptions) -> Result<()> {
         live_reload: true,
         goto: false,
         find: true,
-        extra_initialization_script: Some(PICK_FOLDER_ALIAS.into()),
+        extra_initialization_script: Some(PRODUCT_SCRIPT.into()),
         check_updates: std::env::current_exe()
             .ok()
             .is_some_and(|exe| crate::bundle::running_inside_app_bundle(&exe)),
@@ -63,10 +58,8 @@ mod tests {
     use super::*;
 
     #[test]
-    fn pick_folder_alias_forwards_h35_event() {
-        assert!(PICK_FOLDER_ALIAS.contains("h35-pick-folder"));
-        assert!(PICK_FOLDER_ALIAS.contains("okmate-pick-folder"));
-        assert!(PICK_FOLDER_ALIAS.contains("window.__h35FindRoot = '#okmate-main'"));
+    fn product_script_selects_find_root() {
+        assert!(PRODUCT_SCRIPT.contains("window.__h35FindRoot = '#okmate-main'"));
     }
 
     #[test]

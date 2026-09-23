@@ -69,10 +69,10 @@
     var path = document.getElementById("okmate-dir-path");
     var id = document.getElementById("okmate-dir-id");
     if (!browse || browse.dataset.bound === "1") return;
-    if (!(window.ipc && window.ipc.postMessage)) return;
+    if (typeof window.__h35HostSend !== "function") return;
     browse.dataset.bound = "1";
     browse.hidden = false;
-    window.addEventListener("okmate-pick-folder", function(ev){
+    window.addEventListener("h35-pick-folder", function(ev){
       var picked = ev.detail && ev.detail.path;
       if (!picked || !path) return;
       path.value = picked;
@@ -83,7 +83,7 @@
     });
     browse.addEventListener("click", function(e){
       e.preventDefault();
-      window.ipc.postMessage("pick-folder");
+      window.__h35HostSend("pick-folder");
     });
   })();
   </script>

@@ -46,7 +46,7 @@
   }
 
   function hasIpc() {
-    return !!(window.ipc && typeof window.ipc.postMessage === "function");
+    return typeof window.__h35HostSend === "function";
   }
 
   function persist() {
@@ -385,7 +385,7 @@
       return closePath(active);
     }
     if (hasIpc()) {
-      window.ipc.postMessage("close-window");
+      window.__h35HostSend("close-window");
     }
     return false;
   }

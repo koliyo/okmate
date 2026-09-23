@@ -278,8 +278,8 @@ if (!window.__okmateNav) {
 
   function reportLocation() {
     var href = window.location.href;
-    if (window.ipc && window.ipc.postMessage) {
-      window.ipc.postMessage("location:" + href);
+    if (window.__h35HostSend) {
+      window.__h35HostSend("location:" + href);
     }
     persistLocation();
   }
